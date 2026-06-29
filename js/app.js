@@ -21,6 +21,15 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function initApp() {
+  // Config dinamica del sheet
+  let firstData = null;
+  try {
+    firstData = await Sheets.getAll();
+    if (firstData && firstData.config && firstData.config.cuartos && firstData.config.cuartos.length > 0) {
+      CONFIG.CUARTOS = firstData.config.cuartos;
+    }
+  } catch(e) { console.warn("Config no disponible:", e); }
+
   buildCuartoBtns();
   buildFormCuartos();
   setupNav();
@@ -28,7 +37,15 @@ async function initApp() {
   setupForm();
   setupRefresh();
 
-  await loadAndRender(true);
+  if (firstData) {
+    renderLeaderboard(firstData);
+    renderCuartos(firstData);
+    renderHistorial(firstData);
+    updateLiveBadge(firstData);
+    updateLastUpdate();
+  } else {
+    renderError();
+  }
 
   // Ocultar splash
   document.getElementById("splash").classList.add("fade-out");
