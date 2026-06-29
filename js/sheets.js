@@ -51,15 +51,20 @@ const Sheets = {
   },
 
   async guardarScores({ cuartoId, bloqueInicio, bloqueFin, scores }) {
-    const res = await this._callPost({
+    const params = new URLSearchParams({
       action: "guardarScores",
-      cuartoId,
-      bloqueInicio,
-      bloqueFin,
-      scores,
+      cuartoId: cuartoId,
+      bloqueInicio: bloqueInicio,
+      bloqueFin: bloqueFin,
+      scores: JSON.stringify(scores),
     });
+    const url = CONFIG.APPS_SCRIPT_URL + "?" + params.toString();
+    const res = await fetch(url, { method: "GET", redirect: "follow" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
     this._cache.lastFetch = null;
-    return res;
+    return data;
   },
 
   formatScore(score) {
