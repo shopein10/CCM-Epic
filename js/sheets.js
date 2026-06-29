@@ -16,8 +16,9 @@ const Sheets = {
     return (Date.now() - this._cache.lastFetch) < (CONFIG.REFRESH_INTERVAL * 1000);
   },
 
-  async _callGet(action) {
-    const url = CONFIG.APPS_SCRIPT_URL + "?action=" + action;
+  async _callGet(action, bustCache = false) {
+    let url = CONFIG.APPS_SCRIPT_URL + "?action=" + action;
+    if (bustCache) url += "&_t=" + Date.now();
     const res = await fetch(url, { method: "GET", redirect: "follow" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
@@ -45,7 +46,7 @@ const Sheets = {
     if (!forceRefresh && this._isFresh() && this._cache.leaderboard) {
       return this._cache;
     }
-    const data = await this._callGet("getAll");
+    const data = await this._callGet("getAll", forceRefresh);;
     this._cache = { ...data, lastFetch: Date.now() };
     return this._cache;
   },
