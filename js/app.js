@@ -61,10 +61,10 @@ async function initApp() {
 }
 
 // ── Carga y render ──────────────────────────────────────────
-async function loadAndRender(showSkeleton = false) {
+async function loadAndRender(showSkeleton = false, forceRefresh = false) {
   if (showSkeleton) renderSkeletons();
   try {
-    const data = await Sheets.getAll();
+    const data = await Sheets.geforceRefresh)
     renderLeaderboard(data);
     renderCuartos(data);
     renderHistorial(data);
@@ -263,8 +263,8 @@ async function mostrarDetalleCuarto(cuartoId) {
   if (!cuartoConfig) return;
 
   try {
-    const data = await Sheets.getAll();
-    const detalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
+    const data = await Sheets.getAll(forceRefresh);
+    const datalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
 
     if (!detalle) {
       detailEl.innerHTML = `<p style="color:var(--text-muted)">Sin datos para este cuarto</p>`;
@@ -533,7 +533,7 @@ async function enviarScores() {
     document.getElementById("form-success").classList.remove("hidden");
 
     // Refrescar datos en background
-    loadAndRender();
+    loadAndRender(false, true));
 
   } catch(err) {
     btn.disabled = false;
@@ -544,6 +544,8 @@ async function enviarScores() {
 
 function resetForm() {
   State.form = { cuarto: null, bloque: null, scores: {} };
+  const btnEnviar = document.getElementById("btn-enviar");
+  if (btnEnviar) { btnEnviar.disabled = false; btnEnviar.textContent = "Enviar ✓"; }
   document.getElementById("form-success").classList.add("hidden");
   document.querySelectorAll(".option-btn").forEach(b => b.classList.remove("selected"));
   document.getElementById("inputs-golpes").innerHTML = "";
