@@ -8,7 +8,7 @@ const CONFIG = {
   // URL del Google Apps Script Web App
   // Cómo obtenerla: Apps Script → Implementar → Nueva implementación
   // → Tipo: Aplicación web → Acceso: Cualquier usuario → Implementar
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbynkXNzLdW2ShQCLLYMOMaycJwKE4hTLPurBxtl2xfgZpIiFbywc4on5hgilF-DuDfp_g/exec",
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxRrd-8X6oOTLzTwTKCiU1QJiWxxrTP6ISFOroXq75nfomSk9oqdxfhh65tTTLSLH7kHA/exec",
 
   // Nombre del torneo actual (aparece en toda la app)
   TORNEO_ACTUAL: "Torneo CCM & Epic 2025",
