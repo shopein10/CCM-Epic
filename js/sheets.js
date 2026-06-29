@@ -59,7 +59,7 @@ const Sheets = {
       bloqueFin: bloqueFin,
       scores: JSON.stringify(scores),
     });
-    const url = CONFIG.APPS_SCRIPT_URL + "?" + params.toString();
+    const url = "https://script.google.com/macros/s/AKfycbxRrd-8X6oOTLzTwTKCiU1QJiWxxrTP6ISFOroXq75nfomSk9oqdxfhh65tTTLSLH7kHA/exec" + "?" + params.toString();
     const res = await fetch(url, { method: "GET", redirect: "follow" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
