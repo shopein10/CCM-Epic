@@ -470,8 +470,8 @@ function buildConfirmPreview() {
       <span class="confirm-value">${cuartoConfig.nombre}</span>
     </div>
     <div class="confirm-row">
-      <span class="confirm-label">Hoyos</span>
-      <span class="confirm-value">${ini} – ${fin}</span>
+      <span class="confirm-label">${ini === fin ? 'Hoyo' : 'Hoyos'}</span>
+      <span class="confirm-value">${ini === fin ? ini : ini + ' – ' + fin}</span>
     </div>`;
 
   cuartoConfig.jugadores.forEach(jugador => {
