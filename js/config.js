@@ -1,17 +1,11 @@
-// ============================================================
 // CCM & Epic Golf — CONFIGURACIÓN
-// ============================================================
 
 const CONFIG = {
-
-  // URL del Cloudflare Worker (caching layer, sin cold starts)
   APPS_SCRIPT_URL: "https://ccm-epic-golf.shopein10.workers.dev",
-
   TORNEO_ACTUAL: "Torneo CCM & Epic 2025",
   PAR_TOTAL: 72,
   HOYOS_POR_BLOQUE: 3,
   REFRESH_INTERVAL: 30,
-
   CUARTOS: [
     { id: "Cuarto1", nombre: "Cuarto 1", jugadores: ["Nico DP", "Festapinto", "Pichon", "Cuca"] },
     { id: "Cuarto2", nombre: "Cuarto 2", jugadores: ["Nacho", "Emi", "Mani", "Maxi"] },
@@ -20,6 +14,5 @@ const CONFIG = {
     { id: "Cuarto5", nombre: "Cuarto 5", jugadores: ["Lucas", "Polino", "Pancho", "Andy"] },
     { id: "Cuarto6", nombre: "Cuarto 6", jugadores: ["Pui", "Nole", "Mosk", "Principe"] }
   ],
-
   PAR_HOYOS: [4, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5],
 };
