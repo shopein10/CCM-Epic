@@ -6,13 +6,16 @@ const CONFIG = {
   PAR_TOTAL: 72,
   HOYOS_POR_BLOQUE: 3,
   REFRESH_INTERVAL: 30,
+  // Estos valores se sobreescriben con los datos del sheet al cargar
   CUARTOS: [
-    { id: "Cuarto1", nombre: "Cuarto 1", jugadores: ["Nico DP", "Festapinto", "Pichon", "Cuca"] },
-    { id: "Cuarto2", nombre: "Cuarto 2", jugadores: ["Nacho", "Emi", "Mani", "Maxi"] },
-    { id: "Cuarto3", nombre: "Cuarto 3", jugadores: ["Matungo", "Bocha", "Tato", "Edu"] },
-    { id: "Cuarto4", nombre: "Cuarto 4", jugadores: ["Zorro", "Crazy", "Pera", "Juli"] },
-    { id: "Cuarto5", nombre: "Cuarto 5", jugadores: ["Lucas", "Polino", "Pancho", "Andy"] },
-    { id: "Cuarto6", nombre: "Cuarto 6", jugadores: ["Pui", "Nole", "Mosk", "Principe"] }
+    { id: "Cuarto1", nombre: "Cuarto 1", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
+    { id: "Cuarto2", nombre: "Cuarto 2", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
+    { id: "Cuarto3", nombre: "Cuarto 3", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
+    { id: "Cuarto4", nombre: "Cuarto 4", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
+    { id: "Cuarto5", nombre: "Cuarto 5", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
+    { id: "Cuarto6", nombre: "Cuarto 6", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
+    { id: "Cuarto7", nombre: "Cuarto 7", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
+    { id: "Cuarto8", nombre: "Cuarto 8", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] }
   ],
   PAR_HOYOS: [4, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5],
 };
