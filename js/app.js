@@ -486,10 +486,9 @@ async function enviarScores() {
 
     // Formatear scores: { jugador: [g1, g2, g3] }
     const cuartoConfig = CONFIG.CUARTOS.find(c => c.id === State.form.cuarto);
-    const scoresFormateados = {};
-    cuartoConfig.jugadores.forEach(jugador => {
+    const scoresFormateados = cuartoConfig.jugadores.map(jugador => {
       const golpes = State.form.scores[jugador] || {};
-      scoresFormateados[jugador] = Array.from({length: fin - ini + 1}, (_, i) => golpes[ini + i] || 0);
+      return Array.from({length: fin - ini + 1}, (_, i) => golpes[ini + i] || 0);
     });
 
     await Sheets.guardarScores({
