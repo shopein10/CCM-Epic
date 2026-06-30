@@ -8,7 +8,7 @@ const State = {
   tab: "individual",
   cuartoSeleccionado: null,
   form: {
-    cuarto: null
+    cuarto: null,
     bloque: null,
     scores: {},
   },
