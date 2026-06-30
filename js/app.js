@@ -232,91 +232,23 @@ function buildCuartoBtns() {
 
 function renderCuartos(data) {
   if (!data.cuartosDetalle) return;
-  // Actualizar mini-scores en las tarjetas
-  CONFIG.CUARTOS.forEach(c => {
-    const el = document.getElementById(`mini-score-${c.id}`);
+  CONFIG.CUARTOS.forEach(function(c) {
+    const el = document.getElementById('mini-score-' + c.id);
     if (!el) return;
     const detalle = data.cuartosDetalle[c.id];
     if (!detalle) return;
-    // Score del cuarto = mejor neto entre todos
-    const netos = Object.values(detalle).map(j => j.neto).filter(n => n !== null);
+    const jugadores = Object.values(detalle);
+    const netos = jugadores.map(function(j) { return j.neto; }).filter(function(n) { return n !== null && n !== undefined; });
     if (!netos.length) return;
-    // Intentar obtener score vs par del cuarto desde cuartosRank
-    const rankItem = (data.cuartosRank || []).find(r =>
-      c.jugadores.some(j => r.nombres && r.nombres.includes(j))
-    );
-    if (rankItem) {
-      el.textContent = Sheets.formatScore(rankItem.score);
-      el.className = `cuarto-btn-score ${Sheets.scoreClass(rankItem.score)}`;
-    }
+    const bestNeto = Math.min.apply(null, netos);
+    el.textContent = Sheets.formatScore(bestNeto);
+    el.className = 'cuarto-btn-score ' + Sheets.scoreClass(bestNeto);
   });
-
-  // Si hay un cuarto seleccionado, refrescar su detalle
   if (State.cuartoSeleccionado) {
     mostrarDetalleCuarto(State.cuartoSeleccionado);
   }
 }
 
-async function mostrarDetalleCuarto(cuartoId) {
-  const detailEl = document.getElementById("cuarto-detail");
-  detailEl.classList.remove("hidden");
-
-  const cuartoConfig = CONFIG.CUARTOS.find(c => c.id === cuartoId);
-  if (!cuartoConfig) return;
-
-  try {
-    const data = await Sheets.getAll();
-    const detalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
-
-    if (!detalle) {
-      detailEl.innerHTML = `<p style="color:var(--text-muted)">Sin datos para este cuarto</p>`;
-      return;
-    }
-
-    const pars = CONFIG.PAR_HOYOS;
-    const hoyosHeader = Array.from({length:18}, (_,i) => `<th>${i+1}</th>`).join("");
-
-    const filas = cuartoConfig.jugadores.map(jugador => {
-      const info = detalle[jugador];
-      if (!info) return "";
-      const celdas = info.golpes.map((g, i) => {
-        if (g === null) return `<td class="cell-par">–</td>`;
-        const cls = Sheets.cellClass(g, pars[i]);
-        return `<td class="${cls}">${g}</td>`;
-      }).join("");
-      const netoStr = info.neto !== null ? Sheets.formatScore(info.neto - CONFIG.PAR_TOTAL) : "–";
-      const netoClass = Sheets.scoreClass(info.neto !== null ? info.neto - CONFIG.PAR_TOTAL : null);
-      return `
-        <tr>
-          <td class="td-name">${jugador}</td>
-          ${celdas}
-          <td class="td-total ${netoClass}">${netoStr}</td>
-        </tr>`;
-    }).join("");
-
-    detailEl.innerHTML = `
-      <h3>${cuartoConfig.nombre}</h3>
-      <table class="scorecard-table">
-        <thead>
-          <tr>
-            <th>Jugador</th>
-            ${hoyosHeader}
-            <th>Neto</th>
-          </tr>
-          <tr>
-            <th style="text-align:left;color:var(--copper)">Par</th>
-            ${pars.map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("")}
-            <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
-          </tr>
-        </thead>
-        <tbody>${filas}</tbody>
-      </table>`;
-  } catch(e) {
-    detailEl.innerHTML = `<p style="color:var(--red-over)">Error al cargar. Intentá de nuevo.</p>`;
-  }
-}
-
-// ── RENDER: HISTORIAL ────────────────────────────────────────
 function renderHistorial(data) {
   const el = document.getElementById("historial-list");
   const historial = data.historial || [];
