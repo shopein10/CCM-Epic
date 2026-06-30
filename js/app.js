@@ -8,7 +8,7 @@ const State = {
   tab: "individual",
   cuartoSeleccionado: null,
   form: {
-    cuarto: null,
+    cuarto: null
     bloque: null,
     scores: {},
   },
@@ -64,7 +64,7 @@ async function initApp() {
 async function loadAndRender(showSkeleton = false, forceRefresh = false) {
   if (showSkeleton) renderSkeletons();
   try {
-    const data = await Sheets.geforceRefresh)
+    const data = await Sheets.getAll(forceRefresh);
     renderLeaderboard(data);
     renderCuartos(data);
     renderHistorial(data);
@@ -263,8 +263,8 @@ async function mostrarDetalleCuarto(cuartoId) {
   if (!cuartoConfig) return;
 
   try {
-    const data = await Sheets.getAll(forceRefresh);
-    const datalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
+    const data = await Sheets.getAll();
+    const detalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
 
     if (!detalle) {
       detailEl.innerHTML = `<p style="color:var(--text-muted)">Sin datos para este cuarto</p>`;
@@ -533,7 +533,7 @@ async function enviarScores() {
     document.getElementById("form-success").classList.remove("hidden");
 
     // Refrescar datos en background
-    loadAndRender(false, true));
+    loadAndRender(false, true);
 
   } catch(err) {
     btn.disabled = false;
