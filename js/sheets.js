@@ -16,14 +16,21 @@ const Sheets = {
     return (Date.now() - this._cache.lastFetch) < (CONFIG.REFRESH_INTERVAL * 1000);
   },
 
-  async _callGet(action, bustCache = false) {
-    let url = CONFIG.APPS_SCRIPT_URL + "?action=" + action;
-    if (bustCache) url += "&_t=" + Date.now();
-    const res = await fetch(url, { method: "GET", redirect: "follow" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    return data;
+  async _callGet(action) {
+    const url = CONFIG.APPS_SCRIPT_URL + "?action=" + action;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    try {
+      const res = await fetch(url, { method: "GET", redirect: "follow", signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data;
+    } catch (e) {
+      clearTimeout(timeoutId);
+      throw e;
+    }
   },
 
   async _callPost(payload) {
@@ -46,26 +53,21 @@ const Sheets = {
     if (!forceRefresh && this._isFresh() && this._cache.leaderboard) {
       return this._cache;
     }
-    const data = await this._callGet("getAll", forceRefresh);;
+    const data = await this._callGet("getAll");
     this._cache = { ...data, lastFetch: Date.now() };
     return this._cache;
   },
 
   async guardarScores({ cuartoId, bloqueInicio, bloqueFin, scores }) {
-    const params = new URLSearchParams({
+    const res = await this._callPost({
       action: "guardarScores",
-      cuartoId: cuartoId,
-      bloqueInicio: bloqueInicio,
-      bloqueFin: bloqueFin,
-      scores: JSON.stringify(scores),
+      cuartoId,
+      bloqueInicio,
+      bloqueFin,
+      scores,
     });
-    const url = CONFIG.APPS_SCRIPT_URL + "?" + params.toString();
-    const res = await fetch(url, { method: "GET", redirect: "follow" });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
     this._cache.lastFetch = null;
-    return data;
+    return res;
   },
 
   formatScore(score) {
