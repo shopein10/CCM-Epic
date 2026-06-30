@@ -249,6 +249,43 @@ function renderCuartos(data) {
   }
 }
 
+
+async function mostrarDetalleCuarto(cuartoId) {
+  const detailEl = document.getElementById("cuarto-detail");
+  detailEl.classList.remove("hidden");
+  const cuartoConfig = CONFIG.CUARTOS.find(function(c) { return c.id === cuartoId; });
+  if (!cuartoConfig) return;
+  try {
+    const data = await Sheets.getAll();
+    const detalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
+    if (!detalle) {
+      detailEl.innerHTML = '<p style="color:var(--text-muted)">Sin datos para este cuarto</p>';
+      return;
+    }
+    const pars = CONFIG.PAR_HOYOS;
+    const hoyosHeader = Array.from({length:18}, function(_,i) { return "<th>"+(i+1)+"</th>"; }).join("");
+    const filas = cuartoConfig.jugadores.map(function(jugador) {
+      const info = detalle[jugador];
+      if (!info) return "";
+      const celdas = (info.golpes || []).map(function(g, i) {
+        if (g === null || g === undefined) return '<td class="cell-par">–</td>';
+        return '<td class="' + Sheets.cellClass(g, pars[i]) + '">' + g + '</td>';
+      }).join("");
+      const netoStr = info.neto !== null && info.neto !== undefined ? Sheets.formatScore(info.neto) : "–";
+      const netoClass = Sheets.scoreClass(info.neto);
+      return "<tr><td class='td-name'>" + jugador + "</td>" + celdas + "<td class='td-total " + netoClass + "'>" + netoStr + "</td></tr>";
+    }).join("");
+    detailEl.innerHTML = "<h3>" + cuartoConfig.nombre + "</h3>" +
+      '<table class="scorecard-table"><thead><tr><th>Jugador</th>' + hoyosHeader + "<th>Neto</th></tr>" +
+      '<tr><th style="text-align:left;color:var(--copper)">Par</th>' +
+      pars.map(function(p) { return '<th style="color:var(--text-dim)">' + p + "</th>"; }).join("") +
+      '<th style="color:var(--text-dim)">' + CONFIG.PAR_TOTAL + "</th></tr></thead>" +
+      "<tbody>" + filas + "</tbody></table>";
+  } catch(e) {
+    detailEl.innerHTML = '<p style="color:var(--red-over)">Error al cargar. Intent\u00e1 de nuevo.</p>';
+  }
+}
+
 function renderHistorial(data) {
   const el = document.getElementById("historial-list");
   const historial = data.historial || [];
