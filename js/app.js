@@ -123,7 +123,7 @@ function updateLastUpdate() {
 function updateLiveBadge(data) {
   // Mostrar "EN VIVO" si hay scores cargados pero no está terminado
   const badge = document.getElementById("live-badge");
-  const hayScores = data.leaderboard && data.leaderboard.some(r => r.hoyo !== "Hoyo18");
+  const hayScores = data.leaderboard && data.leaderboard.some(r => (r.hoyosJugados != null ? r.hoyosJugados > 0 : r.hoyo));
   badge.classList.toggle("hidden", !hayScores);
 }
 
@@ -156,13 +156,15 @@ function renderIndividual(rows) {
   const tablaEl = document.getElementById("tabla-individual");
   const resto = rows.slice(3);
   if (!resto.length) { tablaEl.innerHTML = ""; return; }
-  tablaEl.innerHTML = resto.map(r => {
+  tablaEl.innerHTML = resto.map((r, i) => {
     const sc = Sheets.scoreClass(r.score);
+    const pos = r.pos != null ? r.pos : (i + 4);
+    const hoyo = r.hoyo || (r.hoyosJugados != null ? `H${r.hoyosJugados}` : "");
     return `
       <div class="score-row">
-        <span class="row-pos">${r.pos}</span>
+        <span class="row-pos">${pos}</span>
         <span class="row-name">${r.nombre}</span>
-        <span class="row-hoyo">${r.hoyo || ""}</span>
+        <span class="row-hoyo">${hoyo}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
   }).join("");
@@ -179,9 +181,9 @@ function renderParejas(rows) {
     const isTop = i < 3;
     return `
       <div class="score-row ${isTop ? "top-3" : ""}">
-        <span class="row-pos">${r.pos}</span>
+        <span class="row-pos">${r.pos != null ? r.pos : i + 4}</span>
         <span class="row-name">${r.nombres}</span>
-        <span class="row-hoyo">${r.hoyo || ""}</span>
+        <span class="row-hoyo">${r.hoyo || (r.hoyosJugados ? "H"+r.hoyosJugados : "")}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
   }).join("");
