@@ -1,7 +1,7 @@
 // CCM & Epic Golf — CONFIGURACIÓN
 
 const CONFIG = {
-  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxRrd-8X6oOTLzTwTKCiU1QJiWxxrTP6ISFOroXq75nfomSk9oqdxfhh65tTTLSLH7kHA/exec",
+  APPS_SCRIPT_URL: "https://ccm-epic-golf.shopein10.workers.dev",
   TORNEO_ACTUAL: "Torneo CCM & Epic 2025",
   PAR_TOTAL: 72,
   HOYOS_POR_BLOQUE: 3,
