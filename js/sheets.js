@@ -54,7 +54,39 @@ const Sheets = {
       return this._cache;
     }
     const data = await this._callGet("getAll");
-    this._cache = { ...data, lastFetch: Date.now() };
+
+    // Normalizar cuartos (array) -> cuartosDetalle (objeto keyed por nombre)
+    if (data.cuartos && !data.cuartosDetalle) {
+      data.cuartosDetalle = {};
+      const ids = Object.keys(data.cuartos);
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        data.cuartosDetalle[id] = {};
+        const jugadores = data.cuartos[id];
+        for (let j = 0; j < jugadores.length; j++) {
+          const jug = jugadores[j];
+          data.cuartosDetalle[id][jug.nombre] = {
+            golpes: jug.golpesPorHoyo,
+            neto: jug.score
+          };
+        }
+      }
+    }
+
+    // Derivar config.cuartos de los datos reales del sheet
+    if (data.cuartos && !data.config) {
+      data.config = {
+        cuartos: Object.keys(data.cuartos).map(function(id) {
+          return {
+            id: id,
+            nombre: id.replace(/Cuarto(\d+)/, 'Cuarto $1'),
+            jugadores: data.cuartos[id].map(function(j) { return j.nombre; })
+          };
+        })
+      };
+    }
+
+    this._cache = Object.assign({}, data, { lastFetch: Date.now() });
     return this._cache;
   },
 
