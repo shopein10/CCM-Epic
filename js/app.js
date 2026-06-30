@@ -148,6 +148,7 @@ function renderIndividual(rows) {
         <span class="podio-medal">${medallas[i]}</span>
         <div class="podio-avatar">${Sheets.initials(r.nombre)}</div>
         <div class="podio-name">${r.nombre}</div>
+        ${r.hdc != null ? '<div class="podio-hdc">HDC ' + r.hdc + '</div>' : ''}
         <div class="podio-score ${scoreClass}">${Sheets.formatScore(r.score)}</div>
       </div>`;
   }).join("");
@@ -163,7 +164,7 @@ function renderIndividual(rows) {
     return `
       <div class="score-row">
         <span class="row-pos">${pos}</span>
-        <span class="row-name">${r.nombre}</span>
+        <span class="row-name">${r.nombre}${r.hdc != null ? '<span class="row-hdc"> HDC ' + r.hdc + '</span>' : ''}</span>
         <span class="row-hoyo">${hoyo}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
@@ -320,7 +321,10 @@ function formatFecha(fecha) {
 function buildFormCuartos() {
   const grid = document.getElementById("cuarto-btns");
   grid.innerHTML = CONFIG.CUARTOS.map(c => `
-    <button type="button" class="option-btn" data-cuarto="${c.id}">${c.nombre}</button>
+    <button type="button" class="option-btn" data-cuarto="${c.id}">
+      <div class="form-cuarto-nombre">${c.nombre}</div>
+      <div class="form-cuarto-jugadores">${c.jugadores.join(" · ")}</div>
+    </button>
   `).join("");
 }
 
