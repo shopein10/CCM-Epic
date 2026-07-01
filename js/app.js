@@ -351,19 +351,22 @@ function formatFecha(fecha) {
 function buildFormCuartos() {
   const grid = document.getElementById("cuarto-btns");
   grid.innerHTML = CONFIG.CUARTOS.map(c => `
-    <button type="button" class="option-btn" data-cuarto="${c.id}">${c.nombre}</button>
+    <button type="button" class="option-btn" data-cuarto="${c.id}">
+      <div class="form-cuarto-nombre">${c.nombre}</div>
+      <div class="form-cuarto-jugadores">${c.jugadores.join("<br>")}</div>
+    </button>
   `).join("");
 }
 
 function setupForm() {
-  // Paso 1: seleccionar cuarto
-  document.getElementById("cuarto-btns").querySelectorAll(".option-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll("#cuarto-btns .option-btn").forEach(b => b.classList.remove("selected"));
-      btn.classList.add("selected");
-      State.form.cuarto = btn.dataset.cuarto;
-      goToStep(2);
-    });
+  // Paso 1: event delegation para sobrevivir rebuilds de buildFormCuartos()
+  document.getElementById("cuarto-btns").addEventListener("click", e => {
+    const btn = e.target.closest(".option-btn");
+    if (!btn) return;
+    document.querySelectorAll("#cuarto-btns .option-btn").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    State.form.cuarto = btn.dataset.cuarto;
+    goToStep(2);
   });
 
   // Paso 2: seleccionar bloque
