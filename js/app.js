@@ -21,15 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function initApp() {
-  // Config dinamica del sheet
-  let firstData = null;
-  try {
-    firstData = await Sheets.getAll();
-    if (firstData && firstData.config && firstData.config.cuartos && firstData.config.cuartos.length > 0) {
-      CONFIG.CUARTOS = firstData.config.cuartos;
-    }
-  } catch(e) { console.warn("Config no disponible:", e); }
-
   buildCuartoBtns();
   buildFormCuartos();
   setupNav();
@@ -37,15 +28,7 @@ async function initApp() {
   setupForm();
   setupRefresh();
 
-  if (firstData) {
-    renderLeaderboard(firstData);
-    renderCuartos(firstData);
-    renderHistorial(firstData);
-    updateLiveBadge(firstData);
-    updateLastUpdate();
-  } else {
-    renderError();
-  }
+  await loadAndRender(true);
 
   // Ocultar splash
   document.getElementById("splash").classList.add("fade-out");
@@ -61,10 +44,30 @@ async function initApp() {
 }
 
 // ── Carga y render ──────────────────────────────────────────
-async function loadAndRender(showSkeleton = false, forceRefresh = false) {
+async function loadAndRender(showSkeleton = false) {
   if (showSkeleton) renderSkeletons();
   try {
-    const data = await Sheets.getAll(forceRefresh);
+    const data = await Sheets.getAll();
+
+    // Actualizar nombres reales de jugadores desde el sheet
+    if (data.cuartosDetalle) {
+      let needsRebuild = false;
+      CONFIG.CUARTOS.forEach(c => {
+        const detalle = data.cuartosDetalle[c.id];
+        if (detalle) {
+          const realNames = Object.keys(detalle).filter(n => n);
+          if (realNames.length > 0 && realNames[0] !== c.jugadores[0]) {
+            c.jugadores = realNames;
+            needsRebuild = true;
+          }
+        }
+      });
+      if (needsRebuild) {
+        buildCuartoBtns();
+        buildFormCuartos();
+      }
+    }
+
     renderLeaderboard(data);
     renderCuartos(data);
     renderHistorial(data);
@@ -121,9 +124,8 @@ function updateLastUpdate() {
 }
 
 function updateLiveBadge(data) {
-  // Mostrar "EN VIVO" si hay scores cargados pero no está terminado
   const badge = document.getElementById("live-badge");
-  const hayScores = data.leaderboard && data.leaderboard.some(r => (r.hoyosJugados != null ? r.hoyosJugados > 0 : r.hoyo));
+  const hayScores = data.leaderboard && data.leaderboard.some(r => r.hoyo && r.hoyo !== '');
   badge.classList.toggle("hidden", !hayScores);
 }
 
@@ -140,15 +142,14 @@ function renderIndividual(rows) {
   const top3 = rows.slice(0, 3);
   // Reordenar: 2do - 1ro - 3ro (para el podio visual)
   const ordenPodio = [top3[1], top3[0], top3[2]].filter(Boolean);
-  podioEl.innerHTML = ordenPodio.map((r, i) => {
-    const medallas = ["🥈","🥇","🥉"];
+  podioEl.innerHTML = ordenPodio.map(r => {
     const scoreClass = Sheets.scoreClass(r.score);
     return `
-      <div class="podio-item">
-        <span class="podio-medal">${medallas[i]}</span>
+      <div class="podio-item podio-rank-${r.pos}">
+        <div class="podio-pos podio-pos-${r.pos}">${r.pos}</div>
         <div class="podio-avatar">${Sheets.initials(r.nombre)}</div>
         <div class="podio-name">${r.nombre}</div>
-        ${r.hdc != null ? '<div class="podio-hdc">HDC ' + r.hdc + '</div>' : ''}
+        ${r.hdc != null && r.hdc !== 0 ? `<div class="podio-hdc">HDC ${r.hdc}</div>` : ''}
         <div class="podio-score ${scoreClass}">${Sheets.formatScore(r.score)}</div>
       </div>`;
   }).join("");
@@ -157,15 +158,13 @@ function renderIndividual(rows) {
   const tablaEl = document.getElementById("tabla-individual");
   const resto = rows.slice(3);
   if (!resto.length) { tablaEl.innerHTML = ""; return; }
-  tablaEl.innerHTML = resto.map((r, i) => {
+  tablaEl.innerHTML = resto.map(r => {
     const sc = Sheets.scoreClass(r.score);
-    const pos = r.pos != null ? r.pos : (i + 4);
-    const hoyo = r.hoyo || (r.hoyosJugados != null ? `H${r.hoyosJugados}` : "");
     return `
       <div class="score-row">
-        <span class="row-pos">${pos}</span>
-        <span class="row-name">${r.nombre}${r.hdc != null ? '<span class="row-hdc"> HDC ' + r.hdc + '</span>' : ''}</span>
-        <span class="row-hoyo">${hoyo}</span>
+        <span class="row-pos">${r.pos}</span>
+        <span class="row-name">${r.nombre}${r.hdc != null && r.hdc !== 0 ? `<span class="row-hdc"> HDC ${r.hdc}</span>` : ''}</span>
+        <span class="row-hoyo">${r.hoyo || ""}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
   }).join("");
@@ -182,9 +181,8 @@ function renderParejas(rows) {
     const isTop = i < 3;
     return `
       <div class="score-row ${isTop ? "top-3" : ""}">
-        <span class="row-pos">${r.pos != null ? r.pos : i + 4}</span>
+        <span class="row-pos">${r.pos}</span>
         <span class="row-name">${r.nombres}</span>
-        <span class="row-hoyo">${r.hoyo || (r.hoyosJugados ? "H"+r.hoyosJugados : "")}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
   }).join("");
@@ -203,7 +201,6 @@ function renderCuartosRank(rows) {
       <div class="score-row ${isTop ? "top-3" : ""}">
         <span class="row-pos">${r.pos}</span>
         <span class="row-name" style="font-size:12px">${r.nombres}</span>
-        <span class="row-hoyo">${r.hoyo || ""}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
   }).join("");
@@ -233,60 +230,93 @@ function buildCuartoBtns() {
 
 function renderCuartos(data) {
   if (!data.cuartosDetalle) return;
-  CONFIG.CUARTOS.forEach(function(c) {
-    const el = document.getElementById('mini-score-' + c.id);
+  // Actualizar mini-scores en las tarjetas
+  CONFIG.CUARTOS.forEach(c => {
+    const el = document.getElementById(`mini-score-${c.id}`);
     if (!el) return;
     const detalle = data.cuartosDetalle[c.id];
     if (!detalle) return;
-    const jugadores = Object.values(detalle);
-    const netos = jugadores.map(function(j) { return j.neto; }).filter(function(n) { return n !== null && n !== undefined; });
-    if (!netos.length) return;
-    const bestNeto = Math.min.apply(null, netos);
-    el.textContent = Sheets.formatScore(bestNeto);
-    el.className = 'cuarto-btn-score ' + Sheets.scoreClass(bestNeto);
+    // Intentar obtener score vs par del cuarto desde cuartosRank
+    const jugadoresReales = Object.keys(detalle);
+    const rankItem = (data.cuartosRank || []).find(r =>
+      jugadoresReales.some(j => r.nombres && r.nombres.includes(j))
+    );
+    if (rankItem && rankItem.score !== null) {
+      el.textContent = Sheets.formatScore(rankItem.score);
+      el.className = `cuarto-btn-score ${Sheets.scoreClass(rankItem.score)}`;
+    }
   });
+
+  // Si hay un cuarto seleccionado, refrescar su detalle
   if (State.cuartoSeleccionado) {
     mostrarDetalleCuarto(State.cuartoSeleccionado);
   }
 }
 
-
 async function mostrarDetalleCuarto(cuartoId) {
   const detailEl = document.getElementById("cuarto-detail");
   detailEl.classList.remove("hidden");
-  const cuartoConfig = CONFIG.CUARTOS.find(function(c) { return c.id === cuartoId; });
+
+  const cuartoConfig = CONFIG.CUARTOS.find(c => c.id === cuartoId);
   if (!cuartoConfig) return;
+
   try {
     const data = await Sheets.getAll();
     const detalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
+
     if (!detalle) {
-      detailEl.innerHTML = '<p style="color:var(--text-muted)">Sin datos para este cuarto</p>';
+      detailEl.innerHTML = `<p style="color:var(--text-muted)">Sin datos para este cuarto</p>`;
       return;
     }
+
     const pars = CONFIG.PAR_HOYOS;
-    const hoyosHeader = Array.from({length:18}, function(_,i) { return "<th>"+(i+1)+"</th>"; }).join("");
-    const filas = cuartoConfig.jugadores.map(function(jugador) {
+    const hoyosHeader = Array.from({length:18}, (_,i) => `<th>${i+1}</th>`).join("");
+
+    // Usar nombres reales del detalle (no los del config que pueden diferir)
+    const jugadores = Object.keys(detalle);
+
+    const filas = jugadores.map(jugador => {
       const info = detalle[jugador];
       if (!info) return "";
-      const celdas = (info.golpes || []).map(function(g, i) {
-        if (g === null || g === undefined) return '<td class="cell-par">–</td>';
-        return '<td class="' + Sheets.cellClass(g, pars[i]) + '">' + g + '</td>';
+      const celdas = (info.golpes || []).map((g, i) => {
+        if (g === null) return `<td class="cell-par">–</td>`;
+        const cls = Sheets.cellClass(g, pars[i]);
+        return `<td class="${cls}">${g}</td>`;
       }).join("");
+      // neto ya viene como score vs par desde el Apps Script
       const netoStr = info.neto !== null && info.neto !== undefined ? Sheets.formatScore(info.neto) : "–";
       const netoClass = Sheets.scoreClass(info.neto);
-      return "<tr><td class='td-name'>" + jugador + "</td>" + celdas + "<td class='td-total " + netoClass + "'>" + netoStr + "</td></tr>";
+      return `
+        <tr>
+          <td class="td-name">${jugador}${info.hdc ? ` <span style="color:var(--text-dim);font-size:10px">(${info.hdc})</span>` : ''}</td>
+          ${celdas}
+          <td class="td-total ${netoClass}">${netoStr}</td>
+        </tr>`;
     }).join("");
-    detailEl.innerHTML = "<h3>" + cuartoConfig.nombre + "</h3>" +
-      '<table class="scorecard-table"><thead><tr><th>Jugador</th>' + hoyosHeader + "<th>Neto</th></tr>" +
-      '<tr><th style="text-align:left;color:var(--copper)">Par</th>' +
-      pars.map(function(p) { return '<th style="color:var(--text-dim)">' + p + "</th>"; }).join("") +
-      '<th style="color:var(--text-dim)">' + CONFIG.PAR_TOTAL + "</th></tr></thead>" +
-      "<tbody>" + filas + "</tbody></table>";
+
+    detailEl.innerHTML = `
+      <h3>${cuartoConfig.nombre}</h3>
+      <table class="scorecard-table">
+        <thead>
+          <tr>
+            <th>Jugador</th>
+            ${hoyosHeader}
+            <th>Neto</th>
+          </tr>
+          <tr>
+            <th style="text-align:left;color:var(--copper)">Par</th>
+            ${pars.map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("")}
+            <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>`;
   } catch(e) {
-    detailEl.innerHTML = '<p style="color:var(--red-over)">Error al cargar. Intent\u00e1 de nuevo.</p>';
+    detailEl.innerHTML = `<p style="color:var(--red-over)">Error al cargar. Intentá de nuevo.</p>`;
   }
 }
 
+// ── RENDER: HISTORIAL ────────────────────────────────────────
 function renderHistorial(data) {
   const el = document.getElementById("historial-list");
   const historial = data.historial || [];
@@ -321,10 +351,7 @@ function formatFecha(fecha) {
 function buildFormCuartos() {
   const grid = document.getElementById("cuarto-btns");
   grid.innerHTML = CONFIG.CUARTOS.map(c => `
-    <button type="button" class="option-btn" data-cuarto="${c.id}">
-      <div class="form-cuarto-nombre">${c.nombre}</div>
-      <div class="form-cuarto-jugadores">${c.jugadores.join(" · ")}</div>
-    </button>
+    <button type="button" class="option-btn" data-cuarto="${c.id}">${c.nombre}</button>
   `).join("");
 }
 
@@ -462,8 +489,8 @@ function buildConfirmPreview() {
       <span class="confirm-value">${cuartoConfig.nombre}</span>
     </div>
     <div class="confirm-row">
-      <span class="confirm-label">${ini === fin ? 'Hoyo' : 'Hoyos'}</span>
-      <span class="confirm-value">${ini === fin ? ini : ini + ' – ' + fin}</span>
+      <span class="confirm-label">Hoyos</span>
+      <span class="confirm-value">${ini} – ${fin}</span>
     </div>`;
 
   cuartoConfig.jugadores.forEach(jugador => {
@@ -490,9 +517,10 @@ async function enviarScores() {
 
     // Formatear scores: { jugador: [g1, g2, g3] }
     const cuartoConfig = CONFIG.CUARTOS.find(c => c.id === State.form.cuarto);
-    const scoresFormateados = cuartoConfig.jugadores.map(jugador => {
+    const scoresFormateados = {};
+    cuartoConfig.jugadores.forEach(jugador => {
       const golpes = State.form.scores[jugador] || {};
-      return Array.from({length: fin - ini + 1}, (_, i) => golpes[ini + i] || 0);
+      scoresFormateados[jugador] = Array.from({length: fin - ini + 1}, (_, i) => golpes[ini + i] || 0);
     });
 
     await Sheets.guardarScores({
@@ -507,7 +535,7 @@ async function enviarScores() {
     document.getElementById("form-success").classList.remove("hidden");
 
     // Refrescar datos en background
-    loadAndRender(false, true);
+    loadAndRender();
 
   } catch(err) {
     btn.disabled = false;
@@ -518,8 +546,6 @@ async function enviarScores() {
 
 function resetForm() {
   State.form = { cuarto: null, bloque: null, scores: {} };
-  const btnEnviar = document.getElementById("btn-enviar");
-  if (btnEnviar) { btnEnviar.disabled = false; btnEnviar.textContent = "Enviar ✓"; }
   document.getElementById("form-success").classList.add("hidden");
   document.querySelectorAll(".option-btn").forEach(b => b.classList.remove("selected"));
   document.getElementById("inputs-golpes").innerHTML = "";
