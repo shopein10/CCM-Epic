@@ -18,29 +18,21 @@ const Sheets = {
 
   async _callGet(action) {
     const url = CONFIG.APPS_SCRIPT_URL + "?action=" + action;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-    try {
-      const res = await fetch(url, { method: "GET", redirect: "follow", signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      return data;
-    } catch (e) {
-      clearTimeout(timeoutId);
-      throw e;
-    }
+    const res = await fetch(url, { method: "GET", redirect: "follow" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    return data;
   },
 
   async _callPost(payload) {
-    // Para POST usamos un form encode para evitar CORS preflight
+    // Enviamos JSON crudo con Content-Type: text/plain para evitar CORS preflight
+    // y que Apps Script pueda leerlo con e.postData.contents directamente
     const url = CONFIG.APPS_SCRIPT_URL;
-    const params = new URLSearchParams();
-    params.append("payload", JSON.stringify(payload));
     const res = await fetch(url, {
       method: "POST",
-      body: params,
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "text/plain" },
       redirect: "follow",
     });
     if (!res.ok) throw new Error("HTTP " + res.status);
@@ -54,39 +46,7 @@ const Sheets = {
       return this._cache;
     }
     const data = await this._callGet("getAll");
-
-    // Normalizar cuartos (array) -> cuartosDetalle (objeto keyed por nombre)
-    if (data.cuartos && !data.cuartosDetalle) {
-      data.cuartosDetalle = {};
-      const ids = Object.keys(data.cuartos);
-      for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        data.cuartosDetalle[id] = {};
-        const jugadores = data.cuartos[id];
-        for (let j = 0; j < jugadores.length; j++) {
-          const jug = jugadores[j];
-          data.cuartosDetalle[id][jug.nombre] = {
-            golpes: jug.golpesPorHoyo,
-            neto: jug.score
-          };
-        }
-      }
-    }
-
-    // Derivar config.cuartos de los datos reales del sheet
-    if (data.cuartos && !data.config) {
-      data.config = {
-        cuartos: Object.keys(data.cuartos).map(function(id) {
-          return {
-            id: id,
-            nombre: id.replace(/Cuarto(\d+)/, 'Cuarto $1'),
-            jugadores: data.cuartos[id].map(function(j) { return j.nombre; })
-          };
-        })
-      };
-    }
-
-    this._cache = Object.assign({}, data, { lastFetch: Date.now() });
+    this._cache = { ...data, lastFetch: Date.now() };
     return this._cache;
   },
 
