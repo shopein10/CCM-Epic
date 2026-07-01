@@ -554,6 +554,12 @@ function resetForm() {
   document.getElementById("inputs-golpes").innerHTML = "";
   const btnCont = document.querySelector(".btn-continue-step3");
   if (btnCont) btnCont.remove();
+  // Restaurar botón enviar para que funcione en la próxima carga
+  const btnEnviar = document.getElementById("btn-enviar");
+  if (btnEnviar) {
+    btnEnviar.disabled = false;
+    btnEnviar.textContent = "Enviar ✓";
+  }
   goToStep(1);
 }
 
