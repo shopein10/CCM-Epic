@@ -270,7 +270,28 @@ async function mostrarDetalleCuarto(cuartoId) {
     }
 
     const pars = CONFIG.PAR_HOYOS;
-    const hoyosHeader = Array.from({length:18}, (_,i) => `<th>${i+1}</th>`).join("");
+    const parOut = pars.slice(0, 9).reduce((a, b) => a + b, 0);
+    const parIn  = pars.slice(9, 18).reduce((a, b) => a + b, 0);
+
+    // Header: H1..H9 | OUT | H10..H18 | IN | Gross | Neto
+    const hoyosHeader = [
+      ...Array.from({length: 9}, (_, i) => `<th>${i + 1}</th>`),
+      `<th class="td-subtotal">OUT</th>`,
+      ...Array.from({length: 9}, (_, i) => `<th>${i + 10}</th>`),
+      `<th class="td-subtotal">IN</th>`,
+      `<th class="td-subtotal">Gross</th>`,
+      `<th class="td-subtotal">Neto</th>`,
+    ].join("");
+
+    // Par row
+    const parRow = [
+      ...pars.slice(0, 9).map(p => `<th style="color:var(--text-dim)">${p}</th>`),
+      `<th class="td-subtotal" style="color:var(--text-dim)">${parOut}</th>`,
+      ...pars.slice(9, 18).map(p => `<th style="color:var(--text-dim)">${p}</th>`),
+      `<th class="td-subtotal" style="color:var(--text-dim)">${parIn}</th>`,
+      `<th class="td-subtotal" style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>`,
+      `<th class="td-subtotal" style="color:var(--text-dim)">E</th>`,
+    ].join("");
 
     // Usar nombres reales del detalle (no los del config que pueden diferir)
     const jugadores = Object.keys(detalle);
@@ -278,19 +299,48 @@ async function mostrarDetalleCuarto(cuartoId) {
     const filas = jugadores.map(jugador => {
       const info = detalle[jugador];
       if (!info) return "";
-      const celdas = (info.golpes || []).map((g, i) => {
-        if (g === null) return `<td class="cell-par">–</td>`;
+      const golpes = info.golpes || [];
+
+      // Hoyos 1-9
+      const celdas1 = golpes.slice(0, 9).map((g, i) => {
+        if (!g) return `<td class="cell-par">–</td>`;
         const cls = Sheets.cellClass(g, pars[i]);
         return `<td class="${cls}">${g}</td>`;
       }).join("");
-      // neto ya viene como score vs par desde el Apps Script
-      const netoStr = info.neto !== null && info.neto !== undefined ? Sheets.formatScore(info.neto) : "–";
+
+      // OUT subtotal (solo hoyos jugados)
+      const played1 = golpes.slice(0, 9).filter(g => g);
+      const outVal  = played1.length > 0 ? played1.reduce((a, b) => a + b, 0) : null;
+      const outTd   = `<td class="td-subtotal">${outVal !== null ? outVal : "–"}</td>`;
+
+      // Hoyos 10-18
+      const celdas2 = golpes.slice(9, 18).map((g, i) => {
+        if (!g) return `<td class="cell-par">–</td>`;
+        const cls = Sheets.cellClass(g, pars[i + 9]);
+        return `<td class="${cls}">${g}</td>`;
+      }).join("");
+
+      // IN subtotal
+      const played2 = golpes.slice(9, 18).filter(g => g);
+      const inVal   = played2.length > 0 ? played2.reduce((a, b) => a + b, 0) : null;
+      const inTd    = `<td class="td-subtotal">${inVal !== null ? inVal : "–"}</td>`;
+
+      // Gross total
+      const grossVal = (outVal !== null || inVal !== null)
+        ? (outVal || 0) + (inVal || 0) : null;
+      const grossTd  = `<td class="td-subtotal">${grossVal !== null ? grossVal : "–"}</td>`;
+
+      // Neto (score vs par ya calculado por Apps Script)
+      const netoStr   = info.neto !== null && info.neto !== undefined ? Sheets.formatScore(info.neto) : "–";
       const netoClass = Sheets.scoreClass(info.neto);
+
       return `
         <tr>
           <td class="td-name">${jugador}${info.hdc ? ` <span style="color:var(--text-dim);font-size:10px">(${info.hdc})</span>` : ''}</td>
-          ${celdas}
-          <td class="td-total ${netoClass}">${netoStr}</td>
+          ${celdas1}${outTd}
+          ${celdas2}${inTd}
+          ${grossTd}
+          <td class="td-subtotal ${netoClass}">${netoStr}</td>
         </tr>`;
     }).join("");
 
@@ -301,12 +351,10 @@ async function mostrarDetalleCuarto(cuartoId) {
           <tr>
             <th>Jugador</th>
             ${hoyosHeader}
-            <th>Neto</th>
           </tr>
           <tr>
             <th style="text-align:left;color:var(--copper)">Par</th>
-            ${pars.map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("")}
-            <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
+            ${parRow}
           </tr>
         </thead>
         <tbody>${filas}</tbody>
