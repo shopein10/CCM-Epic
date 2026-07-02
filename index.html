@@ -8,8 +8,8 @@
   <meta name="apple-mobile-web-app-title" content="CCM & Epic">
   <meta name="theme-color" content="#0a0a0f">
   <title>CCM & Epic Golf</title>
-  <link rel="manifest" href="manifest.json"
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,7 +18,7 @@
   <div id="splash">
     <div class="splash-inner">
       <img src="icon-512.png" class="splash-logo" alt="CCM Epic Golf">
-      <div class="splash-flag">⛳</div>
+      <div class="splash-flag">â³</div>
       <h1 class="splash-title">CCM <span>&</span> Epic</h1>
       <p class="splash-sub">Golf Tournament</p>
       <div class="splash-loader"><div></div></div>
@@ -31,31 +31,35 @@
     <!-- HEADER -->
     <header class="app-header">
       <div class="header-left">
-        <span class="header-logo">⛳</span>
+        <span class="header-logo">â³</span>
         <span class="header-title">CCM <em>&</em> Epic</span>
       </div>
       <div class="header-right">
         <span id="live-badge" class="live-badge hidden">EN VIVO</span>
-        <button class="icon-btn" id="btn-refresh" title="Actualizar">↻</button>
+        <button class="icon-btn" id="btn-refresh" title="Actualizar">â»</button>
       </div>
     </header>
 
     <!-- NAV -->
     <nav class="bottom-nav">
       <button class="nav-item active" data-view="leaderboard">
-        <span class="nav-icon">🏆</span>
+        <span class="nav-icon">ð</span>
         <span>Ranking</span>
       </button>
       <button class="nav-item" data-view="cuartos">
-        <span class="nav-icon">👥</span>
+        <span class="nav-icon">ð¥</span>
         <span>Cuartos</span>
       </button>
       <button class="nav-item nav-cta" data-view="cargar">
-        <span class="nav-icon">✚</span>
+        <span class="nav-icon">â</span>
         <span>Cargar</span>
       </button>
+      <button class="nav-item" data-view="matchs">
+        <span class="nav-icon">âï¸</span>
+        <span>Matchs</span>
+      </button>
       <button class="nav-item" data-view="historial">
-        <span class="nav-icon">📅</span>
+        <span class="nav-icon">ð</span>
         <span>Historial</span>
       </button>
     </nav>
@@ -105,55 +109,51 @@
         <form id="score-form" class="score-form" onsubmit="return false;">
 
           <div class="form-step active" id="step-1">
-            <p class="step-label">Paso 1 — ¿Qué cuarto anotás?</p>
+            <p class="step-label">Paso 1 â Â¿QuÃ© cuarto anotÃ¡s?</p>
             <div id="cuarto-btns" class="option-grid"></div>
           </div>
 
-                    <div class="form-step" id="step-2">
-            <p class="step-label">Paso 2 — ¿Qué hoyo terminaron?</p>
-            <div id="bloque-btns" class="option-grid hoyo-grid">
-              <button type="button" class="option-btn" data-bloque="1-1">1<br><span class="hoyo-par">P4</span></button>
-              <button type="button" class="option-btn" data-bloque="2-2">2<br><span class="hoyo-par">P4</span></button>
-              <button type="button" class="option-btn" data-bloque="3-3">3<br><span class="hoyo-par">P5</span></button>
-              <button type="button" class="option-btn" data-bloque="4-4">4<br><span class="hoyo-par">P3</span></button>
-              <button type="button" class="option-btn" data-bloque="5-5">5<br><span class="hoyo-par">P4</span></button>
-              <button type="button" class="option-btn" data-bloque="6-6">6<br><span class="hoyo-par">P4</span></button>
-              <button type="button" class="option-btn" data-bloque="7-7">7<br><span class="hoyo-par">P5</span></button>
-              <button type="button" class="option-btn" data-bloque="8-8">8<br><span class="hoyo-par">P3</span></button>
-              <button type="button" class="option-btn" data-bloque="9-9">9<br><span class="hoyo-par">P4</span></button>
-              <button type="button" class="option-btn" data-bloque="10-10">10<br><span class="hoyo-par">P4</span></button>
-              <button type="button" class="option-btn" data-bloque="11-11">11<br><span class="hoyo-par">P3</span></button>
-              <button type="button" class="option-btn" data-bloque="12-12">12<br><span class="hoyo-par">P4</span></button>
-              <button type="button" class="option-btn" data-bloque="13-13">13<br><span class="hoyo-par">P5</span></button>
-              <button type="button" class="option-btn" data-bloque="14-14">14<br><span class="hoyo-par">P4</span></button>
-              <button type="button" class="option-btn" data-bloque="15-15">15<br><span class="hoyo-par">P4</span></button>
-              <button type="button" class="option-btn" data-bloque="16-16">16<br><span class="hoyo-par">P3</span></button>
-              <button type="button" class="option-btn" data-bloque="17-17">17<br><span class="hoyo-par">P4</span></button>
-              <button type="button" class="option-btn" data-bloque="18-18">18<br><span class="hoyo-par">P5</span></button>
+          <div class="form-step" id="step-2">
+            <p class="step-label">Paso 2 â Â¿QuÃ© hoyos terminaron?</p>
+            <div id="bloque-btns" class="option-grid">
+              <button type="button" class="option-btn" data-bloque="1-3">Hoyos 1â3</button>
+              <button type="button" class="option-btn" data-bloque="4-6">Hoyos 4â6</button>
+              <button type="button" class="option-btn" data-bloque="7-9">Hoyos 7â9</button>
+              <button type="button" class="option-btn" data-bloque="10-12">Hoyos 10â12</button>
+              <button type="button" class="option-btn" data-bloque="13-15">Hoyos 13â15</button>
+              <button type="button" class="option-btn" data-bloque="16-18">Hoyos 16â18</button>
             </div>
           </div>
 
           <div class="form-step" id="step-3">
-            <p class="step-label">Paso 3 — Golpes por hoyo</p>
+            <p class="step-label">Paso 3 â Golpes por hoyo</p>
             <div id="inputs-golpes" class="golpes-grid"></div>
           </div>
 
           <div class="form-step" id="step-4">
-            <p class="step-label">Confirmá antes de enviar</p>
+            <p class="step-label">ConfirmÃ¡ antes de enviar</p>
             <div id="confirm-preview" class="confirm-preview"></div>
             <div class="form-actions">
               <button type="button" id="btn-edit" class="btn-secondary">Editar</button>
-              <button type="button" id="btn-enviar" class="btn-primary">Enviar ✓</button>
+              <button type="button" id="btn-enviar" class="btn-primary">Enviar â</button>
             </div>
           </div>
 
           <div id="form-success" class="form-success hidden">
-            <div class="success-icon">✓</div>
-            <p>¡Scores cargados!</p>
-            <button type="button" id="btn-nuevo" class="btn-secondary">Cargar otro hoyo</button>
+            <div class="success-icon">â</div>
+            <p>Â¡Scores cargados!</p>
+            <button type="button" id="btn-nuevo" class="btn-secondary">Cargar otro bloque</button>
           </div>
 
         </form>
+      </section>
+
+      <!-- MATCHS -->
+      <section id="view-matchs" class="view">
+        <div class="view-header">
+          <h2>Matchs</h2>
+        </div>
+        <div id="matchs-list" class="matchs-list"></div>
       </section>
 
       <!-- HISTORIAL -->
