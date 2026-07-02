@@ -607,7 +607,7 @@ function resetForm() {
   const btnEnviar = document.getElementById("btn-enviar");
   if (btnEnviar) {
     btnEnviar.disabled = false;
-    btnEnviar.textContent = "Enviar ✓</ton>";
+    btnEnviar.textContent = "Enviar ✓";
   }
   goToStep(1);
 }
@@ -643,11 +643,59 @@ function renderMatchs(data) {
   el.innerHTML = CONFIG.CUARTOS.map(cuarto => {
     const d = matchsData[cuarto.id];
     if (!d) return '';
+
     const valA = (d.a !== null && d.a !== undefined && d.a !== '') ? String(d.a) : null;
     const valB = (d.b !== null && d.b !== undefined && d.b !== '') ? String(d.b) : null;
-    if (!valA && !valB) {
-      return `<div class="match-card"><div class="match-cuarto-label">Match ${cuarto.nombre}</div><div class="match-result match-pending">No iniciado</div></div>`;
+    const evo  = Array.isArray(d.evo) ? d.evo : [];
+    const hasResult = valA || valB;
+
+    // Celda de evolución por hoyo
+    function evoCell(holeNum, val) {
+      if (val === null || val === undefined || val === '') {
+        return `<div class="match-evo-cell"><div class="match-evo-hoye">H${holeNum}</div><div class="match-evo-val match-evo-empty">·</div></div>`;
+      }
+      const n = Number(val);
+      let cls = 'match-evo-as';
+      let display = String(val);
+      if (!isNaN(n)) {
+        if (n < 0)      { cls = 'match-evo-p1'; display = String(n); }
+        else if (n > 0) { cls = 'match-evo-p2'; display = '+' + n; }
+        else            { cls = 'match-evo-as'; display = 'AS'; }
+      }
+      return `<div class="match-evo-cell"><div class="match-evo-hoye">H${holeNum}</div><div class="match-evo-val ${cls}">${display}</div></div>`;
     }
-    return `<div class="match-card"><div class="match-cuarto-label">Match ${cuarto.nombre}</div><div class="match-result">${valA || '—'}<span class="match-sep"> · </span>${valB || '—'}</div></div>`;
+
+    const evoHtml = evo.length
+      ? [
+          ...evo.slice(0, 9).map((v, i) => evoCell(i + 1, v)),
+          '<div class="match-evo-sep"></div>',
+          ...evo.slice(9, 18).map((v, i) => evoCell(i + 10, v)),
+        ].join('')
+      : '<div style="color:var(--text-muted);font-size:12px;padding:4px 0">Sin datos de evolución</div>';
+
+    return `
+      <div class="match-card" data-cuarto="${cuarto.id}">
+        <div class="match-header">
+          <div class="match-cuarto-label">Match ${cuarto.nombre}</div>
+          <div class="match-toggle-icon">▼</div>
+        </div>
+        <div class="match-result${hasResult ? '' : ' match-pending'}">${
+          hasResult
+            ? (valA || '—') + '<span class="match-sep"> · </span>' + (valB || '—')
+            : 'No iniciado'
+        }</div>
+        <div class="match-evo-wrap">
+          <div class="match-evo-track">${evoHtml}</div>
+        </div>
+      </div>`;
   }).join("");
+
+  // Click: toggle evolución
+  el.querySelectorAll('.match-card').forEach(card => {
+    card.addEventListener('click', () => {
+      card.classList.toggle('expanded');
+      const icon = card.querySelector('.match-toggle-icon');
+      if (icon) icon.textContent = card.classList.contains('expanded') ? '▲' : '▼';
+    });
+  });
 }
