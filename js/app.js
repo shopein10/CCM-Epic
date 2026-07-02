@@ -1,8 +1,8 @@
 // ============================================================
-// CCM & Epic Golf PWA — App principal
+// CCM & Epic Golf PWA â App principal
 // ============================================================
 
-// ── Estado ──────────────────────────────────────────────────
+// ââ Estado ââââââââââââââââââââââââââââââââââââââââââââââââââ
 const State = {
   view: "leaderboard",
   tab: "individual",
@@ -15,7 +15,7 @@ const State = {
   refreshTimer: null,
 };
 
-// ── Init ────────────────────────────────────────────────────
+// ââ Init ââââââââââââââââââââââââââââââââââââââââââââââââââââ
 document.addEventListener("DOMContentLoaded", () => {
   setTimeout(initApp, 1200); // Dejar que se vea el splash
 });
@@ -43,7 +43,7 @@ async function initApp() {
   }, CONFIG.REFRESH_INTERVAL * 1000);
 }
 
-// ── Carga y render ──────────────────────────────────────────
+// ââ Carga y render ââââââââââââââââââââââââââââââââââââââââââ
 async function loadAndRender(showSkeleton = false) {
   if (showSkeleton) renderSkeletons();
   try {
@@ -70,6 +70,7 @@ async function loadAndRender(showSkeleton = false) {
 
     renderLeaderboard(data);
     renderCuartos(data);
+    renderMatchs(data);
     renderHistorial(data);
     updateLiveBadge(data);
     updateLastUpdate();
@@ -79,7 +80,7 @@ async function loadAndRender(showSkeleton = false) {
   }
 }
 
-// ── Navegación ───────────────────────────────────────────────
+// ââ NavegaciÃ³n âââââââââââââââââââââââââââââââââââââââââââââââ
 function setupNav() {
   document.querySelectorAll(".nav-item").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -95,7 +96,7 @@ function navigateTo(view) {
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === `view-${view}`));
 }
 
-// ── Tabs ─────────────────────────────────────────────────────
+// ââ Tabs âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function setupTabs() {
   document.querySelectorAll(".tab").forEach(tab => {
     tab.addEventListener("click", () => {
@@ -106,7 +107,7 @@ function setupTabs() {
   });
 }
 
-// ── Refresh ──────────────────────────────────────────────────
+// ââ Refresh ââââââââââââââââââââââââââââââââââââââââââââââââââ
 function setupRefresh() {
   document.getElementById("btn-refresh").addEventListener("click", async () => {
     const btn = document.getElementById("btn-refresh");
@@ -129,7 +130,7 @@ function updateLiveBadge(data) {
   badge.classList.toggle("hidden", !hayScores);
 }
 
-// ── RENDER: LEADERBOARD ──────────────────────────────────────
+// ââ RENDER: LEADERBOARD ââââââââââââââââââââââââââââââââââââââ
 function renderLeaderboard(data) {
   renderIndividual(data.leaderboard || []);
   renderParejas(data.parejas || []);
@@ -173,7 +174,7 @@ function renderIndividual(rows) {
 function renderParejas(rows) {
   const el = document.getElementById("tabla-parejas");
   if (!rows.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🤝</div><p>Los scores de parejas aparecen acá durante el torneo</p></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">ð¤</div><p>Los scores de parejas aparecen acÃ¡ durante el torneo</p></div>`;
     return;
   }
   el.innerHTML = rows.map((r, i) => {
@@ -191,7 +192,7 @@ function renderParejas(rows) {
 function renderCuartosRank(rows) {
   const el = document.getElementById("tabla-cuartos");
   if (!rows.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>El ranking de cuartos aparece acá durante el torneo</p></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">ð¥</div><p>El ranking de cuartos aparece acÃ¡ durante el torneo</p></div>`;
     return;
   }
   el.innerHTML = rows.map((r, i) => {
@@ -206,14 +207,14 @@ function renderCuartosRank(rows) {
   }).join("");
 }
 
-// ── RENDER: CUARTOS DETALLE ──────────────────────────────────
+// ââ RENDER: CUARTOS DETALLE ââââââââââââââââââââââââââââââââââ
 function buildCuartoBtns() {
   const grid = document.getElementById("cuartos-selector");
   grid.innerHTML = CONFIG.CUARTOS.map(c => `
     <button class="cuarto-btn" data-cuarto="${c.id}">
       <div class="cuarto-btn-title">${c.nombre}</div>
       <div class="cuarto-btn-names">${c.jugadores.join("<br>")}</div>
-      <div class="cuarto-btn-score" id="mini-score-${c.id}">–</div>
+      <div class="cuarto-btn-score" id="mini-score-${c.id}">â</div>
     </button>
   `).join("");
 
@@ -303,7 +304,7 @@ async function mostrarDetalleCuarto(cuartoId) {
 
       // Hoyos 1-9
       const celdas1 = golpes.slice(0, 9).map((g, i) => {
-        if (!g) return `<td class="cell-par">–</td>`;
+        if (!g) return `<td class="cell-par">â</td>`;
         const cls = Sheets.cellClass(g, pars[i]);
         return `<td class="${cls}">${g}</td>`;
       }).join("");
@@ -311,11 +312,11 @@ async function mostrarDetalleCuarto(cuartoId) {
       // OUT subtotal (solo hoyos jugados)
       const played1 = golpes.slice(0, 9).filter(g => g);
       const outVal  = played1.length > 0 ? played1.reduce((a, b) => a + b, 0) : null;
-      const outTd   = `<td class="td-subtotal">${outVal !== null ? outVal : "–"}</td>`;
+      const outTd   = `<td class="td-subtotal">${outVal !== null ? outVal : "â"}</td>`;
 
       // Hoyos 10-18
       const celdas2 = golpes.slice(9, 18).map((g, i) => {
-        if (!g) return `<td class="cell-par">–</td>`;
+        if (!g) return `<td class="cell-par">â</td>`;
         const cls = Sheets.cellClass(g, pars[i + 9]);
         return `<td class="${cls}">${g}</td>`;
       }).join("");
@@ -323,15 +324,15 @@ async function mostrarDetalleCuarto(cuartoId) {
       // IN subtotal
       const played2 = golpes.slice(9, 18).filter(g => g);
       const inVal   = played2.length > 0 ? played2.reduce((a, b) => a + b, 0) : null;
-      const inTd    = `<td class="td-subtotal">${inVal !== null ? inVal : "–"}</td>`;
+      const inTd    = `<td class="td-subtotal">${inVal !== null ? inVal : "â"}</td>`;
 
       // Gross total
       const grossVal = (outVal !== null || inVal !== null)
         ? (outVal || 0) + (inVal || 0) : null;
-      const grossTd  = `<td class="td-subtotal">${grossVal !== null ? grossVal : "–"}</td>`;
+      const grossTd  = `<td class="td-subtotal">${grossVal !== null ? grossVal : "â"}</td>`;
 
       // Neto (score vs par ya calculado por Apps Script)
-      const netoStr   = info.neto !== null && info.neto !== undefined ? Sheets.formatScore(info.neto) : "–";
+      const netoStr   = info.neto !== null && info.neto !== undefined ? Sheets.formatScore(info.neto) : "â";
       const netoClass = Sheets.scoreClass(info.neto);
 
       return `
@@ -360,11 +361,11 @@ async function mostrarDetalleCuarto(cuartoId) {
         <tbody>${filas}</tbody>
       </table>`;
   } catch(e) {
-    detailEl.innerHTML = `<p style="color:var(--red-over)">Error al cargar. Intentá de nuevo.</p>`;
+    detailEl.innerHTML = `<p style="color:var(--red-over)">Error al cargar. IntentÃ¡ de nuevo.</p>`;
   }
 }
 
-// ── RENDER: HISTORIAL ────────────────────────────────────────
+// ââ RENDER: HISTORIAL ââââââââââââââââââââââââââââââââââââââââ
 function renderHistorial(data) {
   const el = document.getElementById("historial-list");
   const historial = data.historial || [];
@@ -372,8 +373,8 @@ function renderHistorial(data) {
   if (!historial.length) {
     el.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">📅</div>
-        <p>El historial de torneos aparecerá acá.<br>Agregá una pestaña "Historial" al Sheet con las columnas:<br>Fecha / Ganador / Score / Jugadores / Polla / Notas</p>
+        <div class="empty-icon">ð</div>
+        <p>El historial de torneos aparecerÃ¡ acÃ¡.<br>AgregÃ¡ una pestaÃ±a "Historial" al Sheet con las columnas:<br>Fecha / Ganador / Score / Jugadores / Polla / Notas</p>
       </div>`;
     return;
   }
@@ -381,9 +382,9 @@ function renderHistorial(data) {
   el.innerHTML = historial.map(t => `
     <div class="historial-card">
       <div class="historial-fecha">${formatFecha(t.fecha)}</div>
-      <div class="historial-ganador">🥇 ${t.ganador}</div>
+      <div class="historial-ganador">ð¥ ${t.ganador}</div>
       <div class="historial-score">${Sheets.formatScore(t.score)}</div>
-      <div class="historial-meta">${t.jugadores} jugadores · $${Number(t.polla||0).toLocaleString("es-AR")} en juego</div>
+      <div class="historial-meta">${t.jugadores} jugadores Â· $${Number(t.polla||0).toLocaleString("es-AR")} en juego</div>
       ${t.notas ? `<div class="historial-meta" style="margin-top:6px;font-style:italic">${t.notas}</div>` : ""}
     </div>`).join("");
 }
@@ -395,7 +396,7 @@ function formatFecha(fecha) {
   return d.toLocaleDateString("es-AR", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
 }
 
-// ── FORM: CARGAR SCORES ──────────────────────────────────────
+// ââ FORM: CARGAR SCORES ââââââââââââââââââââââââââââââââââââââ
 function buildFormCuartos() {
   const grid = document.getElementById("cuarto-btns");
   grid.innerHTML = CONFIG.CUARTOS.map(c => `
@@ -500,14 +501,14 @@ function buildInputsGolpes() {
     });
   });
 
-  // Botón continuar al paso 4
+  // BotÃ³n continuar al paso 4
   let btnCont = container.parentElement.querySelector(".btn-continue-step3");
   if (!btnCont) {
     btnCont = document.createElement("button");
     btnCont.type = "button";
     btnCont.className = "btn-primary btn-continue-step3";
     btnCont.style.marginTop = "8px";
-    btnCont.textContent = "Revisar →";
+    btnCont.textContent = "Revisar â";
     btnCont.addEventListener("click", () => {
       collectScores();
       goToStep(4);
@@ -541,12 +542,12 @@ function buildConfirmPreview() {
     </div>
     <div class="confirm-row">
       <span class="confirm-label">Hoyos</span>
-      <span class="confirm-value">${ini} – ${fin}</span>
+      <span class="confirm-value">${ini} â ${fin}</span>
     </div>`;
 
   cuartoConfig.jugadores.forEach(jugador => {
     const golpes = State.form.scores[jugador] || {};
-    const vals = Array.from({length: fin - ini + 1}, (_, i) => golpes[ini + i] || "–").join(" · ");
+    const vals = Array.from({length: fin - ini + 1}, (_, i) => golpes[ini + i] || "â").join(" Â· ");
     html += `
       <div class="confirm-row">
         <span class="confirm-label">${jugador}</span>
@@ -560,7 +561,7 @@ function buildConfirmPreview() {
 async function enviarScores() {
   const btn = document.getElementById("btn-enviar");
   btn.disabled = true;
-  btn.textContent = "Enviando…";
+  btn.textContent = "Enviandoâ¦";
 
   try {
     collectScores();
@@ -581,7 +582,7 @@ async function enviarScores() {
       scores: scoresFormateados,
     });
 
-    // Mostrar éxito
+    // Mostrar Ã©xito
     document.getElementById("score-form").querySelectorAll(".form-step").forEach(s => s.classList.remove("active"));
     document.getElementById("form-success").classList.remove("hidden");
 
@@ -590,8 +591,8 @@ async function enviarScores() {
 
   } catch(err) {
     btn.disabled = false;
-    btn.textContent = "Enviar ✓";
-    alert("Error al enviar: " + err.message + "\n\nVerificá tu conexión e intentá de nuevo.");
+    btn.textContent = "Enviar â";
+    alert("Error al enviar: " + err.message + "\n\nVerificÃ¡ tu conexiÃ³n e intentÃ¡ de nuevo.");
   }
 }
 
@@ -602,16 +603,62 @@ function resetForm() {
   document.getElementById("inputs-golpes").innerHTML = "";
   const btnCont = document.querySelector(".btn-continue-step3");
   if (btnCont) btnCont.remove();
-  // Restaurar botón enviar para que funcione en la próxima carga
+  // Restaurar botÃ³n enviar para que funcione en la prÃ³xima carga
   const btnEnviar = document.getElementById("btn-enviar");
   if (btnEnviar) {
     btnEnviar.disabled = false;
-    btnEnviar.textContent = "Enviar ✓";
+    btnEnviar.textContent = "Enviar â";
   }
   goToStep(1);
 }
 
-// ── Skeletons / Error ────────────────────────────────────────
+// ââ RENDER: MATCHS âââââââââââââââââââââââââââââââââââââââââââ
+function renderMatchs(data) {
+  const el = document.getElementById("matchs-list");
+  if (!el) return;
+  const matchsData = data.matchsData || {};
+
+  if (!Object.keys(matchsData).length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">âï¸</div><p>Los matchs aparecen acÃ¡ durante el torneo</p></div>`;
+    return;
+  }
+
+  el.innerHTML = CONFIG.CUARTOS.map(cuarto => {
+    const evolution = matchsData[cuarto.id] || [];
+    const j = cuarto.jugadores;
+    const pair1 = [j[0], j[1]].filter(Boolean).join(" & ");
+    const pair2 = [j[2], j[3]].filter(Boolean).join(" & ");
+
+    let currentVal = null;
+    for (let i = evolution.length - 1; i >= 0; i--) {
+      if (evolution[i] !== null && evolution[i] !== undefined && evolution[i] !== "") {
+        currentVal = Number(evolution[i]); break;
+      }
+    }
+
+    let statusHtml;
+    if (currentVal === null) statusHtml = `<span class="match-status-text match-as">No iniciado</span>`;
+    else if (currentVal === 0) statusHtml = `<span class="match-status-text match-as">A.S.</span>`;
+    else if (currentVal > 0) statusHtml = `<span class="match-status-text match-p1">${currentVal} UP</span>`;
+    else statusHtml = `<span class="match-status-text match-p2">${Math.abs(currentVal)} UP</span>`;
+
+    function evoCell(val, h) {
+      if (val === null || val === undefined || val === "")
+        return `<div class="evo-cell"><div class="evo-hole">H${h}</div><div class="evo-val evo-empty">â</div></div>`;
+      const n = Number(val);
+      if (n === 0) return `<div class="evo-cell"><div class="evo-hole">H${h}</div><div class="evo-val evo-as">AS</div></div>`;
+      if (n > 0) return `<div class="evo-cell"><div class="evo-hole">H${h}</div><div class="evo-val evo-p1">+${n}</div></div>`;
+      return `<div class="evo-cell"><div class="evo-hole">H${h}</div><div class="evo-val evo-p2">${n}</div></div>`;
+    }
+
+    const cells1 = evolution.slice(0, 9).map((v, i) => evoCell(v, i + 1)).join("");
+    const cells2 = evolution.slice(9, 18).map((v, i) => evoCell(v, i + 10)).join("");
+
+    return `<div class="match-card"><div class="match-cuarto-label">${cuarto.nombre}</div><div class="match-vs"><div class="match-pair match-p1-side"><div class="match-pair-names">${pair1}</div></div><div class="match-vs-sep">VS</div><div class="match-pair match-p2-side"><div class="match-pair-names">${pair2}</div></div></div><div class="match-status">${statusHtml}</div><div class="match-evolution"><div class="evolution-track"><div class="evolution-group">${cells1}</div><div class="evolution-sep"></div><div class="evolution-group">${cells2}</div></div></div></div>`;
+  }).join("");
+}
+
+// ââ Skeletons / Error
 function renderSkeletons() {
   ["tabla-individual","tabla-parejas","tabla-cuartos"].forEach(id => {
     const el = document.getElementById(id);
@@ -621,9 +668,5 @@ function renderSkeletons() {
 
 function renderError() {
   const el = document.getElementById("tabla-individual");
-  if (el) el.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-icon">📡</div>
-      <p>No se pudo conectar con el Sheet.<br>Verificá tu conexión o revisá la URL en config.js</p>
-    </div>`;
+  if (el) el.innerHTML = `<div class="empty-state"><div class="empty-icon">ð¡</div><p>No se pudo conectar con el Sheet.<br>VerificÃ¡ tu conexiÃ³n revisÃ¡ la URL en config.js</p></div>`;
 }
