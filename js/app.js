@@ -240,7 +240,7 @@ function renderCuartos(data) {
     // Intentar obtener score vs par del cuarto desde cuartosRank
     const jugadoresReales = Object.keys(detalle);
     const rankItem = (data.cuartosRank || []).find(r =>
-      jugadoresReales.some(j => r.nombres && r.nombres.includes(j))
+      jugadoresReales.every(j => r.nombres && r.nombres.includes(j))
     );
     if (rankItem && rankItem.score !== null) {
       el.textContent = Sheets.formatScore(rankItem.score);
