@@ -234,12 +234,13 @@ function renderCuartos(data) {
       el.textContent = Sheets.formatScore(rankItem.score);
       el.className = `cuarto-btn-score ${Sheets.scoreClass(rankItem.score)}`;
     }
-    // Hoyo actual: máximo de golpes registrados entre los jugadores
+    // Hoyo actual: usar hoyo de rankItem si está disponible, sino contar golpes
     const holesPlayed = Object.values(detalle).map(j => j.golpes ? j.golpes.filter(g => g != null).length : 0);
     const maxHole = holesPlayed.length ? Math.max(...holesPlayed) : 0;
+    const hoyoStr = rankItem?.hoyo ? rankItem.hoyo.replace("Hoyo","H") : (maxHole > 0 ? `H${maxHole}` : null);
     const holeEl = document.getElementById(`mini-hole-${c.id}`);
     if (holeEl) {
-      if (maxHole > 0) { holeEl.textContent = `H${maxHole}`; holeEl.classList.remove("hidden"); }
+      if (hoyoStr) { holeEl.textContent = hoyoStr; holeEl.classList.remove("hidden"); }
       else { holeEl.classList.add("hidden"); }
     }
   });
@@ -253,62 +254,53 @@ function renderCuartos(data) {
 async function mostrarDetalleCuarto(cuartoId) {
   const detailEl = document.getElementById("cuarto-detail");
   detailEl.classList.remove("hidden");
-
   const cuartoConfig = CONFIG.CUARTOS.find(c => c.id === cuartoId);
   if (!cuartoConfig) return;
-
   try {
     const data = await Sheets.getAll();
     const detalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
-
+    const rankItem = (data.cuartosRank || []).find(r =>
+      cuartoConfig.jugadores.some(j => r.nombres && r.nombres.includes(j))
+    );
     if (!detalle) {
       detailEl.innerHTML = `<p style="color:var(--text-muted)">Sin datos para este cuarto</p>`;
       return;
     }
-
-    const pars = CONFIG.PAR_HOYOS;
-    const hoyosHeader = Array.from({length:18}, (_,i) => `<th>${i+1}</th>`).join("");
-
+    const hoyoLabel = rankItem?.hoyo ? rankItem.hoyo.replace("Hoyo", "Hoyo ") : null;
     const filas = cuartoConfig.jugadores.map(jugador => {
       const info = detalle[jugador];
       if (!info) return "";
-      const celdas = info.golpes.map((g, i) => {
-        if (g === null) return `<td class="cell-par">–</td>`;
-        const cls = Sheets.cellClass(g, pars[i]);
-        return `<td class="${cls}">${g}</td>`;
-      }).join("");
-      const hdcVal = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
-      const hdcStr = hdcVal !== null ? hdcVal : "–";
-      const netoTotal = info.neto !== null && info.neto !== undefined ? info.neto : null;
-      const netoVsPar = netoTotal !== null ? netoTotal - CONFIG.PAR_TOTAL : null;
+      const holesPlayed = info.golpes ? info.golpes.filter(g => g != null).length : 0;
+      const neto = info.neto != null ? info.neto : null;
+      const netoVsPar = neto != null ? neto - CONFIG.PAR_TOTAL : null;
+      const sc = Sheets.scoreClass(netoVsPar);
+      const hdc = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
+      // Mini golpes recientes (últimos 3 hoyos jugados)
+      const golpes = info.golpes || [];
+      const pars = CONFIG.PAR_HOYOS;
+      const recentHoles = [];
+      for (let i = holesPlayed - 1; i >= 0 && recentHoles.length < 3; i--) {
+        if (golpes[i] != null) {
+          const cls = Sheets.cellClass(golpes[i], pars[i]);
+          recentHoles.unshift(`<span class="csr-hole ${cls}">${golpes[i]}</span>`);
+        }
+      }
       return `
-        <tr>
-          <td class="td-name">${jugador}</td>
-          ${celdas}
-          <td class="td-total" style="color:var(--text-muted);font-size:11px">${hdcStr}</td>
-          <td class="td-total ${Sheets.scoreClass(netoVsPar)}">${netoTotal !== null ? netoTotal : "–"}</td>
-        </tr>`;
+        <div class="cuarto-status-row">
+          <div class="csr-left">
+            <div class="csr-name">${jugador}</div>
+            <div class="csr-meta">${hdc != null ? `HDC ${hdc}` : ""} ${holesPlayed > 0 ? `· H${holesPlayed}` : ""}</div>
+          </div>
+          <div class="csr-recent">${recentHoles.join("")}</div>
+          <div class="csr-score ${sc}">${neto != null ? neto : "–"}</div>
+        </div>`;
     }).join("");
-
     detailEl.innerHTML = `
-      <h3>${cuartoConfig.nombre}</h3>
-      <table class="scorecard-table">
-        <thead>
-          <tr>
-            <th>Jugador</th>
-            ${hoyosHeader}
-            <th title="Handicap">HDC</th>
-            <th>Neto</th>
-          </tr>
-          <tr>
-            <th style="text-align:left;color:var(--copper)">Par</th>
-            ${pars.map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("")}
-            <th></th>
-            <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
-          </tr>
-        </thead>
-        <tbody>${filas}</tbody>
-      </table>`;
+      <div class="cuarto-status-hdr">
+        <span class="csh-nombre">${cuartoConfig.nombre}</span>
+        ${hoyoLabel ? `<span class="csh-hoyo">⛳ ${hoyoLabel}</span>` : ""}
+      </div>
+      <div class="cuarto-status-list">${filas}</div>`;
   } catch(e) {
     detailEl.innerHTML = `<p style="color:var(--red-over)">Error al cargar. Intentá de nuevo.</p>`;
   }
@@ -349,7 +341,10 @@ function formatFecha(fecha) {
 function buildFormCuartos() {
   const grid = document.getElementById("cuarto-btns");
   grid.innerHTML = CONFIG.CUARTOS.map(c => `
-    <button type="button" class="option-btn" data-cuarto="${c.id}">${c.nombre}</button>
+    <button type="button" class="option-btn" data-cuarto="${c.id}">
+      <div class="form-cuarto-nombre">${c.nombre}</div>
+      <div class="form-cuarto-jugadores">${c.jugadores.join("<br>")}</div>
+    </button>
   `).join("");
 }
 
@@ -361,6 +356,7 @@ function setupForm() {
       btn.classList.add("selected");
       State.form.cuarto = btn.dataset.cuarto;
       goToStep(2);
+      markBloqueButtons(btn.dataset.cuarto);
     });
   });
 
@@ -461,6 +457,26 @@ function buildInputsGolpes() {
     });
     container.after(btnCont);
   }
+}
+
+async function markBloqueButtons(cuartoId) {
+  try {
+    const data = await Sheets.getAll();
+    const detalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
+    if (!detalle) return;
+    const holesWithData = new Set();
+    Object.values(detalle).forEach(jug => {
+      (jug.golpes || []).forEach((g, i) => { if (g != null) holesWithData.add(i + 1); });
+    });
+    document.querySelectorAll("#bloque-btns .option-btn").forEach(btn => {
+      const parts = (btn.dataset.bloque || "").split("-").map(Number);
+      if (parts.length < 2) return;
+      const [ini, fin] = parts;
+      let hasData = false;
+      for (let h = ini; h <= fin; h++) { if (holesWithData.has(h)) { hasData = true; break; } }
+      btn.classList.toggle("has-data", hasData);
+    });
+  } catch(e) { /* silent */ }
 }
 
 function collectScores() {
@@ -676,13 +692,31 @@ function renderMatchs(data) {
     const m = matchs[c.id];
     if (!m) return "";
     const evo = m.evo || [];
-    const evoHtml = evo.length ? `
-      <div class="match-evo-wrap">
-        <div class="match-evo-t">${evo.map((e, i) => {
-          const cls = e === "A" ? "mh-a" : e === "B" ? "mh-b" : "mh-even";
-          return `<div class="mh-cell ${cls}">${i+1}</div>`;
-        }).join("")}</div>
-      </div>` : "";
+
+    let evoHtml = "";
+    if (evo.length) {
+      let lead = 0;
+      const cells = evo.map((e, i) => {
+        // Soporte para "A"/"B"/"H"/números
+        const val = typeof e === "number" ? e
+          : e === "A" ? 1 : e === "B" ? -1 : 0;
+        lead += val > 0 ? 1 : val < 0 ? -1 : 0;
+        const cls = val > 0 ? "mh-a" : val < 0 ? "mh-b" : "mh-even";
+        return `<div class="mh-cell ${cls}" title="H${i+1}">${i+1}</div>`;
+      }).join("");
+      const standingText = lead > 0
+        ? `${m.a || "A"} <span class="mh-lead">+${lead}</span>`
+        : lead < 0
+          ? `${m.b || "B"} <span class="mh-lead">+${Math.abs(lead)}</span>`
+          : `<span style="color:var(--text-muted)">ALL SQUARE</span>`;
+      const standingCls = lead > 0 ? "mh-standing-a" : lead < 0 ? "mh-standing-b" : "mh-standing-even";
+      evoHtml = `
+        <div class="match-standing ${standingCls}">${standingText} · H${evo.length}</div>
+        <div class="match-evo-wrap">
+          <div class="match-evo-t">${cells}</div>
+        </div>`;
+    }
+
     const resultBadge = m.resultado
       ? `<span class="match-result-badge">${m.resultado}</span>`
       : `<span class="match-live-badge">EN CURSO</span>`;
