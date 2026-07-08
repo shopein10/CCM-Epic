@@ -138,6 +138,9 @@ function renderLeaderboard(data) {
 }
 
 function renderIndividual(rows) {
+  const posCounts = {};
+  rows.forEach(r => { if (r.pos != null) posCounts[r.pos] = (posCounts[r.pos]||0)+1; });
+
   // Podio top 3
   const podioEl = document.getElementById("podio");
   const top3 = rows.slice(0, 3);
@@ -163,7 +166,7 @@ function renderIndividual(rows) {
     const sc = Sheets.scoreClass(r.score);
     return `
       <div class="score-row">
-        <span class="row-pos">${r.pos}</span>
+        <span class="row-pos">${posCounts[r.pos]>1?'T'+r.pos:r.pos}</span>
         <span class="row-name">${r.nombre}${r.hdc != null && r.hdc !== 0 ? `<span class="row-hdc"> HDC ${r.hdc}</span>` : ''}</span>
         <span class="row-hoyo">${r.hoyo || ""}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
@@ -453,11 +456,13 @@ function buildInputsGolpes() {
   const container = document.getElementById("inputs-golpes");
 
   container.innerHTML = cuartoConfig.jugadores.map(jugador => {
+    const jugadorDetalle = Sheets._cache && Sheets._cache.cuartosDetalle && Sheets._cache.cuartosDetalle[State.form.cuarto] && Sheets._cache.cuartosDetalle[State.form.cuarto][jugador];
     const hoyos = Array.from({length: fin - ini + 1}, (_, i) => {
       const h = ini + i;
       const par = CONFIG.PAR_HOYOS[h - 1];
+      const isLoaded = jugadorDetalle && jugadorDetalle.golpes && jugadorDetalle.golpes[h-1] != null;
       return `
-        <div class="hoyo-input-wrap">
+        <div class="hoyo-input-wrap${isLoaded ? ' hoyo-loaded' : ''}">
           <label>H${h} <span style="color:var(--text-dim)">(P${par})</span></label>
           <input type="number" min="1" max="12" inputmode="numeric"
                  data-jugador="${jugador}" data-hoyo="${h}"
