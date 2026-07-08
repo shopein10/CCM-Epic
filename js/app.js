@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function initApp() {
   buildCuartoBtns();
+  buildTarjetasBtns();
   buildFormCuartos();
   setupNav();
   setupTabs();
@@ -72,6 +73,7 @@ async function loadAndRender(showSkeleton = false) {
     renderCuartos(data);
     renderHistorial(data);
     renderMatchs(data);
+    renderTarjetas(data);
     updateLiveBadge(data);
     updateLastUpdate();
   } catch (err) {
@@ -703,4 +705,108 @@ function renderMatchs(data) {
       if (icon) icon.textContent = card.classList.contains('expanded') ? '▲' : '▼';
     });
   });
+}
+
+// ── TARJETAS ─────────────────────────────────────────────────
+function buildTarjetasBtns() {
+  const grid = document.getElementById('tarjetas-selector');
+  if (!grid) return;
+  grid.innerHTML = CONFIG.CUARTOS.map(c => `
+    <button class="cuarto-btn" data-cuarto="${c.id}">
+      <div class="cuarto-btn-title">${c.nombre}</div>
+      <div class="cuarto-btn-names">${c.jugadores.join('<br>')}</div>
+    </button>
+  `).join('');
+  grid.querySelectorAll('.cuarto-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      grid.querySelectorAll('.cuarto-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mostrarTarjetaCuarto(btn.dataset.cuarto);
+    });
+  });
+}
+
+function renderTarjetas(data) {
+  const grid = document.getElementById('tarjetas-selector');
+  if (!grid || !data.cuartosDetalle) return;
+  // Actualizar mini-scores en tarjetas
+  CONFIG.CUARTOS.forEach(c => {
+    const btn = grid.querySelector(`[data-cuarto="${c.id}"]`);
+    if (!btn) return;
+    const detalle = data.cuartosDetalle[c.id];
+    if (!detalle) return;
+    const netos = Object.values(detalle).map(j => j.neto).filter(n => n != null);
+    if (!netos.length) return;
+    let scoreEl = btn.querySelector('.cuarto-btn-score');
+    if (!scoreEl) {
+      scoreEl = document.createElement('div');
+      scoreEl.className = 'cuarto-btn-score';
+      btn.appendChild(scoreEl);
+    }
+    const bestNeto = Math.min.apply(null, netos);
+    scoreEl.textContent = Sheets.formatScore(bestNeto - CONFIG.PAR_TOTAL);
+    scoreEl.className = 'cuarto-btn-score ' + Sheets.scoreClass(bestNeto - CONFIG.PAR_TOTAL);
+  });
+}
+
+async function mostrarTarjetaCuarto(cuartoId) {
+  const detailEl = document.getElementById('tarjeta-detail');
+  if (!detailEl) return;
+  detailEl.classList.remove('hidden');
+  const cuartoConfig = CONFIG.CUARTOS.find(c => c.id === cuartoId);
+  if (!cuartoConfig) return;
+
+  try {
+    const data = await Sheets.getAll();
+    const detalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
+    if (!detalle) {
+      detailEl.innerHTML = '<p style="color:var(--text-muted)">Sin datos para este cuarto</p>';
+      return;
+    }
+
+    const pars = CONFIG.PAR_HOYOS;
+    const hoyosHeader = Array.from({length:18}, (_,i) => `<th>${i+1}</th>`).join('');
+
+    const filas = cuartoConfig.jugadores.map(jugador => {
+      const info = detalle[jugador];
+      if (!info) return '';
+      const celdas = info.golpes.map((g, i) => {
+        if (g === null || g === undefined) return '<td class="cell-par">–</td>';
+        return `<td class="${Sheets.cellClass(g, pars[i])}">${g}</td>`;
+      }).join('');
+      // Neto como strokes totales (no vs par)
+      const netoTotal = info.neto !== null && info.neto !== undefined ? info.neto : null;
+      const netoVsPar = netoTotal !== null ? netoTotal - CONFIG.PAR_TOTAL : null;
+      const hdcStr = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : '–');
+      return `
+        <tr>
+          <td class="td-name">${jugador}</td>
+          ${celdas}
+          <td class="td-total" style="color:var(--text-dim);font-size:11px">${hdcStr}</td>
+          <td class="td-total ${Sheets.scoreClass(netoVsPar)}">${netoTotal !== null ? netoTotal : '–'}</td>
+        </tr>`;
+    }).join('');
+
+    detailEl.innerHTML = `
+      <h3>${cuartoConfig.nombre}</h3>
+      <table class="scorecard-table">
+        <thead>
+          <tr>
+            <th>Jugador</th>
+            ${hoyosHeader}
+            <th title="Handicap">HDC</th>
+            <th>Neto</th>
+          </tr>
+          <tr>
+            <th style="text-align:left;color:var(--copper)">Par</th>
+            ${pars.map(p => `<th style="color:var(--text-dim)">${p}</th>`).join('')}
+            <th></th>
+            <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+  } catch(e) {
+    detailEl.innerHTML = '<p style="color:var(--red-over)">Error al cargar.</p>';
+  }
 }
