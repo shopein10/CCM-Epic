@@ -243,3 +243,14 @@ html, body {
 .hoyo-grid { grid-template-columns: repeat(9, 1fr); gap: 4px; }
 .hoyo-grid .option-btn { display: flex; flex-direction: column; align-items: center; padding: 8px 4px; font-size: 16px; font-weight: 700; }
 .hoyo-par { font-size: 9px; color: var(--text-dim); margin-top: 2px; font-weight: 400; }
+
+/* ── Match standing & evo ── */
+.match-standing { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 1px; margin-bottom: 6px; color: var(--text-muted); }
+.mh-standing-a { color: var(--green-bright); }
+.mh-standing-b { color: var(--red-over); }
+.mh-standing-even { color: var(--text-muted); }
+.mh-lead { font-size: 13px; }
+
+/* ── Hole buttons with data ── */
+.option-btn.has-data { border-color: var(--gold-dim); }
+.option-btn.has-data::after { content: "✓"; display: block; font-size: 9px; color: var(--gold); margin-top: 2px; font-family: 'DM Mono', monospace; }
