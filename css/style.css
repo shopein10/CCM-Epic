@@ -175,6 +175,9 @@ html, body {
 .match-team { font-size: 13px; font-weight: 600; color: var(--cream); flex: 1; }
 .match-team-r { text-align: right; }
 .match-vs { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); flex-shrink: 0; }
+.match-team--win  { color: #fff !important; }
+.match-team--loss { opacity: 0.35; font-weight: 400; }
+.match-up-badge   { display: inline-block; background: var(--green-bright); color: #000; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.05em; padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
 .match-evo-wrap { overflow-x: auto; }
 .match-evo-t { display: flex; gap: 2px; min-width: max-content; }
 .mh-cell { font-family: 'DM Mono', monospace; font-size: 10px; width: 20px; height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; background: var(--bg-raised); color: var(--text-muted); }
