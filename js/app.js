@@ -264,48 +264,50 @@ async function mostrarDetalleCuarto(cuartoId) {
   try {
     const data = await Sheets.getAll();
     const detalle = data.cuartosDetalle && data.cuartosDetalle[cuartoId];
-    const rankItem = (data.cuartosRank || []).find(r =>
-      cuartoConfig.jugadores.some(j => r.nombres && r.nombres.includes(j))
-    );
     if (!detalle) {
       detailEl.innerHTML = `<p style="color:var(--text-muted)">Sin datos para este cuarto</p>`;
       return;
     }
-    const hoyoLabel = rankItem?.hoyo ? rankItem.hoyo.replace("Hoyo", "Hoyo ") : null;
+    const pars = CONFIG.PAR_HOYOS;
+    const hoyosHeader = Array.from({length:18}, (_,i) => `<th>${i+1}</th>`).join("");
     const filas = cuartoConfig.jugadores.map(jugador => {
       const info = detalle[jugador];
       if (!info) return "";
-      const holesPlayed = info.golpes ? info.golpes.filter(g => g != null).length : 0;
-      const neto = info.neto != null ? info.neto : null;
-      const netoVsPar = neto != null ? neto - CONFIG.PAR_TOTAL : null;
-      const sc = Sheets.scoreClass(netoVsPar);
-      const hdc = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
-      // Mini golpes recientes (últimos 3 hoyos jugados)
-      const golpes = info.golpes || [];
-      const pars = CONFIG.PAR_HOYOS;
-      const recentHoles = [];
-      for (let i = holesPlayed - 1; i >= 0 && recentHoles.length < 3; i--) {
-        if (golpes[i] != null) {
-          const cls = Sheets.cellClass(golpes[i], pars[i]);
-          recentHoles.unshift(`<span class="csr-hole ${cls}">${golpes[i]}</span>`);
-        }
-      }
+      const celdas = info.golpes.map((g, i) => {
+        if (g === null || g === undefined) return `<td class="cell-par">–</td>`;
+        return `<td class="${Sheets.cellClass(g, pars[i])}">${g}</td>`;
+      }).join("");
+      const hdcVal = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
+      const hdcStr = hdcVal !== null ? hdcVal : "–";
+      const netoTotal = info.neto !== null && info.neto !== undefined ? info.neto : null;
+      const netoVsPar = netoTotal !== null ? netoTotal - CONFIG.PAR_TOTAL : null;
       return `
-        <div class="cuarto-status-row">
-          <div class="csr-left">
-            <div class="csr-name">${jugador}</div>
-            <div class="csr-meta">${hdc != null ? `HDC ${hdc}` : ""} ${holesPlayed > 0 ? `· H${holesPlayed}` : ""}</div>
-          </div>
-          <div class="csr-recent">${recentHoles.join("")}</div>
-          <div class="csr-score ${sc}">${neto != null ? neto : "–"}</div>
-        </div>`;
+        <tr>
+          <td class="td-name">${jugador}</td>
+          ${celdas}
+          <td class="td-total" style="color:var(--text-muted);font-size:11px">${hdcStr}</td>
+          <td class="td-total ${Sheets.scoreClass(netoVsPar)}">${netoTotal !== null ? netoTotal : "–"}</td>
+        </tr>`;
     }).join("");
     detailEl.innerHTML = `
-      <div class="cuarto-status-hdr">
-        <span class="csh-nombre">${cuartoConfig.nombre}</span>
-        ${hoyoLabel ? `<span class="csh-hoyo">⛳ ${hoyoLabel}</span>` : ""}
-      </div>
-      <div class="cuarto-status-list">${filas}</div>`;
+      <h3>${cuartoConfig.nombre}</h3>
+      <table class="scorecard-table">
+        <thead>
+          <tr>
+            <th>Jugador</th>
+            ${hoyosHeader}
+            <th title="Handicap">HDC</th>
+            <th>Neto</th>
+          </tr>
+          <tr>
+            <th style="text-align:left;color:var(--copper)">Par</th>
+            ${pars.map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("")}
+            <th></th>
+            <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>`;
   } catch(e) {
     detailEl.innerHTML = `<p style="color:var(--red-over)">Error al cargar. Intentá de nuevo.</p>`;
   }
