@@ -737,7 +737,7 @@ function renderMatchs(data) {
           : `<span style="color:var(--text-muted)">ALL SQUARE</span>`;
       const standingCls = lead > 0 ? "mh-standing-a" : lead < 0 ? "mh-standing-b" : "mh-standing-even";
       evoHtml = `
-        <div class="match-standing ${standingCls}">${standingText} · H${evo.length}</div>
+        <div class="match-standing ${standingCls}">${standingText}</div>
         <div class="match-evo-wrap">
           <div class="match-evo-t">${cells}</div>
         </div>`;
