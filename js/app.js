@@ -48,26 +48,6 @@ async function loadAndRender(showSkeleton = false) {
   if (showSkeleton) renderSkeletons();
   try {
     const data = await Sheets.getAll();
-
-    // Actualizar nombres reales de jugadores desde el sheet
-    if (data.cuartosDetalle) {
-      let needsRebuild = false;
-      CONFIG.CUARTOS.forEach(c => {
-        const detalle = data.cuartosDetalle[c.id];
-        if (detalle) {
-          const realNames = Object.keys(detalle).filter(n => n);
-          if (realNames.length > 0 && realNames[0] !== c.jugadores[0]) {
-            c.jugadores = realNames;
-            needsRebuild = true;
-          }
-        }
-      });
-      if (needsRebuild) {
-        buildCuartoBtns();
-        buildFormCuartos();
-      }
-    }
-
     renderLeaderboard(data);
     renderCuartos(data);
     renderHistorial(data);
@@ -125,8 +105,9 @@ function updateLastUpdate() {
 }
 
 function updateLiveBadge(data) {
+  // Mostrar "EN VIVO" si hay scores cargados pero no está terminado
   const badge = document.getElementById("live-badge");
-  const hayScores = data.leaderboard && data.leaderboard.some(r => r.hoyo && r.hoyo !== '');
+  const hayScores = data.leaderboard && data.leaderboard.some(r => r.hoyo !== "Hoyo18");
   badge.classList.toggle("hidden", !hayScores);
 }
 
@@ -138,33 +119,26 @@ function renderLeaderboard(data) {
 }
 
 function renderIndividual(rows) {
-  // Podio top 3
-  const podioEl = document.getElementById("podio");
-  const top3 = rows.slice(0, 3);
-  // Reordenar: 2do - 1ro - 3ro (para el podio visual)
-  const ordenPodio = [top3[1], top3[0], top3[2]].filter(Boolean);
-  podioEl.innerHTML = ordenPodio.map(r => {
-    const scoreClass = Sheets.scoreClass(r.score);
-    return `
-      <div class="podio-item podio-rank-${r.pos}">
-        <div class="podio-pos podio-pos-${r.pos}">${r.pos}</div>
-        <div class="podio-avatar">${Sheets.initials(r.nombre)}</div>
-        <div class="podio-name">${r.nombre}</div>
-        ${r.hdc != null && r.hdc !== 0 ? `<div class="podio-hdc">HDC ${r.hdc}</div>` : ''}
-        <div class="podio-score ${scoreClass}">${Sheets.formatScore(r.score)}</div>
-      </div>`;
-  }).join("");
+  // Sin podio: lista completa con empates
+  document.getElementById("podio").innerHTML = "";
 
-  // Tabla resto
   const tablaEl = document.getElementById("tabla-individual");
-  const resto = rows.slice(3);
-  if (!resto.length) { tablaEl.innerHTML = ""; return; }
-  tablaEl.innerHTML = resto.map(r => {
+  if (!rows.length) {
+    tablaEl.innerHTML = `<div class="empty-state"><div class="empty-icon">⛳</div><p>El ranking aparece acá durante el torneo</p></div>`;
+    return;
+  }
+
+  // Calcular posiciones con empates (menor score = mejor en golf)
+  let pos = 1;
+  tablaEl.innerHTML = rows.map((r, i) => {
+    if (i > 0 && r.score !== rows[i - 1].score) pos = i + 1;
     const sc = Sheets.scoreClass(r.score);
+    const tied = rows.filter(x => x.score === r.score).length > 1;
+    const posLabel = tied ? `${pos}=` : `${pos}`;
     return `
-      <div class="score-row">
-        <span class="row-pos">${r.pos}</span>
-        <span class="row-name">${r.nombre}${r.hdc != null && r.hdc !== 0 ? `<span class="row-hdc"> HDC ${r.hdc}</span>` : ''}</span>
+      <div class="score-row${pos === 1 ? " top-3" : ""}">
+        <span class="row-pos">${posLabel}</span>
+        <span class="row-name">${r.nombre}</span>
         <span class="row-hoyo">${r.hoyo || ""}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
@@ -174,7 +148,7 @@ function renderIndividual(rows) {
 function renderParejas(rows) {
   const el = document.getElementById("tabla-parejas");
   if (!rows.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">\u{1F91D}</div><p>Los scores de parejas aparecen acá durante el torneo</p></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🤝</div><p>Los scores de parejas aparecen acá durante el torneo</p></div>`;
     return;
   }
   el.innerHTML = rows.map((r, i) => {
@@ -184,6 +158,7 @@ function renderParejas(rows) {
       <div class="score-row ${isTop ? "top-3" : ""}">
         <span class="row-pos">${r.pos}</span>
         <span class="row-name">${r.nombres}</span>
+        <span class="row-hoyo">${r.hoyo || ""}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
   }).join("");
@@ -192,7 +167,7 @@ function renderParejas(rows) {
 function renderCuartosRank(rows) {
   const el = document.getElementById("tabla-cuartos");
   if (!rows.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">\u{1F465}</div><p>El ranking de cuartos aparece acá durante el torneo</p></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>El ranking de cuartos aparece acá durante el torneo</p></div>`;
     return;
   }
   el.innerHTML = rows.map((r, i) => {
@@ -202,6 +177,7 @@ function renderCuartosRank(rows) {
       <div class="score-row ${isTop ? "top-3" : ""}">
         <span class="row-pos">${r.pos}</span>
         <span class="row-name" style="font-size:12px">${r.nombres}</span>
+        <span class="row-hoyo">${r.hoyo || ""}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
   }).join("");
@@ -237,12 +213,14 @@ function renderCuartos(data) {
     if (!el) return;
     const detalle = data.cuartosDetalle[c.id];
     if (!detalle) return;
+    // Score del cuarto = mejor neto entre todos
+    const netos = Object.values(detalle).map(j => j.neto).filter(n => n !== null);
+    if (!netos.length) return;
     // Intentar obtener score vs par del cuarto desde cuartosRank
-    const jugadoresReales = Object.keys(detalle);
     const rankItem = (data.cuartosRank || []).find(r =>
-      jugadoresReales.every(j => r.nombres && r.nombres.includes(j))
+      c.jugadores.some(j => r.nombres && r.nombres.includes(j))
     );
-    if (rankItem && rankItem.score !== null) {
+    if (rankItem) {
       el.textContent = Sheets.formatScore(rankItem.score);
       el.className = `cuarto-btn-score ${Sheets.scoreClass(rankItem.score)}`;
     }
@@ -271,77 +249,23 @@ async function mostrarDetalleCuarto(cuartoId) {
     }
 
     const pars = CONFIG.PAR_HOYOS;
-    const parOut = pars.slice(0, 9).reduce((a, b) => a + b, 0);
-    const parIn  = pars.slice(9, 18).reduce((a, b) => a + b, 0);
+    const hoyosHeader = Array.from({length:18}, (_,i) => `<th>${i+1}</th>`).join("");
 
-    // Header: H1..H9 | OUT | H10..H18 | IN | Gross | Neto
-    const hoyosHeader = [
-      ...Array.from({length: 9}, (_, i) => `<th>${i + 1}</th>`),
-      `<th class="td-subtotal">OUT</th>`,
-      ...Array.from({length: 9}, (_, i) => `<th>${i + 10}</th>`),
-      `<th class="td-subtotal">IN</th>`,
-      `<th class="td-subtotal">Gross</th>`,
-      `<th class="td-subtotal">Neto</th>`,
-    ].join("");
-
-    // Par row
-    const parRow = [
-      ...pars.slice(0, 9).map(p => `<th style="color:var(--text-dim)">${p}</th>`),
-      `<th class="td-subtotal" style="color:var(--text-dim)">${parOut}</th>`,
-      ...pars.slice(9, 18).map(p => `<th style="color:var(--text-dim)">${p}</th>`),
-      `<th class="td-subtotal" style="color:var(--text-dim)">${parIn}</th>`,
-      `<th class="td-subtotal" style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>`,
-      `<th class="td-subtotal" style="color:var(--text-dim)">E</th>`,
-    ].join("");
-
-    // Usar nombres reales del detalle (no los del config que pueden diferir)
-    const jugadores = Object.keys(detalle);
-
-    const filas = jugadores.map(jugador => {
+    const filas = cuartoConfig.jugadores.map(jugador => {
       const info = detalle[jugador];
       if (!info) return "";
-      const golpes = info.golpes || [];
-
-      // Hoyos 1-9
-      const celdas1 = golpes.slice(0, 9).map((g, i) => {
-        if (!g) return `<td class="cell-par">–</td>`;
+      const celdas = info.golpes.map((g, i) => {
+        if (g === null) return `<td class="cell-par">–</td>`;
         const cls = Sheets.cellClass(g, pars[i]);
         return `<td class="${cls}">${g}</td>`;
       }).join("");
-
-      // OUT subtotal (solo hoyos jugados)
-      const played1 = golpes.slice(0, 9).filter(g => g);
-      const outVal  = played1.length > 0 ? played1.reduce((a, b) => a + b, 0) : null;
-      const outTd   = `<td class="td-subtotal">${outVal !== null ? outVal : "–"}</td>`;
-
-      // Hoyos 10-18
-      const celdas2 = golpes.slice(9, 18).map((g, i) => {
-        if (!g) return `<td class="cell-par">–</td>`;
-        const cls = Sheets.cellClass(g, pars[i + 9]);
-        return `<td class="${cls}">${g}</td>`;
-      }).join("");
-
-      // IN subtotal
-      const played2 = golpes.slice(9, 18).filter(g => g);
-      const inVal   = played2.length > 0 ? played2.reduce((a, b) => a + b, 0) : null;
-      const inTd    = `<td class="td-subtotal">${inVal !== null ? inVal : "–"}</td>`;
-
-      // Gross total
-      const grossVal = (outVal !== null || inVal !== null)
-        ? (outVal || 0) + (inVal || 0) : null;
-      const grossTd  = `<td class="td-subtotal">${grossVal !== null ? grossVal : "–"}</td>`;
-
-      // Neto (score vs par ya calculado por Apps Script)
-      const netoStr   = info.neto !== null && info.neto !== undefined ? Sheets.formatScore(info.neto) : "–";
-      const netoClass = Sheets.scoreClass(info.neto);
-
+      const netoStr = info.neto !== null ? Sheets.formatScore(info.neto - CONFIG.PAR_TOTAL) : "–";
+      const netoClass = Sheets.scoreClass(info.neto !== null ? info.neto - CONFIG.PAR_TOTAL : null);
       return `
         <tr>
-          <td class="td-name">${jugador}${info.hdc ? ` <span style="color:var(--text-dim);font-size:10px">(${info.hdc})</span>` : ''}</td>
-          ${celdas1}${outTd}
-          ${celdas2}${inTd}
-          ${grossTd}
-          <td class="td-subtotal ${netoClass}">${netoStr}</td>
+          <td class="td-name">${jugador}</td>
+          ${celdas}
+          <td class="td-total ${netoClass}">${netoStr}</td>
         </tr>`;
     }).join("");
 
@@ -352,10 +276,12 @@ async function mostrarDetalleCuarto(cuartoId) {
           <tr>
             <th>Jugador</th>
             ${hoyosHeader}
+            <th>Neto</th>
           </tr>
           <tr>
             <th style="text-align:left;color:var(--copper)">Par</th>
-            ${parRow}
+            ${pars.map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("")}
+            <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
           </tr>
         </thead>
         <tbody>${filas}</tbody>
@@ -373,7 +299,7 @@ function renderHistorial(data) {
   if (!historial.length) {
     el.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">\u{1F4C5}</div>
+        <div class="empty-icon">📅</div>
         <p>El historial de torneos aparecerá acá.<br>Agregá una pestaña "Historial" al Sheet con las columnas:<br>Fecha / Ganador / Score / Jugadores / Polla / Notas</p>
       </div>`;
     return;
@@ -382,7 +308,7 @@ function renderHistorial(data) {
   el.innerHTML = historial.map(t => `
     <div class="historial-card">
       <div class="historial-fecha">${formatFecha(t.fecha)}</div>
-      <div class="historial-ganador">\u{1F947} ${t.ganador}</div>
+      <div class="historial-ganador">🥇 ${t.ganador}</div>
       <div class="historial-score">${Sheets.formatScore(t.score)}</div>
       <div class="historial-meta">${t.jugadores} jugadores · $${Number(t.polla||0).toLocaleString("es-AR")} en juego</div>
       ${t.notas ? `<div class="historial-meta" style="margin-top:6px;font-style:italic">${t.notas}</div>` : ""}
@@ -400,22 +326,19 @@ function formatFecha(fecha) {
 function buildFormCuartos() {
   const grid = document.getElementById("cuarto-btns");
   grid.innerHTML = CONFIG.CUARTOS.map(c => `
-    <button type="button" class="option-btn" data-cuarto="${c.id}">
-      <div class="form-cuarto-nombre">${c.nombre}</div>
-      <div class="form-cuarto-jugadores">${c.jugadores.join("<br>")}</div>
-    </button>
+    <button type="button" class="option-btn" data-cuarto="${c.id}">${c.nombre}</button>
   `).join("");
 }
 
 function setupForm() {
-  // Paso 1: event delegation para sobrevivir rebuilds de buildFormCuartos()
-  document.getElementById("cuarto-btns").addEventListener("click", e => {
-    const btn = e.target.closest(".option-btn");
-    if (!btn) return;
-    document.querySelectorAll("#cuarto-btns .option-btn").forEach(b => b.classList.remove("selected"));
-    btn.classList.add("selected");
-    State.form.cuarto = btn.dataset.cuarto;
-    goToStep(2);
+  // Paso 1: seleccionar cuarto
+  document.getElementById("cuarto-btns").querySelectorAll(".option-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#cuarto-btns .option-btn").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      State.form.cuarto = btn.dataset.cuarto;
+      goToStep(2);
+    });
   });
 
   // Paso 2: seleccionar bloque
@@ -501,7 +424,7 @@ function buildInputsGolpes() {
     });
   });
 
-  // Boton continuar al paso 4
+  // Botón continuar al paso 4
   let btnCont = container.parentElement.querySelector(".btn-continue-step3");
   if (!btnCont) {
     btnCont = document.createElement("button");
@@ -582,7 +505,7 @@ async function enviarScores() {
       scores: scoresFormateados,
     });
 
-    // Mostrar exito
+    // Mostrar éxito
     document.getElementById("score-form").querySelectorAll(".form-step").forEach(s => s.classList.remove("active"));
     document.getElementById("form-success").classList.remove("hidden");
 
@@ -624,12 +547,12 @@ function renderError() {
   const el = document.getElementById("tabla-individual");
   if (el) el.innerHTML = `
     <div class="empty-state">
-      <div class="empty-icon">\u{1F4E1}</div>
+      <div class="empty-icon">📡</div>
       <p>No se pudo conectar con el Sheet.<br>Verificá tu conexión o revisá la URL en config.js</p>
     </div>`;
 }
 
-// ── RENDER: MATCHS ───────────────────────────────────────────
+// ── RENDER: MATCHS ────────────────────────────────────────────────────────────
 function renderMatchs(data) {
   const el = document.getElementById("matchs-list");
   if (!el) return;
@@ -681,7 +604,7 @@ function renderMatchs(data) {
         </div>
         <div class="match-result${hasResult ? '' : ' match-pending'}">${
           hasResult
-            ? (valA || '—') + '<span class="match-sep"> · </span>' + (valB || '—')
+            ? (valA || '–') + '<span class="match-sep"> · </span>' + (valB || '–')
             : 'No iniciado'
         }</div>
         <div class="match-evo-wrap">
