@@ -712,9 +712,9 @@ function renderMatchs(data) {
     if (!m) return "";
     const evo = m.evo || [];
 
+    let lead = 0;
     let evoHtml = "";
     if (evo.length) {
-      let lead = 0;
       const cells = evo.map((e, i) => {
         // Soporte para "A"/"B"/"H"/números
         const val = typeof e === "number" ? e
@@ -736,6 +736,8 @@ function renderMatchs(data) {
         </div>`;
     }
 
+    const upCount = Math.abs(lead);
+    const upBadge = upCount > 0 ? `<span class="match-up-badge">${upCount}UP</span>` : '';
     const resultBadge = m.resultado
       ? `<span class="match-result-badge">${m.resultado}</span>`
       : `<span class="match-live-badge">EN CURSO</span>`;
@@ -746,9 +748,9 @@ function renderMatchs(data) {
           ${resultBadge}
         </div>
         <div class="match-teams">
-          <span class="match-team">${m.a || "–"}</span>
+          <span class="match-team${lead > 0 ? ' match-team--win' : lead < 0 ? ' match-team--loss' : ''}">${m.a || "–"}${lead > 0 ? upBadge : ''}</span>
           <span class="match-vs">vs</span>
-          <span class="match-team match-team-r">${m.b || "–"}</span>
+          <span class="match-team match-team-r${lead < 0 ? ' match-team--win' : lead > 0 ? ' match-team--loss' : ''}">${m.b || "–"}${lead < 0 ? upBadge : ''}</span>
         </div>
         ${evoHtml}
       </div>`;
