@@ -741,14 +741,10 @@ function renderMatchs(data) {
 
     const upCount = Math.abs(lead);
     const upBadge = upCount > 0 ? `<span class="match-up-badge">${upCount}UP</span>` : '';
-    const resultBadge = m.resultado
-      ? `<span class="match-result-badge">${m.resultado}</span>`
-      : `<span class="match-live-badge">EN CURSO</span>`;
     return `
       <div class="match-card">
         <div class="match-card-hdr">
           <span class="match-cuarto-lbl">${c.nombre}</span>
-          ${resultBadge}
         </div>
         <div class="match-teams">
           <span class="match-team${lead > 0 ? ' match-team--win' : lead < 0 ? ' match-team--loss' : ''}">${m.a || "–"}${lead > 0 ? upBadge : ''}</span>
