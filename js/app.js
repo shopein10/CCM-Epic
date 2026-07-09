@@ -220,6 +220,20 @@ function buildCuartoBtns() {
 
 function renderCuartos(data) {
   if (!data.cuartosDetalle) return;
+
+  // Actualizar nombres reales de jugadores desde el sheet
+  CONFIG.CUARTOS.forEach(c => {
+    const det = data.cuartosDetalle[c.id];
+    if (!det) return;
+    const names = Object.keys(det);
+    if (!names.length) return;
+    c.jugadores = names;
+    const el1 = document.querySelector(`#cuartos-selector [data-cuarto="${c.id}"] .cuarto-btn-names`);
+    if (el1) el1.innerHTML = names.join("<br>");
+    const el2 = document.querySelector(`#cuarto-btns [data-cuarto="${c.id}"] .form-cuarto-jugadores`);
+    if (el2) el2.innerHTML = names.join("<br>");
+  });
+
   // Actualizar mini-scores y hoyo actual en las tarjetas
   CONFIG.CUARTOS.forEach(c => {
     const el = document.getElementById(`mini-score-${c.id}`);
