@@ -221,6 +221,8 @@ function renderCuartos(data) {
     if (el1) el1.innerHTML = names.join("<br>");
     const el2 = document.querySelector(`#cuarto-btns [data-cuarto="${c.id}"] .form-cuarto-jugadores`);
     if (el2) el2.innerHTML = names.join("<br>");
+    const el3 = document.querySelector(`#tarjetas-selector [data-cuarto="${c.id}"] .cuarto-btn-names`);
+    if (el3) el3.innerHTML = names.join("<br>");
   });
 
   // Actualizar mini-scores y hoyo actual en las tarjetas
