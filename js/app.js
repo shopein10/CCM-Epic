@@ -121,34 +121,23 @@ function renderLeaderboard(data) {
 }
 
 function renderIndividual(rows) {
-  // Podio top 3
+  // Sin podio — vaciar el elemento si existe
   const podioEl = document.getElementById("podio");
-  const top3 = rows.slice(0, 3);
-  // Reordenar: 2do - 1ro - 3ro (para el podio visual)
-  const ordenPodio = [top3[1], top3[0], top3[2]].filter(Boolean);
-  podioEl.innerHTML = ordenPodio.map((r, i) => {
-    const medallas = ["🥈","🥇","🥉"];
-    const scoreClass = Sheets.scoreClass(r.score);
-    return `
-      <div class="podio-item">
-        <span class="podio-medal">${medallas[i]}</span>
-        <div class="podio-avatar">${Sheets.initials(r.nombre)}</div>
-        <div class="podio-name">${r.nombre}</div>
-        <div class="podio-score ${scoreClass}">${Sheets.formatScore(r.score)}</div>
-      </div>`;
-  }).join("");
+  if (podioEl) podioEl.innerHTML = "";
 
-  // Tabla resto — detectar posiciones empatadas
+  // Tabla completa con empates
   const tablaEl = document.getElementById("tabla-individual");
-  const resto = rows.slice(3);
-  if (!resto.length) { tablaEl.innerHTML = ""; return; }
+  if (!rows.length) {
+    tablaEl.innerHTML = `<div class="empty-state"><div class="empty-icon">🏌️</div><p>El ranking individual aparece acá durante el torneo</p></div>`;
+    return;
+  }
   const posCounts = {};
   rows.forEach(r => { posCounts[r.pos] = (posCounts[r.pos] || 0) + 1; });
-  tablaEl.innerHTML = resto.map(r => {
+  tablaEl.innerHTML = rows.map((r, i) => {
     const sc = Sheets.scoreClass(r.score);
     const posStr = posCounts[r.pos] > 1 ? "T" + r.pos : String(r.pos);
     return `
-      <div class="score-row">
+      <div class="score-row ${i < 3 ? "top-3" : ""}">
         <span class="row-pos">${posStr}</span>
         <span class="row-name">${r.nombre}</span>
         <span class="row-hoyo">${r.hoyo || ""}</span>
