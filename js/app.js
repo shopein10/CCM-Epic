@@ -270,49 +270,84 @@ async function mostrarDetalleCuarto(cuartoId) {
       detailEl.innerHTML = `<p style="color:var(--text-muted)">Sin datos para este cuarto</p>`;
       return;
     }
-    const pars = CONFIG.PAR_HOYOS;
-    const hoyosHeader = Array.from({length:18}, (_,i) => `<th>${i+1}</th>`).join("");
-    const filas = cuartoConfig.jugadores.map(jugador => {
-      const info = detalle[jugador];
-      if (!info) return "";
-      const celdas = info.golpes.map((g, i) => {
-        if (g === null || g === undefined) return `<td class="cell-par">–</td>`;
-        return `<td class="${Sheets.cellClass(g, pars[i])}">${g}</td>`;
-      }).join("");
-      const hdcVal = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
-      const hdcStr = hdcVal !== null ? hdcVal : "–";
-      const netoTotal = info.neto !== null && info.neto !== undefined ? info.neto : null;
-      const netoVsPar = netoTotal !== null ? netoTotal - CONFIG.PAR_TOTAL : null;
-      return `
-        <tr>
-          <td class="td-name">${jugador}</td>
-          ${celdas}
-          <td class="td-total" style="color:var(--text-muted);font-size:11px">${hdcStr}</td>
-          <td class="td-total ${Sheets.scoreClass(netoVsPar)}">${netoTotal !== null ? netoTotal : "–"}</td>
-        </tr>`;
-    }).join("");
-    detailEl.innerHTML = `
-      <h3>${cuartoConfig.nombre}</h3>
-      <table class="scorecard-table">
-        <thead>
-          <tr>
-            <th>Jugador</th>
-            ${hoyosHeader}
-            <th title="Handicap">HDC</th>
-            <th>Neto</th>
-          </tr>
-          <tr>
-            <th style="text-align:left;color:var(--copper)">Par</th>
-            ${pars.map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("")}
-            <th></th>
-            <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
-          </tr>
-        </thead>
-        <tbody>${filas}</tbody>
-      </table>`;
+    detailEl.innerHTML = `<h3>${cuartoConfig.nombre}</h3>` + buildScorecardHTML(cuartoConfig, detalle);
   } catch(e) {
     detailEl.innerHTML = `<p style="color:var(--red-over)">Error al cargar. Intentá de nuevo.</p>`;
   }
+}
+
+// ── SCORECARD HELPER ─────────────────────────────────────────
+function buildScorecardHTML(cuartoConfig, detalle) {
+  const pars   = CONFIG.PAR_HOYOS;
+  const parOut = pars.slice(0, 9).reduce((a, b) => a + b, 0);
+  const parIn  = pars.slice(9).reduce((a, b) => a + b, 0);
+
+  const filas = cuartoConfig.jugadores.map(jugador => {
+    const info = detalle[jugador];
+    if (!info) return "";
+    const g = info.golpes;
+
+    const cel = (v, i) => v == null
+      ? `<td class="cell-par">–</td>`
+      : `<td class="${Sheets.cellClass(v, pars[i])}">${v}</td>`;
+
+    const cOut = g.slice(0, 9).map((v, i) => cel(v, i)).join("");
+    const cIn  = g.slice(9).map((v, i) => cel(v, i + 9)).join("");
+
+    const sumOut = g.slice(0, 9).filter(v => v != null).reduce((a, b) => a + b, 0);
+    const hasOut = g.slice(0, 9).some(v => v != null);
+    const sumIn  = g.slice(9).filter(v => v != null).reduce((a, b) => a + b, 0);
+    const hasIn  = g.slice(9).some(v => v != null);
+    const bruto  = (hasOut || hasIn) ? sumOut + sumIn : null;
+
+    const hdcVal = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
+    const neto   = info.neto != null ? info.neto : null;
+    const netoVsPar = neto != null ? neto - CONFIG.PAR_TOTAL : null;
+
+    return `
+      <tr>
+        <td class="td-name">${jugador}</td>
+        ${cOut}
+        <td class="td-total" style="font-weight:600">${hasOut ? sumOut : "–"}</td>
+        ${cIn}
+        <td class="td-total" style="font-weight:600">${hasIn ? sumIn : "–"}</td>
+        <td class="td-total" style="font-weight:700">${bruto != null ? bruto : "–"}</td>
+        <td class="td-total" style="color:var(--text-muted);font-size:11px">${hdcVal != null ? hdcVal : "–"}</td>
+        <td class="td-total ${Sheets.scoreClass(netoVsPar)}">${neto != null ? neto : "–"}</td>
+      </tr>`;
+  }).join("");
+
+  const th9  = Array.from({length:9}, (_, i) => `<th>${i+1}</th>`).join("");
+  const th9b = Array.from({length:9}, (_, i) => `<th>${i+10}</th>`).join("");
+  const p9   = pars.slice(0,9).map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("");
+  const p9b  = pars.slice(9).map(p  => `<th style="color:var(--text-dim)">${p}</th>`).join("");
+
+  return `
+    <table class="scorecard-table">
+      <thead>
+        <tr>
+          <th>Jugador</th>
+          ${th9}
+          <th>OUT</th>
+          ${th9b}
+          <th>IN</th>
+          <th>Total</th>
+          <th title="Handicap">HDC</th>
+          <th>Neto</th>
+        </tr>
+        <tr>
+          <th style="text-align:left;color:var(--copper)">Par</th>
+          ${p9}
+          <th style="color:var(--text-dim);font-weight:600">${parOut}</th>
+          ${p9b}
+          <th style="color:var(--text-dim);font-weight:600">${parIn}</th>
+          <th style="color:var(--text-dim);font-weight:700">${CONFIG.PAR_TOTAL}</th>
+          <th></th>
+          <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
+        </tr>
+      </thead>
+      <tbody>${filas}</tbody>
+    </table>`;
 }
 
 // ── RENDER: HISTORIAL ────────────────────────────────────────
@@ -667,46 +702,7 @@ async function mostrarTarjetaCuarto(cuartoId) {
       detailEl.innerHTML = "<p style=\"color:var(--text-muted)\">Sin datos para este cuarto</p>";
       return;
     }
-    const pars = CONFIG.PAR_HOYOS;
-    const hoyosHeader = Array.from({length:18}, (_,i) => `<th>${i+1}</th>`).join("");
-    const filas = cuartoConfig.jugadores.map(jugador => {
-      const info = detalle[jugador];
-      if (!info) return "";
-      const celdas = info.golpes.map((g, i) => {
-        if (g === null || g === undefined) return "<td class=\"cell-par\">–</td>";
-        return `<td class="${Sheets.cellClass(g, pars[i])}">${g}</td>`;
-      }).join("");
-      const hdcVal = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
-      const hdcStr = hdcVal !== null ? hdcVal : "–";
-      const netoTotal = info.neto !== null && info.neto !== undefined ? info.neto : null;
-      const netoVsPar = netoTotal !== null ? netoTotal - CONFIG.PAR_TOTAL : null;
-      return `
-        <tr>
-          <td class="td-name">${jugador}</td>
-          ${celdas}
-          <td class="td-total" style="color:var(--text-muted);font-size:11px">${hdcStr}</td>
-          <td class="td-total ${Sheets.scoreClass(netoVsPar)}">${netoTotal !== null ? netoTotal : "–"}</td>
-        </tr>`;
-    }).join("");
-    detailEl.innerHTML = `
-      <h3>${cuartoConfig.nombre}</h3>
-      <table class="scorecard-table">
-        <thead>
-          <tr>
-            <th>Jugador</th>
-            ${hoyosHeader}
-            <th title="Handicap">HDC</th>
-            <th>Neto</th>
-          </tr>
-          <tr>
-            <th style="text-align:left;color:var(--copper)">Par</th>
-            ${pars.map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("")}
-            <th></th>
-            <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
-          </tr>
-        </thead>
-        <tbody>${filas}</tbody>
-      </table>`;
+    detailEl.innerHTML = `<h3>${cuartoConfig.nombre}</h3>` + buildScorecardHTML(cuartoConfig, detalle);
   } catch(e) {
     detailEl.innerHTML = "<p style=\"color:var(--red-over)\">Error al cargar.</p>";
   }
