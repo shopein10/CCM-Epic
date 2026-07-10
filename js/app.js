@@ -107,9 +107,9 @@ function updateLastUpdate() {
 }
 
 function updateLiveBadge(data) {
-  // Mostrar "EN VIVO" si hay scores cargados pero no está terminado
+  // Mostrar "EN VIVO" si hay jugadores que no terminaron aún (hoyo != H18)
   const badge = document.getElementById("live-badge");
-  const hayScores = data.leaderboard && data.leaderboard.some(r => r.hoyo !== "Hoyo18");
+  const hayScores = data.leaderboard && data.leaderboard.some(r => r.hoyo && r.hoyo !== "H18" && r.hoyo !== "Hoyo18");
   badge.classList.toggle("hidden", !hayScores);
 }
 
@@ -148,6 +148,7 @@ function renderIndividual(rows) {
 
 function renderParejas(rows) {
   const el = document.getElementById("tabla-parejas");
+  rows = rows.filter(r => r.score !== null && r.score !== undefined);
   if (!rows.length) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">🤝</div><p>Los scores de parejas aparecen acá durante el torneo</p></div>`;
     return;
@@ -167,6 +168,7 @@ function renderParejas(rows) {
 
 function renderCuartosRank(rows) {
   const el = document.getElementById("tabla-cuartos");
+  rows = rows.filter(r => r.score !== null && r.score !== undefined);
   if (!rows.length) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>El ranking de cuartos aparece acá durante el torneo</p></div>`;
     return;
@@ -214,7 +216,7 @@ function renderCuartos(data) {
   CONFIG.CUARTOS.forEach(c => {
     const det = data.cuartosDetalle[c.id];
     if (!det) return;
-    const names = Object.keys(det);
+    const names = Object.keys(det).filter(n => n !== "VACIO");
     if (!names.length) return;
     c.jugadores = names;
     const el1 = document.querySelector(`#cuartos-selector [data-cuarto="${c.id}"] .cuarto-btn-names`);
@@ -479,6 +481,11 @@ function buildInputsGolpes() {
         const jugData = detalle[jugador];
         if (jugData && jugData.golpes && jugData.golpes[h - 1] != null) {
           inp.closest(".hoyo-input-wrap")?.classList.add("already-loaded");
+          // Pre-poblar state para que al enviar no se mande 0
+          if (!State.form.scores[jugador]) State.form.scores[jugador] = {};
+          if (!State.form.scores[jugador][h]) {
+            State.form.scores[jugador][h] = jugData.golpes[h - 1];
+          }
         }
       });
     } catch(e) { /* silent */ }
@@ -716,26 +723,32 @@ function renderMatchs(data) {
   }
   el.innerHTML = CONFIG.CUARTOS.map(c => {
     const m = matchs[c.id];
-    if (!m) return "";
+    // Skip cuartos sin jugadores asignados
+    if (!m || (!m.a && !m.b)) return "";
     const evo = m.evo || [];
 
-    let lead = 0;
+    // evo[i] = diferencial ACUMULADO hasta el hoyo i+1
+    // positivo = equipo A adelante, negativo = equipo B adelante
     let evoHtml = "";
+    let finalLead = 0;
+
     if (evo.length) {
+      let prev = 0;
       const cells = evo.map((e, i) => {
-        // Soporte para "A"/"B"/"H"/números
-        const val = typeof e === "number" ? e
-          : e === "A" ? 1 : e === "B" ? -1 : 0;
-        lead += val > 0 ? 1 : val < 0 ? -1 : 0;
-        const cls = val > 0 ? "mh-a" : val < 0 ? "mh-b" : "mh-even";
+        const delta = e - prev;
+        prev = e;
+        const cls = delta > 0 ? "mh-a" : delta < 0 ? "mh-b" : "mh-even";
         return `<div class="mh-cell ${cls}" title="H${i+1}">${i+1}</div>`;
       }).join("");
-      const standingText = lead > 0
-        ? `${m.a || "A"} <span class="mh-lead">+${lead}</span>`
-        : lead < 0
-          ? `${m.b || "B"} <span class="mh-lead">+${Math.abs(lead)}</span>`
+
+      finalLead = evo[evo.length - 1];
+      const upCount = Math.abs(finalLead);
+      const standingText = finalLead > 0
+        ? `${m.a || "A"} <span class="mh-lead">+${upCount}</span>`
+        : finalLead < 0
+          ? `${m.b || "B"} <span class="mh-lead">+${upCount}</span>`
           : `<span style="color:var(--text-muted)">ALL SQUARE</span>`;
-      const standingCls = lead > 0 ? "mh-standing-a" : lead < 0 ? "mh-standing-b" : "mh-standing-even";
+      const standingCls = finalLead > 0 ? "mh-standing-a" : finalLead < 0 ? "mh-standing-b" : "mh-standing-even";
       evoHtml = `
         <div class="match-standing ${standingCls}">${standingText}</div>
         <div class="match-evo-wrap">
@@ -743,7 +756,7 @@ function renderMatchs(data) {
         </div>`;
     }
 
-    const upCount = Math.abs(lead);
+    const upCount = Math.abs(finalLead);
     const upBadge = upCount > 0 ? `<span class="match-up-badge">${upCount}UP</span>` : '';
     return `
       <div class="match-card">
@@ -751,9 +764,9 @@ function renderMatchs(data) {
           <span class="match-cuarto-lbl">${c.nombre}</span>
         </div>
         <div class="match-teams">
-          <span class="match-team${lead > 0 ? ' match-team--win' : lead < 0 ? ' match-team--loss' : ''}">${m.a || "–"}${lead > 0 ? upBadge : ''}</span>
+          <span class="match-team${finalLead > 0 ? ' match-team--win' : finalLead < 0 ? ' match-team--loss' : ''}">${m.a || "–"}${finalLead > 0 ? upBadge : ''}</span>
           <span class="match-vs">vs</span>
-          <span class="match-team match-team-r${lead < 0 ? ' match-team--win' : lead > 0 ? ' match-team--loss' : ''}">${m.b || "–"}${lead < 0 ? upBadge : ''}</span>
+          <span class="match-team match-team-r${finalLead < 0 ? ' match-team--win' : finalLead > 0 ? ' match-team--loss' : ''}">${m.b || "–"}${finalLead < 0 ? upBadge : ''}</span>
         </div>
         ${evoHtml}
       </div>`;
