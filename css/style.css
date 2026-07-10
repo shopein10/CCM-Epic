@@ -158,10 +158,10 @@ html, body {
 .scorecard-table td { padding: 6px; text-align: center; border-bottom: 1px solid var(--text-dim); }
 .scorecard-table .td-name { text-align: left; color: var(--cream); font-size: 12px; white-space: nowrap; padding-right: 12px; }
 .scorecard-table .td-total { color: var(--gold); font-weight: 500; }
-.cell-birdie { color: var(--green-bright); }
-.cell-eagle  { color: var(--gold-bright); font-weight: bold; }
-.cell-bogey  { color: #e8a87c; }
-.cell-double { color: var(--red-over); }
+.cell-birdie { color: var(--text-primary); }
+.cell-eagle  { color: var(--text-primary); }
+.cell-bogey  { color: var(--text-primary); }
+.cell-double { color: var(--text-primary); }
 .cell-par    { color: var(--text-muted); }
 
 /* Scorecard badge shapes: círculo=birdie, doble círculo=águila, cuadrado=bogey, doble cuadrado=doble bogey */
