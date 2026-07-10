@@ -138,9 +138,9 @@ html, body {
 .row-hdc { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); font-weight: 400; margin-left: 4px; }
 .row-hoyo { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--text-muted); }
 .row-score { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; min-width: 36px; text-align: right; }
-.score-under { color: var(--green-bright); }
+.score-under { color: var(--red-over); }
 .score-even  { color: var(--sand); }
-.score-over  { color: var(--red-over); }
+.score-over  { color: var(--green-bright); }
 
 /* CUARTOS */
 .cuartos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
@@ -163,6 +163,34 @@ html, body {
 .cell-bogey  { color: #e8a87c; }
 .cell-double { color: var(--red-over); }
 .cell-par    { color: var(--text-muted); }
+
+/* Scorecard badge shapes: círculo=birdie, doble círculo=águila, cuadrado=bogey, doble cuadrado=doble bogey */
+.sc-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+}
+.cell-birdie .sc-badge {
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.cell-eagle .sc-badge {
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px currentColor;
+}
+.cell-bogey .sc-badge {
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+}
+.cell-double .sc-badge {
+  border: 1.5px solid currentColor;
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px currentColor;
+}
 
 /* MATCHS */
 .matchs-list { display: flex; flex-direction: column; gap: 12px; }
@@ -212,8 +240,8 @@ html, body {
 .hoyo-input-wrap input::-webkit-outer-spin-button,
 .hoyo-input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
 .hoyo-input-wrap input:focus { outline: none; border-color: var(--gold); }
-.vs-par-under { border-color: var(--green-bright) !important; color: var(--green-bright) !important; }
-.vs-par-over  { border-color: var(--red-over) !important; color: var(--red-over) !important; }
+.vs-par-under { border-color: var(--red-over) !important; color: var(--red-over) !important; }
+.vs-par-over  { border-color: var(--green-bright) !important; color: var(--green-bright) !important; }
 .hoyo-input-wrap.already-loaded label { opacity: 0.4; }
 .hoyo-input-wrap.already-loaded input { opacity: 0.35; border-color: var(--border); }
 .confirm-preview { background: var(--bg-card); border-radius: var(--radius-md); padding: 16px; margin-bottom: 20px; }
