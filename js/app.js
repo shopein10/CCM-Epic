@@ -289,7 +289,7 @@ function buildScorecardHTML(cuartoConfig, detalle) {
 
     const cel = (v, i) => v == null
       ? `<td class="cell-par">–</td>`
-      : `<td class="${Sheets.cellClass(v, pars[i])}">${v}</td>`;
+      : `<td class="${Sheets.cellClass(v, pars[i])}"><span class="sc-badge">${v}</span></td>`;
 
     const cOut = g.slice(0, 9).map((v, i) => cel(v, i)).join("");
     const cIn  = g.slice(9).map((v, i) => cel(v, i + 9)).join("");
