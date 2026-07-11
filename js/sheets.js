@@ -26,19 +26,30 @@ const Sheets = {
   },
 
   async _callPost(payload) {
-    // Enviamos JSON crudo con Content-Type: text/plain para evitar CORS preflight
-    // y que Apps Script pueda leerlo con e.postData.contents directamente
     const url = CONFIG.APPS_SCRIPT_URL;
-    const res = await fetch(url, {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: { "Content-Type": "text/plain" },
-      redirect: "follow",
-    });
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    return data;
+    // Timeout de 25 segundos para evitar que el botón quede tildado indefinidamente
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: { "Content-Type": "text/plain" },
+        redirect: "follow",
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data;
+    } catch(e) {
+      clearTimeout(timeoutId);
+      if (e.name === "AbortError") {
+        throw new Error("Sin respuesta del servidor (25s). Verificá la conexión y reintentá.");
+      }
+      throw e;
+    }
   },
 
   async getAll(forceRefresh = false) {
@@ -66,8 +77,8 @@ const Sheets = {
     if (score === null || score === undefined || score === "") return "–";
     const n = Number(score);
     if (isNaN(n)) return "–";
-    if (n === 0)  return "E";
-    if (n > 0)   return "+" + n;
+    if (n === 0) return "E";
+    if (n > 0) return "+" + n;
     return "" + n;
   },
 

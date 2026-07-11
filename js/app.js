@@ -417,8 +417,7 @@ function setupForm() {
       document.querySelectorAll("#bloque-btns .option-btn").forEach(b => b.classList.remove("selected"));
       btn.classList.add("selected");
       State.form.bloque = btn.dataset.bloque;
-      buildInputsGolpes();
-      goToStep(3);
+      goToStep(3); // goToStep ya llama buildInputsGolpes — no llamar dos veces
     });
   });
 
@@ -523,10 +522,12 @@ function buildInputsGolpes() {
         const jugData = detalle[jugador];
         if (jugData && jugData.golpes && jugData.golpes[h - 1] != null) {
           inp.closest(".hoyo-input-wrap")?.classList.add("already-loaded");
-          // Pre-poblar state para que al enviar no se mande 0
+          // Pre-poblar state Y el input visible para que collectScores() lea el valor correcto
           if (!State.form.scores[jugador]) State.form.scores[jugador] = {};
           if (!State.form.scores[jugador][h]) {
-            State.form.scores[jugador][h] = jugData.golpes[h - 1];
+            const val = jugData.golpes[h - 1];
+            State.form.scores[jugador][h] = val;
+            inp.value = val; // mostrar en el campo para que el usuario lo vea y collectScores lo lea
           }
         }
       });
