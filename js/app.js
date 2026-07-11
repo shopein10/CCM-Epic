@@ -215,9 +215,16 @@ function renderCuartos(data) {
   // Actualizar nombres reales de jugadores desde el sheet
   CONFIG.CUARTOS.forEach(c => {
     const det = data.cuartosDetalle[c.id];
-    if (!det) return;
+
+    // Cuarto vacío o inexistente → ocultar en todos los selectores
+    const isEmpty = !det || Object.keys(det).filter(n => n !== "VACIO").length === 0;
+    ["#cuartos-selector", "#cuarto-btns", "#tarjetas-selector"].forEach(sel => {
+      const btn = document.querySelector(`${sel} [data-cuarto="${c.id}"]`);
+      if (btn) btn.style.display = isEmpty ? "none" : "";
+    });
+    if (isEmpty) return;
+
     const names = Object.keys(det).filter(n => n !== "VACIO");
-    if (!names.length) return;
     c.jugadores = names;
     const el1 = document.querySelector(`#cuartos-selector [data-cuarto="${c.id}"] .cuarto-btn-names`);
     if (el1) el1.innerHTML = names.join("<br>");
