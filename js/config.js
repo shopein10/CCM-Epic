@@ -1,21 +1,36 @@
+// ============================================================
 // CCM & Epic Golf — CONFIGURACIÓN
+// Completar estos valores antes de publicar
+// ============================================================
 
 const CONFIG = {
-  APPS_SCRIPT_URL: "https://ccm-epic-golf.shopein10.workers.dev",
+
+  // URL del Google Apps Script Web App
+  APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxRrd-8X6oOTLzTwTKCiU1QJiWxxrTP6ISFOroXq75nfomSk9oqdxfhh65tTTLSLH7kHA/exec",
+
+  // Nombre del torneo actual (aparece en toda la app)
   TORNEO_ACTUAL: "Torneo CCM & Epic 2025",
+
+  // Par total del campo
   PAR_TOTAL: 72,
-  HOYOS_POR_BLOQUE: 3,
+
+  // Cada cuántos segundos se refresca el leaderboard automáticamente
   REFRESH_INTERVAL: 30,
-  // Estos valores se sobreescriben con los datos del sheet al cargar
+
+  // Cuartos del torneo — los nombres reales se cargan desde la planilla en tiempo real.
+  // Los jugadores placeholder acá no importan: se pisan con los datos del sheet.
+  // Si un cuarto está VACIO en la planilla, su botón se oculta automáticamente.
   CUARTOS: [
-    { id: "Cuarto1", nombre: "Cuarto 1", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
-    { id: "Cuarto2", nombre: "Cuarto 2", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
-    { id: "Cuarto3", nombre: "Cuarto 3", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
-    { id: "Cuarto4", nombre: "Cuarto 4", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
-    { id: "Cuarto5", nombre: "Cuarto 5", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
-    { id: "Cuarto6", nombre: "Cuarto 6", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
-    { id: "Cuarto7", nombre: "Cuarto 7", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] },
-    { id: "Cuarto8", nombre: "Cuarto 8", jugadores: ["Jugador 1", "Jugador 2", "Jugador 3", "Jugador 4"] }
+    { id: "Cuarto1", nombre: "Cuarto 1", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto2", nombre: "Cuarto 2", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto3", nombre: "Cuarto 3", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto4", nombre: "Cuarto 4", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto5", nombre: "Cuarto 5", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto6", nombre: "Cuarto 6", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto7", nombre: "Cuarto 7", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto8", nombre: "Cuarto 8", jugadores: ["J1", "J2", "J3", "J4"] },
   ],
+
+  // Par de cada hoyo — debe coincidir con el campo
   PAR_HOYOS: [4, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5],
 };
