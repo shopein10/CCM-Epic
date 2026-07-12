@@ -16,6 +16,9 @@ const Sheets = {
     return (Date.now() - this._cache.lastFetch) < (CONFIG.REFRESH_INTERVAL * 1000);
   },
 
+  // Después de guardar, el próximo getAll va directo al Apps Script (dato fresco garantizado)
+  _freshNext: false,
+
   async _callGet(action) {
     const url = CONFIG.APPS_SCRIPT_URL + "?action=" + action;
     const res = await fetch(url, { method: "GET", redirect: "follow" });
@@ -23,6 +26,24 @@ const Sheets = {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     return data;
+  },
+
+  // GET via Worker (rápido, caché ~20s) — solo para polling
+  async _callWorker(action) {
+    const url = CONFIG.WORKER_URL + "/?action=" + action;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    try {
+      const res = await fetch(url, { method: "GET", signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data;
+    } catch(e) {
+      clearTimeout(timeoutId);
+      throw e;
+    }
   },
 
   async _callPost(payload) {
@@ -56,7 +77,19 @@ const Sheets = {
     if (!forceRefresh && this._isFresh() && this._cache.leaderboard) {
       return this._cache;
     }
-    const data = await this._callGet("getAll");
+    let data;
+    if (this._freshNext || forceRefresh || !CONFIG.WORKER_URL) {
+      // Directo al Apps Script: fresco garantizado (post-envío o refresh manual)
+      data = await this._callGet("getAll");
+      this._freshNext = false;
+    } else {
+      // Polling normal: Worker (rápido); si falla, fallback directo
+      try {
+        data = await this._callWorker("getAll");
+      } catch(e) {
+        data = await this._callGet("getAll");
+      }
+    }
     this._cache = { ...data, lastFetch: Date.now() };
     return this._cache;
   },
@@ -70,6 +103,7 @@ const Sheets = {
       scores,
     });
     this._cache.lastFetch = null;
+    this._freshNext = true; // el próximo getAll trae el dato recién escrito, sin caché
     return res;
   },
 
