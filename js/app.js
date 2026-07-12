@@ -55,7 +55,7 @@ async function loadAndRender(showSkeleton = false, force = false) {
     renderTarjetas(data);
     renderHistorial(data);
     updateLiveBadge(data);
-    updateLastUpdate();
+    updateLastUpdate(data);
   } catch (err) {
     console.error("Error cargando datos:", err);
     renderError();
@@ -100,10 +100,13 @@ function setupRefresh() {
   });
 }
 
-function updateLastUpdate() {
+function updateLastUpdate(data) {
   const el = document.getElementById("last-update");
   const now = new Date();
-  el.textContent = `${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
+  const hora = `${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
+  // Indicador de versión: v<front>/a<apps script> — para diagnosticar deploys viejos de un vistazo
+  const api = data && data.version ? `/a${data.version}` : "";
+  el.textContent = `${hora} · v${CONFIG.APP_VERSION}${api}`;
 }
 
 function updateLiveBadge(data) {
@@ -251,7 +254,9 @@ function renderCuartos(data) {
     // Hoyo actual: usar hoyo de rankItem si está disponible, sino contar golpes
     const holesPlayed = Object.values(detalle).map(j => j.golpes ? j.golpes.filter(g => g != null).length : 0);
     const maxHole = holesPlayed.length ? Math.max(...holesPlayed) : 0;
-    const hoyoStr = rankItem?.hoyo ? rankItem.hoyo.replace("Hoyo","H") : (maxHole > 0 ? `H${maxHole}` : null);
+    const salidaC = (data.salidas && data.salidas[c.id]) || 1;
+    const hoyoFallback = maxHole > 0 ? "H" + (((salidaC - 1 + maxHole - 1) % 18) + 1) : null;
+    const hoyoStr = rankItem?.hoyo ? rankItem.hoyo.replace("Hoyo","H") : hoyoFallback;
     const holeEl = document.getElementById(`mini-hole-${c.id}`);
     if (holeEl) {
       if (hoyoStr) { holeEl.textContent = hoyoStr; holeEl.classList.remove("hidden"); }
@@ -554,6 +559,7 @@ async function markBloqueButtons(cuartoId) {
     Object.values(detalle).forEach(jug => {
       (jug.golpes || []).forEach((g, i) => { if (g != null) holesWithData.add(i + 1); });
     });
+    const salida = (data.salidas && data.salidas[cuartoId]) || 1;
     document.querySelectorAll("#bloque-btns .option-btn").forEach(btn => {
       const parts = (btn.dataset.bloque || "").split("-").map(Number);
       if (parts.length < 2) return;
@@ -561,6 +567,20 @@ async function markBloqueButtons(cuartoId) {
       let hasData = false;
       for (let h = ini; h <= fin; h++) { if (holesWithData.has(h)) { hasData = true; break; } }
       btn.classList.toggle("has-data", hasData);
+      // Marcar el hoyo de SALIDA del cuarto (anillo cobre + estrella)
+      const esSalida = ini === salida;
+      btn.style.boxShadow = esSalida ? "inset 0 0 0 2px #b87333" : "";
+      const tagPrevio = btn.querySelector(".salida-tag");
+      if (esSalida && !tagPrevio) {
+        btn.style.position = "relative";
+        const tag = document.createElement("span");
+        tag.className = "salida-tag";
+        tag.textContent = "★";
+        tag.style.cssText = "position:absolute;top:1px;right:3px;font-size:9px;color:#b87333;line-height:1;pointer-events:none";
+        btn.appendChild(tag);
+      } else if (!esSalida && tagPrevio) {
+        tagPrevio.remove();
+      }
     });
   } catch(e) { /* silent */ }
 }
@@ -593,15 +613,37 @@ function buildConfirmPreview() {
       <span class="confirm-value">${ini} – ${fin}</span>
     </div>`;
 
+  // Comparar contra lo ya cargado en el servidor para avisar si se pisa un score distinto
+  const detalleSrv = (Sheets._cache && Sheets._cache.cuartosDetalle && Sheets._cache.cuartosDetalle[State.form.cuarto]) || {};
+  let hayPisadas = false;
+
   cuartoConfig.jugadores.forEach(jugador => {
     const golpes = State.form.scores[jugador] || {};
-    const vals = Array.from({length: fin - ini + 1}, (_, i) => golpes[ini + i] || "–").join(" · ");
+    const srv = detalleSrv[jugador] && detalleSrv[jugador].golpes;
+    const vals = Array.from({length: fin - ini + 1}, (_, i) => {
+      const h = ini + i;
+      const nuevo = golpes[h];
+      if (!nuevo) return "–";
+      const previo = srv ? srv[h - 1] : null;
+      if (previo != null && Number(previo) !== Number(nuevo)) {
+        hayPisadas = true;
+        return `<span style="color:#e5484d;font-weight:700">${previo}→${nuevo}</span>`;
+      }
+      return String(nuevo);
+    }).join(" · ");
     html += `
       <div class="confirm-row">
         <span class="confirm-label">${jugador}</span>
         <span class="confirm-value" style="font-family:'DM Mono',monospace">${vals}</span>
       </div>`;
   });
+
+  if (hayPisadas) {
+    html += `
+      <div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:rgba(229,72,77,.12);color:#e5484d;font-size:13px;line-height:1.45">
+        ⚠️ Estás cambiando scores que ya estaban cargados (marcados en rojo). Revisá antes de enviar.
+      </div>`;
+  }
 
   document.getElementById("confirm-preview").innerHTML = html;
 }
@@ -748,6 +790,7 @@ function renderMatchs(data) {
     // Skip cuartos sin jugadores asignados
     if (!m || (!m.a && !m.b)) return "";
     const evo = m.evo || [];
+    const salidaM = (data.salidas && data.salidas[c.id]) || 1; // rotular celdas con el hoyo REAL
 
     // evo[i] = diferencial ACUMULADO hasta el hoyo i+1
     // positivo = equipo A adelante, negativo = equipo B adelante
@@ -760,7 +803,8 @@ function renderMatchs(data) {
         const delta = e - prev;
         prev = e;
         const cls = delta > 0 ? "mh-a" : delta < 0 ? "mh-b" : "mh-even";
-        return `<div class="mh-cell ${cls}" title="H${i+1}">${i+1}</div>`;
+        const hReal = ((salidaM - 1 + i) % 18) + 1;
+        return `<div class="mh-cell ${cls}" title="H${hReal}">${hReal}</div>`;
       }).join("");
 
       finalLead = evo[evo.length - 1];
