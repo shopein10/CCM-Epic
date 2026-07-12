@@ -97,6 +97,7 @@ const Sheets = {
   async guardarScores({ cuartoId, bloqueInicio, bloqueFin, scores }) {
     const res = await this._callPost({
       action: "guardarScores",
+      token: CONFIG.SCORE_TOKEN,
       cuartoId,
       bloqueInicio,
       bloqueFin,
