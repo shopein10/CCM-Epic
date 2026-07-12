@@ -45,10 +45,10 @@ async function initApp() {
 }
 
 // ── Carga y render ──────────────────────────────────────────
-async function loadAndRender(showSkeleton = false) {
+async function loadAndRender(showSkeleton = false, force = false) {
   if (showSkeleton) renderSkeletons();
   try {
-    const data = await Sheets.getAll();
+    const data = await Sheets.getAll(force);
     renderLeaderboard(data);
     renderCuartos(data);
     renderMatchs(data);
@@ -96,7 +96,7 @@ function setupRefresh() {
     btn.style.transform = "rotate(360deg)";
     btn.style.transition = "transform .5s";
     setTimeout(() => { btn.style.transform = ""; btn.style.transition = ""; }, 500);
-    await loadAndRender(false);
+    await loadAndRender(false, true); // refresh manual → directo al Apps Script, sin caché
   });
 }
 
