@@ -5,6 +5,12 @@
 
 const CONFIG = {
 
+  // Versión del front — mantener en sincronía con el ?v=N de index.html
+  APP_VERSION: 5,
+
+  // Token compartido para guardarScores (validado por el Apps Script)
+  SCORE_TOKEN: "ccm-epic-2026",
+
   // URL del Google Apps Script Web App
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxRrd-8X6oOTLzTwTKCiU1QJiWxxrTP6ISFOroXq75nfomSk9oqdxfhh65tTTLSLH7kHA/exec",
 
