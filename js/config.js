@@ -8,6 +8,11 @@ const CONFIG = {
   // URL del Google Apps Script Web App
   APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxRrd-8X6oOTLzTwTKCiU1QJiWxxrTP6ISFOroXq75nfomSk9oqdxfhh65tTTLSLH7kHA/exec",
 
+  // Cloudflare Worker (caché ~20s) — usado SOLO para el polling del leaderboard.
+  // El refresh post-envío y los POSTs van directo al Apps Script (datos frescos).
+  // Si el Worker falla, sheets.js cae automáticamente al Apps Script directo.
+  WORKER_URL: "https://ccm-epic-golf.shopein10.workers.dev",
+
   // Nombre del torneo actual (aparece en toda la app)
   TORNEO_ACTUAL: "Torneo CCM & Epic 2025",
 
