@@ -489,7 +489,7 @@ function buildInputsGolpes() {
         const all = [...container.querySelectorAll("input")];
         const idx = all.indexOf(inp);
         if (idx < all.length - 1) all[idx + 1].focus();
-        else buildConfirmPreview() && goToStep(4);
+        else { collectScores(); goToStep(4); } // último input → ir a revisar
       }
     });
   });
@@ -511,26 +511,36 @@ function buildInputsGolpes() {
 
   // Marcar hoyos que ya tienen datos cargados en el servidor
   const _cuartoId = State.form.cuarto;
+  const _bloque = State.form.bloque;
+  const aplicarPrePopulate = (detalle) => {
+    if (!detalle) return;
+    // Si el usuario cambió de cuarto/hoyo mientras cargaba, no pisar los inputs
+    if (State.form.cuarto !== _cuartoId || State.form.bloque !== _bloque) return;
+    container.querySelectorAll("input").forEach(inp => {
+      const jugador = inp.dataset.jugador;
+      const h = parseInt(inp.dataset.hoyo);
+      const jugData = detalle[jugador];
+      if (jugData && jugData.golpes && jugData.golpes[h - 1] != null) {
+        inp.closest(".hoyo-input-wrap")?.classList.add("already-loaded");
+        // Pre-poblar state Y el input visible para que collectScores() lea el valor correcto
+        if (!State.form.scores[jugador]) State.form.scores[jugador] = {};
+        if (!State.form.scores[jugador][h]) {
+          const val = jugData.golpes[h - 1];
+          State.form.scores[jugador][h] = val;
+          inp.value = val; // mostrar en el campo para que el usuario lo vea y collectScores lo lea
+        }
+      }
+    });
+  };
+  // 1) Aplicar YA desde la caché local (aunque tenga hasta 30s) → feedback inmediato
+  if (Sheets._cache && Sheets._cache.cuartosDetalle) {
+    aplicarPrePopulate(Sheets._cache.cuartosDetalle[_cuartoId]);
+  }
+  // 2) Refrescar del servidor y re-aplicar por si hay datos más nuevos
   (async () => {
     try {
       const data = await Sheets.getAll();
-      const detalle = data.cuartosDetalle && data.cuartosDetalle[_cuartoId];
-      if (!detalle) return;
-      container.querySelectorAll("input").forEach(inp => {
-        const jugador = inp.dataset.jugador;
-        const h = parseInt(inp.dataset.hoyo);
-        const jugData = detalle[jugador];
-        if (jugData && jugData.golpes && jugData.golpes[h - 1] != null) {
-          inp.closest(".hoyo-input-wrap")?.classList.add("already-loaded");
-          // Pre-poblar state Y el input visible para que collectScores() lea el valor correcto
-          if (!State.form.scores[jugador]) State.form.scores[jugador] = {};
-          if (!State.form.scores[jugador][h]) {
-            const val = jugData.golpes[h - 1];
-            State.form.scores[jugador][h] = val;
-            inp.value = val; // mostrar en el campo para que el usuario lo vea y collectScores lo lea
-          }
-        }
-      });
+      aplicarPrePopulate(data.cuartosDetalle && data.cuartosDetalle[_cuartoId]);
     } catch(e) { /* silent */ }
   })();
 }
@@ -624,7 +634,11 @@ async function enviarScores() {
     document.getElementById("score-form").querySelectorAll(".form-step").forEach(s => s.classList.remove("active"));
     document.getElementById("form-success").classList.remove("hidden");
 
-    // Refrescar datos en background
+    // Re-habilitar el botón para el próximo envío (si no, queda "Enviando…" para siempre)
+    btn.disabled = false;
+    btn.textContent = "Enviar ✓";
+
+    // Refrescar datos en background (cache ya invalidado → trae datos frescos)
     loadAndRender();
 
   } catch(err) {
@@ -637,6 +651,10 @@ async function enviarScores() {
 function resetForm() {
   State.form = { cuarto: null, bloque: null, scores: {} };
   document.getElementById("form-success").classList.add("hidden");
+  // Asegurar que el botón Enviar quede usable
+  const btnEnviar = document.getElementById("btn-enviar");
+  btnEnviar.disabled = false;
+  btnEnviar.textContent = "Enviar ✓";
   document.querySelectorAll(".option-btn").forEach(b => b.classList.remove("selected"));
   document.getElementById("inputs-golpes").innerHTML = "";
   const btnCont = document.querySelector(".btn-continue-step3");
