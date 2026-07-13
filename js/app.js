@@ -801,29 +801,34 @@ function renderMatchs(data) {
     // y tomar el último elemento del array (evo[17]) marcaba ALL SQUARE falso en cuartos en curso.
     const evoJugado = jugadosM > 0 ? evo.slice(0, Math.min(jugadosM, evo.length)) : [];
 
-    // evo[i] = diferencial ACUMULADO hasta el hoyo i+1
-    // positivo = equipo A adelante, negativo = equipo B adelante
+    // Resultado AUTORITATIVO de la planilla (celda A89 del cuarto):
+    //   m.a         = pareja que va ARRIBA (líder) — salvo empate
+    //   m.resultado = "NUP" (ej. "1UP") cuando hay líder, o "A/S" si empatan
+    // El front NO recalcula el ganador desde el signo de evo (eso invertía el
+    // equipo cuando la planilla ponía al líder en m.a): replica lo que ya
+    // resolvió la planilla.
+    const resultado = (m.resultado || "").toString().trim();
+    const esSquare  = !resultado || /^a\s*\/?\s*s$/i.test(resultado);
+    const decidido  = evoJugado.length > 0 && !esSquare;
+    const upCount   = parseInt((resultado.match(/(\d+)/) || [])[1], 10) || 0;
+
     let evoHtml = "";
-    let finalLead = 0;
 
     if (evoJugado.length) {
       let prev = 0;
       const cells = evoJugado.map((e, i) => {
         const delta = e - prev;
         prev = e;
-        const cls = delta > 0 ? "mh-a" : delta < 0 ? "mh-b" : "mh-even";
+        // evo baja (delta<0) en los hoyos que gana la pareja líder (m.a)
+        const cls = delta < 0 ? "mh-a" : delta > 0 ? "mh-b" : "mh-even";
         const hReal = ((salidaM - 1 + i) % 18) + 1;
         return `<div class="mh-cell ${cls}" title="H${hReal}">${hReal}</div>`;
       }).join("");
 
-      finalLead = evoJugado[evoJugado.length - 1];
-      const upCount = Math.abs(finalLead);
-      const standingText = finalLead > 0
-        ? `${m.a || "A"} <span class="mh-lead">+${upCount}</span>`
-        : finalLead < 0
-          ? `${m.b || "B"} <span class="mh-lead">+${upCount}</span>`
-          : `<span style="color:var(--text-muted)">ALL SQUARE</span>`;
-      const standingCls = finalLead > 0 ? "mh-standing-a" : finalLead < 0 ? "mh-standing-b" : "mh-standing-even";
+      const standingText = decidido
+        ? `${m.a || "A"} <span class="mh-lead">${resultado}</span>`
+        : `<span style="color:var(--text-muted)">ALL SQUARE</span>`;
+      const standingCls = decidido ? "mh-standing-a" : "mh-standing-even";
       evoHtml = `
         <div class="match-standing ${standingCls}">${standingText}</div>
         <div class="match-evo-wrap">
@@ -831,17 +836,16 @@ function renderMatchs(data) {
         </div>`;
     }
 
-    const upCount = Math.abs(finalLead);
-    const upBadge = upCount > 0 ? `<span class="match-up-badge">${upCount}UP</span>` : '';
+    const upBadge = decidido && upCount > 0 ? `<span class="match-up-badge">${upCount}UP</span>` : '';
     return `
       <div class="match-card">
         <div class="match-card-hdr">
           <span class="match-cuarto-lbl">${c.nombre}</span>
         </div>
         <div class="match-teams">
-          <span class="match-team${finalLead > 0 ? ' match-team--win' : finalLead < 0 ? ' match-team--loss' : ''}">${m.a || "–"}${finalLead > 0 ? upBadge : ''}</span>
+          <span class="match-team${decidido ? ' match-team--win' : ''}">${m.a || "–"}${decidido ? upBadge : ''}</span>
           <span class="match-vs">vs</span>
-          <span class="match-team match-team-r${finalLead < 0 ? ' match-team--win' : finalLead > 0 ? ' match-team--loss' : ''}">${m.b || "–"}${finalLead < 0 ? upBadge : ''}</span>
+          <span class="match-team match-team-r${decidido ? ' match-team--loss' : ''}">${m.b || "–"}</span>
         </div>
         ${evoHtml}
       </div>`;
