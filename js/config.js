@@ -6,7 +6,7 @@
 const CONFIG = {
 
   // Versión del front — mantener en sincronía con el ?v=N de index.html
-  APP_VERSION: 6,
+  APP_VERSION: 7,
 
   // Token compartido para guardarScores (validado por el Apps Script)
   SCORE_TOKEN: "ccm-epic-2026",
@@ -34,6 +34,17 @@ const CONFIG = {
   CUARTOS: [
     { id: "Cuarto1", nombre: "Cuarto 1", jugadores: ["J1", "J2", "J3", "J4"] },
     { id: "Cuarto2", nombre: "Cuarto 2", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto3", nombre: "Cuarto 3", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto4", nombre: "Cuarto 4", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto5", nombre: "Cuarto 5", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto6", nombre: "Cuarto 6", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto7", nombre: "Cuarto 7", jugadores: ["J1", "J2", "J3", "J4"] },
+    { id: "Cuarto8", nombre: "Cuarto 8", jugadores: ["J1", "J2", "J3", "J4"] },
+  ],
+
+  // Par de cada hoyo — debe coincidir con el campo
+  PAR_HOYOS: [4, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5],
+};
     { id: "Cuarto3", nombre: "Cuarto 3", jugadores: ["J1", "J2", "J3", "J4"] },
     { id: "Cuarto4", nombre: "Cuarto 4", jugadores: ["J1", "J2", "J3", "J4"] },
     { id: "Cuarto5", nombre: "Cuarto 5", jugadores: ["J1", "J2", "J3", "J4"] },
