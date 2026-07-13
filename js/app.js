@@ -252,6 +252,7 @@ function renderCuartos(data) {
       el.className = `cuarto-btn-score ${Sheets.scoreClass(rankItem.score)}`;
     }
     // Hoyo actual: usar hoyo de rankItem si está disponible, sino contar golpes
+    // (el conteo se traduce a hoyo REAL según la salida del cuarto)
     const holesPlayed = Object.values(detalle).map(j => j.golpes ? j.golpes.filter(g => g != null).length : 0);
     const maxHole = holesPlayed.length ? Math.max(...holesPlayed) : 0;
     const salidaC = (data.salidas && data.salidas[c.id]) || 1;
@@ -567,7 +568,7 @@ async function markBloqueButtons(cuartoId) {
       let hasData = false;
       for (let h = ini; h <= fin; h++) { if (holesWithData.has(h)) { hasData = true; break; } }
       btn.classList.toggle("has-data", hasData);
-      // Marcar el hoyo de SALIDA del cuarto (anillo cobre + estrella)
+      // Marcar el hoyo de SALIDA del cuarto (anillo cobre + etiqueta)
       const esSalida = ini === salida;
       btn.style.boxShadow = esSalida ? "inset 0 0 0 2px #b87333" : "";
       const tagPrevio = btn.querySelector(".salida-tag");
@@ -792,14 +793,22 @@ function renderMatchs(data) {
     const evo = m.evo || [];
     const salidaM = (data.salidas && data.salidas[c.id]) || 1; // rotular celdas con el hoyo REAL
 
+    // Cuántos hoyos jugó realmente este cuarto (para no leer los ceros de los hoyos sin jugar)
+    const detalleM = (data.cuartosDetalle && data.cuartosDetalle[c.id]) || {};
+    const holesPlayedM = Object.values(detalleM).map(j => j && j.golpes ? j.golpes.filter(g => g != null).length : 0);
+    const jugadosM = holesPlayedM.length ? Math.max(...holesPlayedM) : 0;
+    // Recortar evo a los hoyos efectivamente jugados: el Sheet deja 0 en los no jugados,
+    // y tomar el último elemento del array (evo[17]) marcaba ALL SQUARE falso en cuartos en curso.
+    const evoJugado = jugadosM > 0 ? evo.slice(0, Math.min(jugadosM, evo.length)) : [];
+
     // evo[i] = diferencial ACUMULADO hasta el hoyo i+1
     // positivo = equipo A adelante, negativo = equipo B adelante
     let evoHtml = "";
     let finalLead = 0;
 
-    if (evo.length) {
+    if (evoJugado.length) {
       let prev = 0;
-      const cells = evo.map((e, i) => {
+      const cells = evoJugado.map((e, i) => {
         const delta = e - prev;
         prev = e;
         const cls = delta > 0 ? "mh-a" : delta < 0 ? "mh-b" : "mh-even";
@@ -807,7 +816,7 @@ function renderMatchs(data) {
         return `<div class="mh-cell ${cls}" title="H${hReal}">${hReal}</div>`;
       }).join("");
 
-      finalLead = evo[evo.length - 1];
+      finalLead = evoJugado[evoJugado.length - 1];
       const upCount = Math.abs(finalLead);
       const standingText = finalLead > 0
         ? `${m.a || "A"} <span class="mh-lead">+${upCount}</span>`
