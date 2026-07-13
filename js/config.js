@@ -45,14 +45,3 @@ const CONFIG = {
   // Par de cada hoyo — debe coincidir con el campo
   PAR_HOYOS: [4, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5],
 };
-    { id: "Cuarto3", nombre: "Cuarto 3", jugadores: ["J1", "J2", "J3", "J4"] },
-    { id: "Cuarto4", nombre: "Cuarto 4", jugadores: ["J1", "J2", "J3", "J4"] },
-    { id: "Cuarto5", nombre: "Cuarto 5", jugadores: ["J1", "J2", "J3", "J4"] },
-    { id: "Cuarto6", nombre: "Cuarto 6", jugadores: ["J1", "J2", "J3", "J4"] },
-    { id: "Cuarto7", nombre: "Cuarto 7", jugadores: ["J1", "J2", "J3", "J4"] },
-    { id: "Cuarto8", nombre: "Cuarto 8", jugadores: ["J1", "J2", "J3", "J4"] },
-  ],
-
-  // Par de cada hoyo — debe coincidir con el campo
-  PAR_HOYOS: [4, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5],
-};
