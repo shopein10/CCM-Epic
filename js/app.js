@@ -134,13 +134,17 @@ function renderIndividual(rows) {
     tablaEl.innerHTML = `<div class="empty-state"><div class="empty-icon">🏌️</div><p>El ranking individual aparece acá durante el torneo</p></div>`;
     return;
   }
-  const posCounts = {};
-  rows.forEach(r => { posCounts[r.pos] = (posCounts[r.pos] || 0) + 1; });
-  tablaEl.innerHTML = rows.map((r, i) => {
+  // Posición por SCORE: los empatados comparten posición, estilo golf (1, T2, T2, 4…).
+  // rows viene ordenado de mejor a peor. rank = 1 + jugadores con score estrictamente mejor.
+  const scoreCounts = {};
+  rows.forEach(r => { const k = String(r.score); scoreCounts[k] = (scoreCounts[k] || 0) + 1; });
+  tablaEl.innerHTML = rows.map(r => {
     const sc = Sheets.scoreClass(r.score);
-    const posStr = posCounts[r.pos] > 1 ? "T" + r.pos : String(r.pos);
+    const rank = rows.filter(x => x.score < r.score).length + 1;
+    const empatado = scoreCounts[String(r.score)] > 1;
+    const posStr = empatado ? "T" + rank : String(rank);
     return `
-      <div class="score-row ${i < 3 ? "top-3" : ""}">
+      <div class="score-row ${rank <= 3 ? "top-3" : ""}">
         <span class="row-pos">${posStr}</span>
         <span class="row-name">${r.nombre}</span>
         <span class="row-hoyo">${r.hoyo || ""}</span>
