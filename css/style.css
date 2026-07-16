@@ -192,6 +192,39 @@ html, body {
   box-shadow: 0 0 0 2px currentColor;
 }
 
+/* Reparto de golpes de hándicap: puntitos en la esquina de la celda */
+.sc-cell { position: relative; }
+.rep-wrap {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+.rep-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.rep-juego { background: #57c77a; }
+.rep-both  { background: #57c77a; box-shadow: 0 0 0 1.5px #e24b4a; }
+.rep-give  { color: #e2b04a; font-weight: 700; font-size: 11px; line-height: 1; font-family: sans-serif; }
+.rep-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.rep-legend span { display: inline-flex; align-items: center; gap: 5px; }
+
 /* MATCHS */
 .matchs-list { display: flex; flex-direction: column; gap: 12px; }
 .match-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; }
