@@ -6,7 +6,7 @@
 const CONFIG = {
 
   // Versión del front — mantener en sincronía con el ?v=N de index.html
-  APP_VERSION: 9,
+  APP_VERSION: 10,
 
   // Token compartido para guardarScores (validado por el Apps Script)
   SCORE_TOKEN: "ccm-epic-2026",
@@ -44,4 +44,8 @@ const CONFIG = {
 
   // Par de cada hoyo — debe coincidir con el campo
   PAR_HOYOS: [4, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5],
+
+  // Stroke index (handicap del hoyo) por hoyo REAL 1..18 — leído de la planilla.
+  // Es fijo del campo; se usa para repartir los golpes de hándicap por hoyo.
+  STROKE_INDEX: [11, 3, 9, 17, 15, 5, 7, 13, 1, 16, 14, 2, 8, 12, 4, 18, 10, 6],
 };
