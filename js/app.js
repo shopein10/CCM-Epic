@@ -293,6 +293,55 @@ async function mostrarDetalleCuarto(cuartoId) {
   }
 }
 
+// ── REPARTO DE GOLPES DE HÁNDICAP ────────────────────────────
+// Reparte un total de golpes sobre los 18 hoyos según el stroke index.
+// Positivo: los golpes van a los hoyos MÁS difíciles (índice 1,2,3…).
+// Negativo (hándicap plus): DEVUELVE golpes en los hoyos MÁS fáciles (índice 18,17…).
+function repartirGolpes(total) {
+  const si = CONFIG.STROKE_INDEX;
+  const arr = new Array(18).fill(0);
+  if (!total) return arr;
+  const s = total < 0 ? -1 : 1;
+  const n = Math.abs(total);
+  const full = Math.floor(n / 18);
+  const rem  = n % 18;
+  for (let i = 0; i < 18; i++) arr[i] = s * full;
+  for (let k = 1; k <= rem; k++) {
+    const idxObjetivo = s > 0 ? k : (19 - k);      // índice de hoyo que recibe el extra
+    const hoyo = si.indexOf(idxObjetivo);          // hoyo REAL con ese stroke index
+    if (hoyo >= 0) arr[hoyo] += s;
+  }
+  return arr;
+}
+
+// round() "medio se aleja de cero", igual que la función ROUND de Google Sheets
+function round85(hdc) {
+  const x = hdc * 0.85;
+  return (x < 0 ? -1 : 1) * Math.round(Math.abs(x));
+}
+
+function computeReparto(hdc) {
+  return { juego: repartirGolpes(hdc), match: repartirGolpes(round85(hdc)) };
+}
+
+// Puntitos de hándicap en la esquina de la celda.
+// verde = golpe al 100% (juego); verde con aro rojo = golpe también al 85% (match);
+// doble golpe = 2 puntos; hándicap negativo = "+" ámbar (devuelve golpe).
+function repartoDots(j, m) {
+  if (!j && !m) return "";
+  if (j < 0 || m < 0) {
+    const n = Math.max(Math.abs(j), Math.abs(m));
+    let plus = "";
+    for (let k = 0; k < n; k++) plus += `<span class="rep-give">+</span>`;
+    return `<span class="rep-wrap">${plus}</span>`;
+  }
+  let dots = "";
+  for (let d = 0; d < j; d++) {
+    dots += `<span class="rep-dot ${d < m ? "rep-both" : "rep-juego"}"></span>`;
+  }
+  return `<span class="rep-wrap">${dots}</span>`;
+}
+
 // ── SCORECARD HELPER ─────────────────────────────────────────
 function buildScorecardHTML(cuartoConfig, detalle) {
   const pars   = CONFIG.PAR_HOYOS;
@@ -303,10 +352,15 @@ function buildScorecardHTML(cuartoConfig, detalle) {
     const info = detalle[jugador];
     if (!info) return "";
     const g = info.golpes;
+    const hdcCel = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
+    const rep = hdcCel != null ? computeReparto(hdcCel) : null;
 
-    const cel = (v, i) => v == null
-      ? `<td class="cell-par">–</td>`
-      : `<td class="${Sheets.cellClass(v, pars[i])}"><span class="sc-badge">${v}</span></td>`;
+    const cel = (v, i) => {
+      const dots = rep ? repartoDots(rep.juego[i], rep.match[i]) : "";
+      return v == null
+        ? `<td class="cell-par sc-cell">–${dots}</td>`
+        : `<td class="${Sheets.cellClass(v, pars[i])} sc-cell"><span class="sc-badge">${v}</span>${dots}</td>`;
+    };
 
     const cOut = g.slice(0, 9).map((v, i) => cel(v, i)).join("");
     const cIn  = g.slice(9).map((v, i) => cel(v, i + 9)).join("");
@@ -364,7 +418,12 @@ function buildScorecardHTML(cuartoConfig, detalle) {
         </tr>
       </thead>
       <tbody>${filas}</tbody>
-    </table>`;
+    </table>
+    <div class="rep-legend">
+      <span><span class="rep-dot rep-juego"></span> golpe 100% (juego)</span>
+      <span><span class="rep-dot rep-both"></span> también 85% (match)</span>
+      <span><span class="rep-give">+</span> devuelve golpe (hdc &minus;)</span>
+    </div>`;
 }
 
 // ── RENDER: HISTORIAL ────────────────────────────────────────
