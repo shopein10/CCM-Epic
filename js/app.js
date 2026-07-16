@@ -234,7 +234,10 @@ function renderCuartos(data) {
     const names = Object.keys(det).filter(n => n !== "VACIO");
     c.jugadores = names;
     const el1 = document.querySelector(`#cuartos-selector [data-cuarto="${c.id}"] .cuarto-btn-names`);
-    if (el1) el1.innerHTML = names.join("<br>");
+    if (el1) el1.innerHTML = names.map(n => {
+      const h85 = det[n] && det[n].hdc != null ? round85(det[n].hdc) : null;
+      return h85 != null ? `${n} <span style="color:var(--gold-dim);font-size:11px;font-family:'DM Mono',monospace">${h85}</span>` : n;
+    }).join("<br>");
     const el2 = document.querySelector(`#cuarto-btns [data-cuarto="${c.id}"] .form-cuarto-jugadores`);
     if (el2) el2.innerHTML = names.join("<br>");
     const el3 = document.querySelector(`#tarjetas-selector [data-cuarto="${c.id}"] .cuarto-btn-names`);
