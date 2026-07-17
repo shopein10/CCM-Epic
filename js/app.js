@@ -235,7 +235,7 @@ function renderCuartos(data) {
     c.jugadores = names;
     const el1 = document.querySelector(`#cuartos-selector [data-cuarto="${c.id}"] .cuarto-btn-names`);
     if (el1) el1.innerHTML = names.map(n => {
-      const h85 = det[n] && det[n].hdc != null ? round85(det[n].hdc) : null;
+      const h85 = det[n] && det[n].hdc85 != null ? det[n].hdc85 : null;
       return h85 != null ? `${n} <span style="color:var(--gold-dim);font-size:11px;font-family:'DM Mono',monospace">${h85}</span>` : n;
     }).join("<br>");
     const el2 = document.querySelector(`#cuarto-btns [data-cuarto="${c.id}"] .form-cuarto-jugadores`);
@@ -317,14 +317,10 @@ function repartirGolpes(total) {
   return arr;
 }
 
-// round() "medio se aleja de cero", igual que la función ROUND de Google Sheets
-function round85(hdc) {
-  const x = hdc * 0.85;
-  return (x < 0 ? -1 : 1) * Math.round(Math.abs(x));
-}
-
-function computeReparto(hdc) {
-  return { juego: repartirGolpes(hdc), match: repartirGolpes(round85(hdc)) };
+// El 85% (match) viene calculado sobre el index en la planilla (B10/B19/B28/B37);
+// no lo derivamos acá, lo recibimos en hdc85 desde el getAll.
+function computeReparto(hdc, hdc85) {
+  return { juego: repartirGolpes(hdc), match: repartirGolpes(hdc85) };
 }
 
 // Puntitos de hándicap en la esquina de la celda.
@@ -332,17 +328,17 @@ function computeReparto(hdc) {
 // doble golpe = 2 puntos; hándicap negativo = "+" ámbar (devuelve golpe).
 function repartoDots(j, m) {
   if (!j && !m) return "";
-  if (j < 0 || m < 0) {
-    const n = Math.max(Math.abs(j), Math.abs(m));
+  // Hándicap negativo (devuelve golpe): se marca SOLO respecto del match (85%).
+  if (m < 0) {
     let plus = "";
-    for (let k = 0; k < n; k++) plus += `<span class="rep-give">+</span>`;
+    for (let k = 0; k < Math.abs(m); k++) plus += `<span class="rep-give">+</span>`;
     return `<span class="rep-wrap">${plus}</span>`;
   }
   let dots = "";
   for (let d = 0; d < j; d++) {
     dots += `<span class="rep-dot ${d < m ? "rep-both" : "rep-juego"}"></span>`;
   }
-  return `<span class="rep-wrap">${dots}</span>`;
+  return dots ? `<span class="rep-wrap">${dots}</span>` : "";
 }
 
 // ── SCORECARD HELPER ─────────────────────────────────────────
@@ -356,7 +352,7 @@ function buildScorecardHTML(cuartoConfig, detalle) {
     if (!info) return "";
     const g = info.golpes;
     const hdcCel = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
-    const rep = hdcCel != null ? computeReparto(hdcCel) : null;
+    const rep = hdcCel != null ? computeReparto(hdcCel, info.hdc85) : null;
 
     const cel = (v, i) => {
       const dots = rep ? repartoDots(rep.juego[i], rep.match[i]) : "";
