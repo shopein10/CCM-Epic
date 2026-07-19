@@ -335,3 +335,40 @@ html, body {
 .csr-hole.cell-bogey { background: #3a1a1a; color: var(--red-over); }
 .csr-hole.cell-double { background: #5a1010; color: var(--red-over); }
 .csr-score { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 700; min-width: 36px; text-align: right; }
+
+/* ── Nombre clickable en el ranking individual ── */
+.row-name-click { cursor: pointer; text-decoration: underline; text-decoration-color: var(--text-dim); text-underline-offset: 3px; }
+.row-name-click:hover { color: var(--gold); text-decoration-color: var(--gold); }
+
+/* ── Modal: tarjeta individual ── */
+.ti-modal {
+  position: fixed; inset: 0; z-index: 200;
+  display: none; align-items: flex-start; justify-content: center;
+  background: rgba(0,0,0,.72); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  padding: 24px 12px; overflow-y: auto;
+}
+.ti-modal.open { display: flex; }
+.ti-modal-panel {
+  position: relative; width: 100%; max-width: 620px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 20px 18px 24px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+}
+.ti-modal-close {
+  position: absolute; top: 10px; right: 10px;
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg-raised); border: 1px solid var(--border);
+  color: var(--cream); font-size: 14px; cursor: pointer; line-height: 1;
+}
+.ti-modal-close:hover { color: var(--gold); border-color: var(--gold); }
+.ti-modal-body { overflow-x: auto; }
+
+/* ── Encabezado de la tarjeta individual ── */
+.ti-header {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 18px;
+  margin-bottom: 14px; padding-right: 36px;
+}
+.ti-name { font-size: 18px; font-weight: 600; color: var(--cream); }
+.ti-hdc { display: inline-flex; flex-direction: column; line-height: 1.2; }
+.ti-hdc-lbl { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+.ti-hdc-val { font-family: 'DM Mono', monospace; font-size: 15px; color: var(--gold); }
