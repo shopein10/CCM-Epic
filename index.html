@@ -10,7 +10,7 @@
 <title>CCM & Epic Golf</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
 
@@ -179,9 +179,17 @@
 </main>
 </div>
 
-<script src="js/config.js?v=12"></script>
-<script src="js/sheets.js?v=12"></script>
-<script src="js/app.js?v=12"></script>
+<!-- TARJETA INDIVIDUAL (modal) — se abre al clickear un nombre del ranking -->
+<div id="tarjeta-modal" class="ti-modal" aria-hidden="true">
+<div class="ti-modal-panel">
+<button class="ti-modal-close" data-close-modal aria-label="Cerrar">✕</button>
+<div id="tarjeta-modal-body" class="ti-modal-body"></div>
+</div>
+</div>
+
+<script src="js/config.js?v=13"></script>
+<script src="js/sheets.js?v=13"></script>
+<script src="js/app.js?v=13"></script>
 <script>
 if ('serviceWorker' in navigator) {
 navigator.serviceWorker.register('sw.js');
