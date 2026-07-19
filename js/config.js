@@ -6,7 +6,7 @@
 const CONFIG = {
 
   // Versión del front — mantener en sincronía con el ?v=N de index.html
-  APP_VERSION: 12,
+  APP_VERSION: 13,
 
   // Token compartido para guardarScores (validado por el Apps Script)
   SCORE_TOKEN: "ccm-epic-2026",

@@ -28,6 +28,7 @@ async function initApp() {
   setupTabs();
   setupForm();
   setupRefresh();
+  setupTarjetaModal();
 
   await loadAndRender(true);
 
@@ -146,11 +147,80 @@ function renderIndividual(rows) {
     return `
       <div class="score-row ${rank <= 3 ? "top-3" : ""}">
         <span class="row-pos">${posStr}</span>
-        <span class="row-name">${r.nombre}</span>
+        <span class="row-name row-name-click" data-jugador="${r.nombre}">${r.nombre}</span>
         <span class="row-hoyo">${r.hoyo || ""}</span>
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
   }).join("");
+}
+
+// ── TARJETA INDIVIDUAL (click en un nombre del ranking) ──────
+// El click se resuelve por NOMBRE (data-jugador), no por posición en la
+// tabla; por eso el reordenamiento del ranking no rompe nada.
+function setupTarjetaModal() {
+  const tabla = document.getElementById("tabla-individual");
+  if (tabla) {
+    tabla.addEventListener("click", e => {
+      const el = e.target.closest("[data-jugador]");
+      if (!el) return;
+      abrirTarjetaIndividual(el.dataset.jugador);
+    });
+  }
+  const modal = document.getElementById("tarjeta-modal");
+  if (modal) {
+    modal.addEventListener("click", e => {
+      // Cerrar al tocar el fondo o el botón ✕
+      if (e.target === modal || e.target.closest("[data-close-modal]")) {
+        cerrarTarjetaIndividual();
+      }
+    });
+  }
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") cerrarTarjetaIndividual();
+  });
+}
+
+// Busca el detalle de un jugador (golpes/neto/hdc/hdc85) en cualquier cuarto.
+function findJugadorDetalle(data, nombre) {
+  const cd = (data && data.cuartosDetalle) || {};
+  for (const cid in cd) {
+    if (cd[cid] && cd[cid][nombre]) return cd[cid][nombre];
+  }
+  return null;
+}
+
+function abrirTarjetaIndividual(nombre) {
+  const modal = document.getElementById("tarjeta-modal");
+  const body  = document.getElementById("tarjeta-modal-body");
+  if (!modal || !body) return;
+  const info = findJugadorDetalle(Sheets._cache, nombre);
+  body.innerHTML = info
+    ? buildTarjetaIndividualHTML(nombre, info)
+    : `<p style="color:var(--text-muted)">Sin datos para ${nombre}.</p>`;
+  modal.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function cerrarTarjetaIndividual() {
+  const modal = document.getElementById("tarjeta-modal");
+  if (!modal || !modal.classList.contains("open")) return;
+  modal.classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+// Encabezado (nombre + HDC 100% + HDC 85%) + la tarjeta de siempre para un solo jugador.
+function buildTarjetaIndividualHTML(nombre, info) {
+  const hdc   = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
+  const hdc85 = info.hdc85 != null ? info.hdc85 : null;
+  const header = `
+    <div class="ti-header">
+      <span class="ti-name">${nombre}</span>
+      <span class="ti-hdc"><span class="ti-hdc-lbl">HDC 100%</span><span class="ti-hdc-val">${hdc != null ? hdc : "–"}</span></span>
+      <span class="ti-hdc"><span class="ti-hdc-lbl">HDC 85%</span><span class="ti-hdc-val">${hdc85 != null ? hdc85 : "–"}</span></span>
+    </div>`;
+  const pseudoConfig = { nombre, jugadores: [nombre] };
+  const detalle = { [nombre]: info };
+  return header + buildScorecardHTML(pseudoConfig, detalle);
 }
 
 function renderParejas(rows) {
