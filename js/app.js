@@ -360,7 +360,8 @@ async function mostrarDetalleCuarto(cuartoId) {
       detailEl.innerHTML = `<p style="color:var(--text-muted)">Sin datos para este cuarto</p>`;
       return;
     }
-    detailEl.innerHTML = `<h3>${cuartoConfig.nombre}</h3>` + buildScorecardHTML(cuartoConfig, detalle);
+    const evo = data.evolucionCuartos && data.evolucionCuartos[cuartoId];
+    detailEl.innerHTML = `<h3>${cuartoConfig.nombre}</h3>` + buildScorecardHTML(cuartoConfig, detalle, evo);
   } catch(e) {
     detailEl.innerHTML = `<p style="color:var(--red-over)">Error al cargar. Intentá de nuevo.</p>`;
   }
@@ -412,7 +413,7 @@ function repartoDots(j, m) {
 }
 
 // ── SCORECARD HELPER ─────────────────────────────────────────
-function buildScorecardHTML(cuartoConfig, detalle) {
+function buildScorecardHTML(cuartoConfig, detalle, evo) {
   const pars   = CONFIG.PAR_HOYOS;
   const parOut = pars.slice(0, 9).reduce((a, b) => a + b, 0);
   const parIn  = pars.slice(9).reduce((a, b) => a + b, 0);
@@ -462,6 +463,22 @@ function buildScorecardHTML(cuartoConfig, detalle) {
   const p9   = pars.slice(0,9).map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("");
   const p9b  = pars.slice(9).map(p  => `<th style="color:var(--text-dim)">${p}</th>`).join("");
 
+  // Fila de evolución del cuarto (fila 50 del sheet) — se usa como desempate.
+  // Viene del backend ya indexada por hoyo REAL 1..18, así que cae alineada con las columnas.
+  // Es acumulativa, no aditiva: por eso OUT/IN/Total se dejan vacíos (sumarlos no significaría nada).
+  const evoCel = v => `<td class="${v != null ? Sheets.scoreClass(v) : ""}">${v != null ? Sheets.formatScore(v) : "–"}</td>`;
+  const filaEvo = (Array.isArray(evo) && evo.some(v => v != null)) ? `
+      <tr class="sc-evo-row">
+        <td class="td-name">Evolución</td>
+        ${evo.slice(0, 9).map(evoCel).join("")}
+        <td></td>
+        ${evo.slice(9).map(evoCel).join("")}
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+      </tr>` : "";
+
   return `
     <table class="scorecard-table">
       <thead>
@@ -486,7 +503,7 @@ function buildScorecardHTML(cuartoConfig, detalle) {
           <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
         </tr>
       </thead>
-      <tbody>${filas}</tbody>
+      <tbody>${filas}${filaEvo}</tbody>
     </table>
     <div class="rep-legend">
       <span><span class="rep-dot rep-juego"></span> golpe 100% (juego)</span>
@@ -903,7 +920,8 @@ async function mostrarTarjetaCuarto(cuartoId) {
       detailEl.innerHTML = "<p style=\"color:var(--text-muted)\">Sin datos para este cuarto</p>";
       return;
     }
-    detailEl.innerHTML = `<h3>${cuartoConfig.nombre}</h3>` + buildScorecardHTML(cuartoConfig, detalle);
+    const evo = data.evolucionCuartos && data.evolucionCuartos[cuartoId];
+    detailEl.innerHTML = `<h3>${cuartoConfig.nombre}</h3>` + buildScorecardHTML(cuartoConfig, detalle, evo);
   } catch(e) {
     detailEl.innerHTML = "<p style=\"color:var(--red-over)\">Error al cargar.</p>";
   }
