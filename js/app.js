@@ -220,7 +220,11 @@ function buildTarjetaIndividualHTML(nombre, info) {
     </div>`;
   const pseudoConfig = { nombre, jugadores: [nombre] };
   const detalle = { [nombre]: info };
-  return header + buildScorecardHTML(pseudoConfig, detalle);
+  // El ajuste del match depende del CUARTO, no del jugador: buscamos su cuarto
+  // real para no calcular el min sobre una sola persona (daría siempre 0).
+  const cuartoDet = findCuartoDeJugador(Sheets._cache, nombre);
+  const mn = cuartoDet ? minHdc85(cuartoDet) : 0;
+  return header + buildScorecardHTML(pseudoConfig, detalle, null, mn);
 }
 
 function renderParejas(rows) {
@@ -361,7 +365,9 @@ async function mostrarDetalleCuarto(cuartoId) {
       return;
     }
     const evo = data.evolucionCuartos && data.evolucionCuartos[cuartoId];
-    detailEl.innerHTML = `<h3>${cuartoConfig.nombre}</h3>` + buildScorecardHTML(cuartoConfig, detalle, evo);
+    // Mismo min que usa el match, así los puntitos del 85% coinciden con los puntos.
+    const mcx = calcularMatch(data, cuartoId);
+    detailEl.innerHTML = `<h3>${cuartoConfig.nombre}</h3>` + buildScorecardHTML(cuartoConfig, detalle, evo, mcx ? mcx.min : undefined);
   } catch(e) {
     detailEl.innerHTML = `<p style="color:var(--red-over)">Error al cargar. Intentá de nuevo.</p>`;
   }
@@ -388,10 +394,37 @@ function repartirGolpes(total) {
   return arr;
 }
 
-// El 85% (match) viene calculado sobre el index en la planilla (B10/B19/B28/B37);
+// ── MATCH: HDC 85% AJUSTADO ("el mejor baja a 0") ────────────
+// En los MATCHS no se juega con el hdc85 crudo: el jugador de MENOR hdc85 del
+// CUARTO baja a 0 y los otros tres descuentan esa misma cantidad. Es decir,
+// golpes de match = hdc85 - min(hdc85 de los 4).
+// Consecuencia útil: después del ajuste nadie queda en negativo, así que
+// desaparece por completo el caso de "devolver" golpes dentro del match.
+// (El HDC 100% del juego individual NO se toca: eso sigue crudo.)
+function minHdc85(detalle) {
+  const vals = Object.keys(detalle || {})
+    .filter(n => n !== "VACIO" && detalle[n] && detalle[n].hdc85 != null)
+    .map(n => detalle[n].hdc85);
+  return vals.length ? Math.min.apply(null, vals) : 0;
+}
+
+// Busca el detalle COMPLETO del cuarto donde juega un jugador (para conocer el
+// min del cuarto cuando se abre la tarjeta individual desde el ranking).
+function findCuartoDeJugador(data, nombre) {
+  const cd = (data && data.cuartosDetalle) || {};
+  for (const cid in cd) {
+    if (cd[cid] && cd[cid][nombre]) return cd[cid];
+  }
+  return null;
+}
+
+// El 85% viene calculado sobre el index en la planilla (B10/B19/B28/B37);
 // no lo derivamos acá, lo recibimos en hdc85 desde el getAll.
-function computeReparto(hdc, hdc85) {
-  return { juego: repartirGolpes(hdc), match: repartirGolpes(hdc85) };
+// minMatch = min(hdc85) del cuarto; si no se pasa, no se ajusta (0).
+function computeReparto(hdc, hdc85, minMatch) {
+  const mn = minMatch || 0;
+  const ajust = hdc85 == null ? null : Math.max(0, hdc85 - mn);
+  return { juego: repartirGolpes(hdc), match: repartirGolpes(ajust) };
 }
 
 // Puntitos de hándicap en la esquina de la celda.
@@ -399,21 +432,27 @@ function computeReparto(hdc, hdc85) {
 // doble golpe = 2 puntos; hándicap negativo = "+" ámbar (devuelve golpe).
 function repartoDots(j, m) {
   if (!j && !m) return "";
-  // Hándicap negativo (devuelve golpe): se marca SOLO respecto del match (85%).
-  if (m < 0) {
-    let plus = "";
-    for (let k = 0; k < Math.abs(m); k++) plus += `<span class="rep-give">+</span>`;
-    return `<span class="rep-wrap">${plus}</span>`;
+  let out = "";
+  // El "+" (devuelve golpe) se marca respecto del JUEGO individual (100%), que es
+  // el único donde puede haber hándicap negativo. En el MATCH ya no pasa nunca:
+  // con el ajuste (el mejor del cuarto a 0) nadie queda por debajo de 0.
+  if (j < 0) {
+    for (let k = 0; k < Math.abs(j); k++) out += `<span class="rep-give">+</span>`;
   }
-  let dots = "";
-  for (let d = 0; d < j; d++) {
-    dots += `<span class="rep-dot ${d < m ? "rep-both" : "rep-juego"}"></span>`;
+  // Ojo: el 85% AJUSTADO puede ser MAYOR que el hdc 100% (pasa cuando en el cuarto
+  // hay un hándicap negativo, que empuja para arriba a los otros tres). Por eso se
+  // itera hasta el máximo de los dos y no hasta j, que se comía esos golpes.
+  const n = Math.max(Math.max(0, j), Math.max(0, m));
+  for (let d = 0; d < n; d++) {
+    out += `<span class="rep-dot ${d < m ? "rep-both" : "rep-juego"}"></span>`;
   }
-  return dots ? `<span class="rep-wrap">${dots}</span>` : "";
+  return out ? `<span class="rep-wrap">${out}</span>` : "";
 }
 
 // ── SCORECARD HELPER ─────────────────────────────────────────
-function buildScorecardHTML(cuartoConfig, detalle, evo) {
+function buildScorecardHTML(cuartoConfig, detalle, evo, minMatch) {
+  // Los puntitos del 85% se dibujan con el hdc85 YA AJUSTADO (el mejor a 0).
+  const mnMatch = (minMatch != null) ? minMatch : minHdc85(detalle);
   const pars   = CONFIG.PAR_HOYOS;
   const parOut = pars.slice(0, 9).reduce((a, b) => a + b, 0);
   const parIn  = pars.slice(9).reduce((a, b) => a + b, 0);
@@ -423,7 +462,7 @@ function buildScorecardHTML(cuartoConfig, detalle, evo) {
     if (!info) return "";
     const g = info.golpes;
     const hdcCel = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
-    const rep = hdcCel != null ? computeReparto(hdcCel, info.hdc85) : null;
+    const rep = hdcCel != null ? computeReparto(hdcCel, info.hdc85, mnMatch) : null;
 
     const cel = (v, i) => {
       const dots = rep ? repartoDots(rep.juego[i], rep.match[i]) : "";
@@ -507,7 +546,7 @@ function buildScorecardHTML(cuartoConfig, detalle, evo) {
     </table>
     <div class="rep-legend">
       <span><span class="rep-dot rep-juego"></span> golpe 100% (juego)</span>
-      <span><span class="rep-dot rep-both"></span> también 85% (match)</span>
+      <span><span class="rep-dot rep-both"></span> también 85% ajustado (match)</span>
       <span><span class="rep-give">+</span> devuelve golpe (hdc &minus;)</span>
     </div>`;
 }
@@ -921,10 +960,87 @@ async function mostrarTarjetaCuarto(cuartoId) {
       return;
     }
     const evo = data.evolucionCuartos && data.evolucionCuartos[cuartoId];
-    detailEl.innerHTML = `<h3>${cuartoConfig.nombre}</h3>` + buildScorecardHTML(cuartoConfig, detalle, evo);
+    // Mismo min que usa el match, así los puntitos del 85% coinciden con los puntos.
+    const mcx = calcularMatch(data, cuartoId);
+    detailEl.innerHTML = `<h3>${cuartoConfig.nombre}</h3>` + buildScorecardHTML(cuartoConfig, detalle, evo, mcx ? mcx.min : undefined);
   } catch(e) {
     detailEl.innerHTML = "<p style=\"color:var(--red-over)\">Error al cargar.</p>";
   }
+}
+
+// ── MATCH: CÁLCULO EN EL FRONT ───────────────────────────────
+// Sistema de puntos POR HOYO (reemplaza a la fila 90 del Sheet):
+//   · 2 puntos para la pareja con la MEJOR bola neta del hoyo
+//   · 1 punto  para la pareja con la MEJOR "peor bola" neta del hoyo
+//   · empate en cualquiera de las dos → esos puntos NO se otorgan a nadie
+// El neto usa el HDC 85% AJUSTADO (ver minHdc85 / computeReparto).
+// Se recorre en ORDEN DE JUEGO: un cuarto que sale del 10 empieza por el 10.
+function calcularMatch(data, cuartoId) {
+  const det = (data && data.cuartosDetalle && data.cuartosDetalle[cuartoId]) || null;
+  const m   = (data && data.matchsData    && data.matchsData[cuartoId])    || null;
+  if (!det || !m || !m.a || !m.b) return null;
+
+  const split = t => String(t).trim().split(/\s+/).filter(n => det[n]);
+  const A = split(m.a), B = split(m.b);
+  if (!A.length || !B.length) return null;
+
+  // El mínimo se toma sobre los 4 que EFECTIVAMENTE juegan el match (A ∪ B),
+  // no sobre todo lo que haya en la pestaña. Como los cuartos se rearman cada
+  // semana, si quedó un nombre viejo colgado en el detalle no arrastra el mínimo.
+  const enMatch = {};
+  A.concat(B).forEach(n => { enMatch[n] = det[n]; });
+  const mn = minHdc85(enMatch);
+  const st = {};
+  A.concat(B).forEach(n => {
+    const h = det[n].hdc85 != null ? det[n].hdc85 : null;
+    st[n] = repartirGolpes(h == null ? 0 : Math.max(0, h - mn));
+  });
+  const neto = {};
+  A.concat(B).forEach(n => {
+    const g = det[n].golpes || [];
+    neto[n] = g.map((v, h) => v == null ? null : v - st[n][h]);
+  });
+
+  const salida = (data.salidas && data.salidas[cuartoId]) || 1;
+  let pa = 0, pb = 0;
+  const hoyos = [];
+  for (let i = 0; i < 18; i++) {
+    const h = (salida - 1 + i) % 18;                 // hoyo REAL (0-based)
+    const va = A.map(n => neto[n][h]);
+    const vb = B.map(n => neto[n][h]);
+    if (va.some(v => v == null) || vb.some(v => v == null)) {
+      hoyos.push({ hoyo: h + 1, jugado: false, ga: 0, gb: 0, pa, pb });
+      continue;
+    }
+    const mejorA = Math.min.apply(null, va), mejorB = Math.min.apply(null, vb);
+    const peorA  = Math.max.apply(null, va), peorB  = Math.max.apply(null, vb);
+    let ga = 0, gb = 0;
+    if (mejorA < mejorB) ga += 2; else if (mejorB < mejorA) gb += 2;
+    if (peorA  < peorB)  ga += 1; else if (peorB  < peorA)  gb += 1;
+    pa += ga; pb += gb;
+    hoyos.push({ hoyo: h + 1, jugado: true, ga, gb, pa, pb });
+  }
+  // Recortar los hoyos no jugados del final (los del medio se dejan como "–")
+  while (hoyos.length && !hoyos[hoyos.length - 1].jugado) hoyos.pop();
+
+  const ajustados = {};
+  A.concat(B).forEach(n => {
+    ajustados[n] = det[n].hdc85 != null ? Math.max(0, det[n].hdc85 - mn) : null;
+  });
+
+  // Chequeo de consistencia: los nombres de A89/B89 tienen que cubrir EXACTO el
+  // roster de la pestaña (filas 45-48). Si alguien rearma el cuarto y se olvida de
+  // actualizar las parejas, el match se calcularía sobre gente equivocada en
+  // silencio. Preferimos gritarlo en pantalla.
+  const roster = Object.keys(det).filter(n => n !== "VACIO");
+  const enM = A.concat(B);
+  const faltan = roster.filter(n => enM.indexOf(n) === -1);
+  const sinHdc = enM.filter(n => det[n].hdc85 == null);
+  let aviso = null;
+  if (faltan.length) aviso = `En la pestaña juegan ${roster.length} (${roster.join(", ")}) pero el match solo nombra a ${enM.length}. Falta(n): ${faltan.join(", ")}. Revisá A89/B89.`;
+  else if (sinHdc.length) aviso = `Sin HDC 85% en la planilla: ${sinHdc.join(", ")}. El ajuste se calcula sin ellos.`;
+
+  return { A, B, hoyos, ptsA: pa, ptsB: pb, dif: pa - pb, min: mn, ajustados, aviso };
 }
 
 // ── RENDER: MATCHS ───────────────────────────────────────────
@@ -938,66 +1054,89 @@ function renderMatchs(data) {
   }
   el.innerHTML = CONFIG.CUARTOS.map(c => {
     const m = matchs[c.id];
-    // Skip cuartos sin jugadores asignados
     if (!m || (!m.a && !m.b)) return "";
-    const evo = m.evo || [];
-    const salidaM = (data.salidas && data.salidas[c.id]) || 1; // rotular celdas con el hoyo REAL
 
-    // Cuántos hoyos jugó realmente este cuarto (para no leer los ceros de los hoyos sin jugar)
-    const detalleM = (data.cuartosDetalle && data.cuartosDetalle[c.id]) || {};
-    const holesPlayedM = Object.values(detalleM).map(j => j && j.golpes ? j.golpes.filter(g => g != null).length : 0);
-    const jugadosM = holesPlayedM.length ? Math.max(...holesPlayedM) : 0;
-    // Recortar evo a los hoyos efectivamente jugados: el Sheet deja 0 en los no jugados,
-    // y tomar el último elemento del array (evo[17]) marcaba ALL SQUARE falso en cuartos en curso.
-    const evoJugado = jugadosM > 0 ? evo.slice(0, Math.min(jugadosM, evo.length)) : [];
+    const mc = calcularMatch(data, c.id);
+    if (!mc) {
+      return `
+      <div class="match-card">
+        <div class="match-card-hdr"><span class="match-cuarto-lbl">${c.nombre}</span></div>
+        <div class="match-teams">
+          <span class="match-team">${m.a || "–"}</span>
+          <span class="match-vs">vs</span>
+          <span class="match-team match-team-r">${m.b || "–"}</span>
+        </div>
+      </div>`;
+    }
 
-    // Resultado AUTORITATIVO de la planilla (celda A89 del cuarto):
-    //   m.a         = pareja que va ARRIBA (líder) — salvo empate
-    //   m.resultado = "NUP" (ej. "1UP") cuando hay líder, o "A/S" si empatan
-    // El front NO recalcula el ganador desde el signo de evo (eso invertía el
-    // equipo cuando la planilla ponía al líder en m.a): replica lo que ya
-    // resolvió la planilla.
-    const resultado = (m.resultado || "").toString().trim();
-    const esSquare  = !resultado || /^a\s*\/?\s*s$/i.test(resultado);
-    const decidido  = evoJugado.length > 0 && !esSquare;
-    const upCount   = parseInt((resultado.match(/(\d+)/) || [])[1], 10) || 0;
+    const jugados = mc.hoyos.filter(h => h.jugado).length;
+    const decidido = jugados > 0 && mc.dif !== 0;
+    const ganaA = mc.dif > 0;
+    const lider = ganaA ? mc.A.join(" ") : mc.B.join(" ");
 
-    let evoHtml = "";
+    const standingText = jugados === 0
+      ? `<span style="color:var(--text-muted)">SIN JUGAR</span>`
+      : decidido
+        ? `${lider} <span class="mh-lead">+${Math.abs(mc.dif)}</span>`
+        : `<span style="color:var(--text-muted)">EMPATADOS</span>`;
+    const standingCls = !decidido ? "mh-standing-even" : (ganaA ? "mh-standing-a" : "mh-standing-b");
 
-    if (evoJugado.length) {
-      let prev = 0;
-      const cells = evoJugado.map((e, i) => {
-        const delta = e - prev;
-        prev = e;
-        // evo baja (delta<0) en los hoyos que gana la pareja líder (m.a)
-        const cls = delta < 0 ? "mh-a" : delta > 0 ? "mh-b" : "mh-even";
-        const hReal = ((salidaM - 1 + i) % 18) + 1;
-        return `<div class="mh-cell ${cls}" title="H${hReal}">${hReal}</div>`;
+    // Cada jugador con SU hándicap de match (85% ya ajustado, el mejor del cuarto
+    // en 0). Va pegado al nombre para que se pueda auditar de dónde sale el neto.
+    const jug = n => `<span class="mj-chip">${n}<span class="mj-g">${mc.ajustados[n] != null ? mc.ajustados[n] : "–"}</span></span>`;
+    const lado = (arr, der) => `<div class="match-side${der ? " match-side-r" : ""}">
+            <div class="match-side-players">${arr.map(jug).join("")}</div>
+          </div>`;
+
+    let tabla = "";
+    if (mc.hoyos.length) {
+      const cell = (v, cls) => `<div class="mh-cell ${cls || ""}">${v}</div>`;
+      const fHoyo = mc.hoyos.map(h => cell(h.hoyo, "mh-hdr")).join("");
+      const fA = mc.hoyos.map(h => cell(h.jugado ? h.ga : "–", h.jugado && h.ga > h.gb ? "mh-a" : "mh-even")).join("");
+      const fB = mc.hoyos.map(h => cell(h.jugado ? h.gb : "–", h.jugado && h.gb > h.ga ? "mh-b" : "mh-even")).join("");
+      const fD = mc.hoyos.map(h => {
+        const d = h.pa - h.pb;
+        return cell(d === 0 ? "AS" : (d > 0 ? "+" : "−") + Math.abs(d), d > 0 ? "mh-a" : d < 0 ? "mh-b" : "mh-even");
       }).join("");
-
-      const standingText = decidido
-        ? `${m.a || "A"} <span class="mh-lead">${resultado}</span>`
-        : `<span style="color:var(--text-muted)">ALL SQUARE</span>`;
-      const standingCls = decidido ? "mh-standing-a" : "mh-standing-even";
-      evoHtml = `
-        <div class="match-standing ${standingCls}">${standingText}</div>
+      tabla = `
         <div class="match-evo-wrap">
-          <div class="match-evo-t">${cells}</div>
+          <div class="match-grid">
+            <div class="match-grid-lbls">
+              <div class="mh-lbl">HOYO</div>
+              <div class="mh-lbl mh-lbl-a">${mc.A.join("/")}</div>
+              <div class="mh-lbl mh-lbl-b">${mc.B.join("/")}</div>
+              <div class="mh-lbl">DIF</div>
+            </div>
+            <div class="match-grid-rows">
+              <div class="match-evo-t">${fHoyo}</div>
+              <div class="match-evo-t">${fA}</div>
+              <div class="match-evo-t">${fB}</div>
+              <div class="match-evo-t">${fD}</div>
+            </div>
+          </div>
         </div>`;
     }
 
-    const upBadge = decidido && upCount > 0 ? `<span class="match-up-badge">${upCount}UP</span>` : '';
     return `
       <div class="match-card">
         <div class="match-card-hdr">
           <span class="match-cuarto-lbl">${c.nombre}</span>
+          <span class="match-hdc-note">HDC 85% ajustado · el mejor a 0</span>
         </div>
         <div class="match-teams">
-          <span class="match-team${decidido ? ' match-team--win' : ''}">${m.a || "–"}${decidido ? upBadge : ''}</span>
+          <div class="match-col${decidido ? (ganaA ? ' match-team--win' : ' match-team--loss') : ''}">
+            ${lado(mc.A, false)}
+            <div class="match-pts">${mc.ptsA}<span class="match-pts-lbl">pts</span></div>
+          </div>
           <span class="match-vs">vs</span>
-          <span class="match-team match-team-r${decidido ? ' match-team--loss' : ''}">${m.b || "–"}</span>
+          <div class="match-col match-col-r${decidido ? (ganaA ? ' match-team--loss' : ' match-team--win') : ''}">
+            ${lado(mc.B, true)}
+            <div class="match-pts">${mc.ptsB}<span class="match-pts-lbl">pts</span></div>
+          </div>
         </div>
-        ${evoHtml}
+        <div class="match-standing ${standingCls}">${standingText}</div>
+        ${mc.aviso ? `<div class="match-aviso">⚠ ${mc.aviso}</div>` : ""}
+        ${tabla}
       </div>`;
   }).filter(Boolean).join("");
 }
