@@ -6,11 +6,23 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CCM & Epic">
-<meta name="theme-color" content="#0a0a0f">
+<meta name="theme-color" content="#f2efe4">
 <title>CCM & Epic Golf</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="css/style.css?v=17">
+<!-- Tema ANTES del CSS y del primer paint: si esto corriera en app.js
+     se vería un flash del tema equivocado al abrir la app. -->
+<script>
+(function () {
+  var t = null;
+  try { t = localStorage.getItem('ccm-theme'); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') t = 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  var m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.setAttribute('content', t === 'light' ? '#f2efe4' : '#0c1a0f');
+})();
+</script>
+<link rel="stylesheet" href="css/style.css?v=18">
 </head>
 <body>
 
@@ -36,6 +48,7 @@
 </div>
 <div class="header-right">
 <span id="live-badge" class="live-badge hidden">EN VIVO</span>
+<button class="icon-btn theme-btn" id="btn-theme" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
 <button class="icon-btn" id="btn-refresh" title="Actualizar">↻</button>
 </div>
 </header>
@@ -187,9 +200,9 @@
 </div>
 </div>
 
-<script src="js/config.js?v=17"></script>
-<script src="js/sheets.js?v=17"></script>
-<script src="js/app.js?v=17"></script>
+<script src="js/config.js?v=18"></script>
+<script src="js/sheets.js?v=18"></script>
+<script src="js/app.js?v=18"></script>
 <script>
 if ('serviceWorker' in navigator) {
 navigator.serviceWorker.register('sw.js');
