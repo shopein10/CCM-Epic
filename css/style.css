@@ -379,3 +379,32 @@ html, body {
 .ti-hdc { display: inline-flex; flex-direction: column; line-height: 1.2; }
 .ti-hdc-lbl { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
 .ti-hdc-val { font-family: 'DM Mono', monospace; font-size: 15px; color: var(--gold); }
+
+/* ── MATCHS: puntos por pareja + diferencia (front v17) ────────
+   Reemplaza a la fila 90 del Sheet. 2 pts mejor bola, 1 pt peor bola,
+   empate no suma, con HDC 85% ajustado (el mejor del cuarto baja a 0). */
+.match-hdc-note { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px; color: var(--text-muted); text-transform: uppercase; }
+.match-pts { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 700; color: var(--gold); }
+.match-golpes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.mj-chip { font-size: 10px; color: var(--text-muted); background: var(--bg-raised); border: 1px solid var(--border); border-radius: 3px; padding: 1px 6px; display: inline-flex; gap: 5px; align-items: center; }
+.mj-g { font-family: 'DM Mono', monospace; font-weight: 700; color: var(--gold-dim); }
+.match-grid { display: flex; gap: 8px; min-width: max-content; }
+.match-grid-lbls { display: flex; flex-direction: column; gap: 2px; position: sticky; left: 0; background: var(--bg-card); z-index: 1; padding-right: 4px; }
+.match-grid-rows { display: flex; flex-direction: column; gap: 2px; }
+.mh-lbl { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 0.5px; height: 20px; display: flex; align-items: center; justify-content: flex-end; color: var(--text-muted); text-transform: uppercase; white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+.mh-lbl-a { color: var(--green-bright); }
+.mh-lbl-b { color: var(--red-over); }
+.mh-hdr { background: transparent; color: var(--text-dim); font-weight: 600; }
+.match-aviso { font-size: 11px; line-height: 1.4; color: #f5a623; background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.35); border-radius: 4px; padding: 6px 8px; margin-bottom: 10px; }
+
+/* Parejas del match: jugadores + su HDC de match a cada lado, puntos al centro */
+.match-teams { align-items: flex-start; }
+.match-col { flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.match-col-r { flex-direction: row-reverse; }
+.match-side { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.match-side-r { align-items: flex-end; }
+.match-side-players { display: flex; flex-direction: column; gap: 3px; }
+.match-side-r .match-side-players { align-items: flex-end; }
+.match-col .match-pts { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+.match-pts-lbl { font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 400; letter-spacing: 1px; color: var(--text-muted); text-transform: uppercase; }
+.mj-chip { font-size: 12px; font-weight: 600; color: var(--cream); background: var(--bg-raised); border: 1px solid var(--border); border-radius: 3px; padding: 2px 7px; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
