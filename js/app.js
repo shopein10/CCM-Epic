@@ -98,7 +98,15 @@ const THEME_KEY = "ccm-theme";
 const THEME_COLOR = { light: "#f2efe4", dark: "#0c1a0f" };
 
 function aplicarTema(t) {
-  document.documentElement.setAttribute("data-theme", t);
+  // Chrome NO recalcula una transition cuyo valor sale de una variable CSS:
+  // .nav-item y .icon-btn tienen `transition: color` y se quedaban pintados
+  // con el color del tema anterior. Apagamos las transiciones durante el cambio.
+  const root = document.documentElement;
+  root.classList.add("theme-switching");
+  void root.offsetHeight;
+  root.setAttribute("data-theme", t);
+  void root.offsetHeight;
+  root.classList.remove("theme-switching");
   const btn = document.getElementById("btn-theme");
   if (btn) {
     // El ícono muestra a DÓNDE vas, no dónde estás
@@ -529,8 +537,8 @@ function buildScorecardHTML(cuartoConfig, detalle, evo, minMatch) {
 
   const th9  = Array.from({length:9}, (_, i) => `<th>${i+1}</th>`).join("");
   const th9b = Array.from({length:9}, (_, i) => `<th>${i+10}</th>`).join("");
-  const p9   = pars.slice(0,9).map(p => `<th style="color:var(--text-dim)">${p}</th>`).join("");
-  const p9b  = pars.slice(9).map(p  => `<th style="color:var(--text-dim)">${p}</th>`).join("");
+  const p9   = pars.slice(0,9).map(p => `<th style="color:var(--text-muted)">${p}</th>`).join("");
+  const p9b  = pars.slice(9).map(p  => `<th style="color:var(--text-muted)">${p}</th>`).join("");
 
   // Fila de evolución del cuarto (fila 50 del sheet) — se usa como desempate.
   // Viene del backend ya indexada por hoyo REAL 1..18, así que cae alineada con las columnas.
@@ -564,12 +572,12 @@ function buildScorecardHTML(cuartoConfig, detalle, evo, minMatch) {
         <tr>
           <th style="text-align:left;color:var(--copper)">Par</th>
           ${p9}
-          <th style="color:var(--text-dim);font-weight:600">${parOut}</th>
+          <th style="color:var(--text-muted);font-weight:600">${parOut}</th>
           ${p9b}
-          <th style="color:var(--text-dim);font-weight:600">${parIn}</th>
-          <th style="color:var(--text-dim);font-weight:700">${CONFIG.PAR_TOTAL}</th>
+          <th style="color:var(--text-muted);font-weight:600">${parIn}</th>
+          <th style="color:var(--text-muted);font-weight:700">${CONFIG.PAR_TOTAL}</th>
           <th></th>
-          <th style="color:var(--text-dim)">${CONFIG.PAR_TOTAL}</th>
+          <th style="color:var(--text-muted)">${CONFIG.PAR_TOTAL}</th>
         </tr>
       </thead>
       <tbody>${filas}${filaEvo}</tbody>
@@ -674,7 +682,7 @@ function buildInputsGolpes() {
       const par = CONFIG.PAR_HOYOS[h - 1];
       return `
         <div class="hoyo-input-wrap">
-          <label>H${h} <span style="color:var(--text-dim)">(P${par})</span></label>
+          <label>H${h} <span style="color:var(--text-muted)">(P${par})</span></label>
           <input type="number" min="1" max="12" inputmode="numeric"
                  data-jugador="${jugador}" data-hoyo="${h}"
                  placeholder="${par}"
