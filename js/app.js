@@ -28,6 +28,7 @@ async function initApp() {
   setupTabs();
   setupForm();
   setupRefresh();
+  setupTema();
   setupTarjetaModal();
 
   await loadAndRender(true);
@@ -87,6 +88,35 @@ function setupTabs() {
       document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tabId));
       document.querySelectorAll(".tab-content").forEach(c => c.classList.toggle("active", c.id === `tab-${tabId}`));
     });
+  });
+}
+
+// ── Tema claro / oscuro ──────────────────────────────────────
+// El tema se aplica en un <script> inline del <head> ANTES del primer paint
+// (si se hiciera acá se vería un flash oscuro al abrir). Acá solo el toggle.
+const THEME_KEY = "ccm-theme";
+const THEME_COLOR = { light: "#f2efe4", dark: "#0c1a0f" };
+
+function aplicarTema(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  const btn = document.getElementById("btn-theme");
+  if (btn) {
+    // El ícono muestra a DÓNDE vas, no dónde estás
+    btn.textContent = t === "light" ? "🌙" : "☀️";
+    btn.title = t === "light" ? "Modo oscuro" : "Modo claro";
+  }
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", THEME_COLOR[t] || THEME_COLOR.light);
+  try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+}
+
+function setupTema() {
+  const btn = document.getElementById("btn-theme");
+  if (!btn) return;
+  aplicarTema(document.documentElement.getAttribute("data-theme") || "light");
+  btn.addEventListener("click", () => {
+    const actual = document.documentElement.getAttribute("data-theme");
+    aplicarTema(actual === "light" ? "dark" : "light");
   });
 }
 
