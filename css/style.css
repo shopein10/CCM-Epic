@@ -511,3 +511,7 @@ html, body {
 /* El doble bogey en claro: el rojo normal sobre el rosa fuerte da 4.05:1
    (bajo el mínimo AA). Con este rojo más profundo sube a 5.7:1. */
 [data-theme="light"] .csr-hole.cell-double { color: #8c1a13; }
+
+/* Ver aplicarTema() en app.js: sin esto, los elementos con `transition: color`
+   (nav de abajo, iconos del header) quedan con el color del tema anterior. */
+.theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }
