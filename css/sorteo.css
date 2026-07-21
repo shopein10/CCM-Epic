@@ -1,0 +1,251 @@
+/* ============================================================
+   CCM & Epic — SORTEO DE CUARTOS
+   ============================================================
+   Módulo aparte. Todo el color sale de las variables de style.css:
+   no hay un solo hex acá, así que el tema claro y el oscuro salen
+   correctos sin mantener dos paletas.
+
+   Recordatorios de style.css:
+     --gold       → dorado de TEXTO y bordes
+     --gold-fill  → FONDO de botones dorados (nunca --gold)
+     --on-gold    → texto SOBRE --gold-fill
+     --text-dim   → DECORATIVO (bordes). Nunca para texto legible.
+     --text-muted → texto secundario legible
+   ============================================================ */
+
+/* El nav pasó de 5 a 6 botones: sin esto, en pantallas angostas
+   los labels se cortan. */
+.bottom-nav .nav-item { min-width: 0; }
+.bottom-nav .nav-item > span:not(.nav-icon) {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+#sorteo-body { padding-bottom: 24px; }
+
+/* ── Encabezado ──────────────────────────────────────────── */
+
+.srt-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.srt-count {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.srt-count.srt-ok { color: var(--gold); }
+
+.srt-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.srt-hint.srt-ok   { color: var(--gold); font-weight: 600; }
+.srt-hint.srt-warn { color: var(--red-over); font-weight: 600; }
+
+/* ── Grilla del padrón ───────────────────────────────────── */
+
+.srt-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 18px;
+}
+
+.srt-chip {
+  font: inherit;
+  font-size: 13px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--text-dim);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: none;
+}
+
+.srt-chip-on {
+  background: var(--gold-fill);
+  border-color: var(--gold-fill);
+  color: var(--on-gold);
+  font-weight: 700;
+}
+
+/* ── Tarjetas de cuarto ──────────────────────────────────── */
+
+.srt-cuarto {
+  background: var(--bg-card);
+  border: 1px solid var(--text-dim);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.srt-cuarto-tit {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 9px;
+}
+
+.srt-parejas {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.srt-pareja {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.srt-jug {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.srt-vs {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  flex: 0 0 auto;
+}
+
+/* ── Botones ─────────────────────────────────────────────── */
+
+.srt-acciones {
+  display: flex;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.srt-btn {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--gold-fill);
+  background: var(--gold-fill);
+  color: var(--on-gold);
+  cursor: pointer;
+  flex: 1;
+}
+
+.srt-btn:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.srt-btn-ghost {
+  background: transparent;
+  border-color: var(--text-dim);
+  color: var(--text-muted);
+}
+
+.srt-btn-primary { flex: 2; }
+
+/* El volcado escribe en la planilla del torneo: va solo, ancho completo y
+   separado del resto, para que nadie lo apriete de pasada. */
+.srt-btn-vol {
+  width: 100%;
+  margin-top: 20px;
+  background: transparent;
+  border: 2px solid var(--gold-fill);
+  color: var(--gold);
+}
+
+.srt-nota {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 7px;
+}
+
+.srt-link {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 8px;
+  background: none;
+  border: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ── Mensajes ────────────────────────────────────────────── */
+
+.srt-msg {
+  padding: 26px 14px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.srt-error { color: var(--red-over); }
+
+.srt-banner {
+  padding: 10px 13px;
+  border-radius: 9px;
+  font-size: 13px;
+  line-height: 1.45;
+  margin-bottom: 12px;
+  border: 1px solid var(--text-dim);
+  color: var(--text-muted);
+}
+
+.srt-banner-ok {
+  border-color: var(--gold-fill);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.srt-banner-warn {
+  border-color: var(--gold-fill);
+  color: var(--text-primary);
+  margin-top: 20px;
+}
+
+/* Ya sorteados esta semana: se muestran apagados y sin data-nombre, así el
+   handler de chips no los engancha y no se pueden volver a tildar. */
+.srt-chip-off {
+  display: inline-block;
+  opacity: .5;
+  cursor: default;
+  border-style: dashed;
+}
+
+.srt-chip-off small {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.srt-sub {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 4px 0 7px;
+}
