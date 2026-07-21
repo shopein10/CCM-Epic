@@ -528,7 +528,7 @@
   function htmlPieJornada() {
     var viejos = cuantosViejos();
     if (!viejos) return "";
-    return '<p class="dsf-pie">Se muestra solo la jornada del ' + esc(jornadaLbl()) +
+    return '<p class="dsf-pie">Se muestra solo la jornada vigente · ' + esc(jornadaLbl()) +
            '. Hay ' + viejos + (viejos === 1 ? " desafío" : " desafíos") +
            ' de jornadas anteriores, guardados pero fuera de juego.</p>';
   }
