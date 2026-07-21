@@ -23,6 +23,7 @@
 })();
 </script>
 <link rel="stylesheet" href="css/style.css?v=21">
+<link rel="stylesheet" href="css/desafios.css?v=1">
 </head>
 <body>
 
@@ -71,9 +72,11 @@
 <span class="nav-icon">⚔️</span>
 <span>Matchs</span>
 </button>
-<button class="nav-item" data-view="historial">
-<span class="nav-icon">📅</span>
-<span>Historial</span>
+<!-- Historial queda en el código pero fuera del nav (no se activó nunca).
+     Su <section id="view-historial"> sigue abajo, intacta. -->
+<button class="nav-item" data-view="desafios">
+<span class="nav-icon">🔥</span>
+<span>Desafíos</span>
 </button>
 </nav>
 
@@ -181,6 +184,14 @@
 <div id="matchs-list" class="matchs-list"></div>
 </section>
 
+<!-- DESAFÍOS — todo el contenido lo pinta js/desafios.js -->
+<section id="view-desafios" class="view">
+<div class="view-header">
+<h2>Desafíos</h2>
+</div>
+<div id="desafios-body"></div>
+</section>
+
 <!-- HISTORIAL -->
 <section id="view-historial" class="view">
 <div class="view-header">
@@ -203,6 +214,8 @@
 <script src="js/config.js?v=21"></script>
 <script src="js/sheets.js?v=21"></script>
 <script src="js/app.js?v=21"></script>
+<!-- Módulo aparte. Si falla o no carga, el torneo sigue andando igual. -->
+<script src="js/desafios.js?v=1"></script>
 <script>
 if ('serviceWorker' in navigator) {
 navigator.serviceWorker.register('sw.js');
