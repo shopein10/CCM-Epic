@@ -247,7 +247,7 @@
     h += '<div class="srt-acciones">' +
          '<button class="srt-btn srt-btn-ghost" id="srt-limpiar">Destildar</button>' +
          '<button class="srt-btn srt-btn-primary" id="srt-sortear"' + (ok ? "" : " disabled") +
-         ">Sortear ⚄</button></div>";
+         ">Sortear 🎲</button></div>";
 
     if (cantCuartos()) {
       h += '<button class="srt-link" id="srt-ver-ultimo">← Ver los cuartos de la semana</button>';
@@ -264,7 +264,7 @@
 
     var h = '<div class="srt-head">' +
             '<span class="srt-count">' + S.cuartos.length + " cuartos</span>" +
-            '<span class="srt-hint">Semana del ' + esc(S.semana || "") +
+            '<span class="srt-hint">Semana del ' + esc(semanaLbl()) +
             (S.tandas.length > 1 ? " · " + S.tandas.length + " tandas" : "") + "</span></div>";
 
     if (volcadoTodo) {
@@ -307,6 +307,14 @@
            (ult.cuartos > 1 ? "s" : "") + ")</button>";
     }
     return h;
+  }
+
+  /** El backend guarda la semana como "S2026-07-20"; la S es para que Sheets
+      no la convierta en fecha. No tiene por qué verla el usuario. */
+  function semanaLbl() {
+    var s = String(S.semana || "").replace(/^S/, "");
+    var m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? (m[3] + "/" + m[2]) : s;
   }
 
   function jugadoresHtml(arr) {
@@ -374,7 +382,7 @@
     } finally {
       // Siempre se re-habilita, pase lo que pase: el bug del botón "Enviando…"
       // tildado para siempre vino justo de no hacer esto.
-      if (btn) { btn.disabled = false; btn.textContent = "Sortear ⚄"; }
+      if (btn) { btn.disabled = false; btn.textContent = "Sortear 🎲"; }
       pintar();
     }
   }
