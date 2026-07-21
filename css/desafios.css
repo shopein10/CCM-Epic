@@ -1,0 +1,313 @@
+/* ============================================================
+   CCM & Epic — DESAFÍOS
+   ============================================================
+   Archivo aparte: no toca una sola línea de style.css.
+
+   ⚠ REGLA DEL PROYECTO: acá NO hay un solo hex hardcodeado. Todo sale de las
+   variables que style.css ya define en :root (oscuro) y en [data-theme="light"]
+   (claro), así el tema claro funciona sin agregar nada.
+
+   Recordatorios de esas reglas:
+   - fondo de botón dorado  → --gold-fill  (NUNCA --gold, queda marrón en claro)
+   - texto sobre ese fondo  → --on-gold
+   - texto secundario legible → --text-muted (NUNCA --text-dim, da 2.2:1)
+   ============================================================ */
+
+#view-desafios { padding-bottom: 24px; }
+
+/* ── Header con tabs propias ──────────────────────────────── */
+/* Clases dsf-tab, NO .tab: app.js engancha todos los .tab del documento y
+   clickear acá apagaría las tabs del leaderboard. */
+.dsf-hdr {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 14px;
+}
+.dsf-tabs {
+  flex: 1; display: flex; gap: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+}
+.dsf-tab {
+  flex: 1;
+  background: transparent; border: none;
+  color: var(--text-muted);
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  padding: 8px 4px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.dsf-tab.active { background: var(--bg-raised); color: var(--gold); }
+
+.dsf-yo {
+  flex: none;
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 12px;
+  padding: 9px 11px;
+  cursor: pointer;
+}
+.dsf-yo-neto { font-weight: 600; color: var(--text-muted); }
+.dsf-yo-neto.pos { color: var(--green-bright); }
+.dsf-yo-neto.neg { color: var(--red-over); }
+
+/* ── Secciones ────────────────────────────────────────────── */
+.dsf-sec {
+  font-size: 11px; letter-spacing: .07em;
+  color: var(--gold-dim);
+  margin: 18px 0 7px;
+}
+
+/* ── Tarjetas ─────────────────────────────────────────────── */
+.dsf-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.dsf-card--muerta { opacity: .62; }
+
+.dsf-card-top {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+}
+.dsf-card-txt { min-width: 0; }
+.dsf-card-t {
+  font-size: 14px; font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.35;
+}
+.dsf-card-s {
+  font-size: 12px; color: var(--text-muted);
+  margin-top: 3px;
+}
+.dsf-dim { color: var(--text-muted); font-weight: 400; }
+
+.dsf-pel {
+  flex: none; text-align: right;
+  font-size: 17px; font-weight: 600;
+  color: var(--gold);
+  line-height: 1;
+}
+.dsf-pel span {
+  display: block;
+  font-size: 10px; font-weight: 400;
+  color: var(--gold-dim);
+  margin-top: 3px;
+}
+
+.dsf-falta {
+  font-size: 11px;
+  color: var(--warn);
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-bd);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  margin-top: 9px;
+}
+.dsf-cerrado {
+  font-size: 11px; color: var(--text-muted);
+  margin-top: 9px;
+}
+
+.dsf-tag {
+  flex: none;
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.dsf-tag--no { color: var(--red-over); }
+
+/* ── Botones ──────────────────────────────────────────────── */
+.dsf-btn {
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.dsf-btn:disabled { opacity: .55; cursor: default; }
+.dsf-btn-full { width: 100%; display: block; }
+.dsf-btn-oro   { background: var(--gold-fill); color: var(--on-gold); border-color: var(--gold-fill); }
+.dsf-btn-line  { background: transparent; color: var(--gold); border-color: var(--gold); }
+.dsf-btn-gris  { background: transparent; color: var(--text-muted); border-color: var(--border); }
+.dsf-acciones { display: flex; gap: 6px; margin-top: 10px; }
+.dsf-acciones .dsf-btn { flex: 1; }
+#dsf-nuevo { margin-bottom: 4px; padding: 12px; font-size: 14px; }
+
+/* ── Solapa En juego ──────────────────────────────────────── */
+.dsf-vs {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+  align-items: center; gap: 8px;
+  margin: 11px 0 4px;
+}
+.dsf-lado { text-align: center; min-width: 0; }
+.dsf-lado-n {
+  font-size: 14px; font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+.dsf-lado-v {
+  font-size: 20px; font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 3px;
+  font-family: 'DM Mono', monospace;
+}
+.dsf-lado-h { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.dsf-lado--gana .dsf-lado-v { color: var(--green-bright); }
+.dsf-lado--pierde .dsf-lado-n,
+.dsf-lado--pierde .dsf-lado-v { color: var(--text-muted); }
+.dsf-vs-lbl { font-size: 11px; color: var(--text-muted); }
+
+.dsf-st {
+  text-align: center;
+  font-size: 12px; font-weight: 500;
+  padding: 7px;
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+}
+.dsf-st--vivo { background: var(--bg-raised); color: var(--text-muted); }
+.dsf-st--fin  { background: var(--green-under); color: var(--green-bright); }
+.dsf-st--emp  { background: var(--bg-raised); color: var(--gold); }
+
+/* ── Cuenta del día ───────────────────────────────────────── */
+.dsf-cuenta {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 13px;
+  margin-top: 18px;
+}
+.dsf-cuenta-t {
+  font-size: 11px; letter-spacing: .07em;
+  color: var(--gold-dim);
+  margin-bottom: 9px;
+}
+.dsf-cuenta-r {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: var(--text-muted);
+  padding: 4px 0;
+}
+.dsf-cuenta-r .pos { color: var(--green-bright); font-weight: 500; }
+.dsf-cuenta-r .neg { color: var(--red-over); font-weight: 500; }
+.dsf-cuenta-neto {
+  display: flex; justify-content: space-between; align-items: baseline;
+  border-top: 1px solid var(--border);
+  margin-top: 7px; padding-top: 10px;
+  font-size: 14px; color: var(--text-primary);
+}
+.dsf-cuenta-neto span:last-child {
+  font-size: 18px; font-weight: 600; color: var(--gold);
+}
+
+/* ── Login ────────────────────────────────────────────────── */
+.dsf-login {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 15px;
+  margin-top: 8px;
+}
+.dsf-login-t { font-size: 17px; font-weight: 600; color: var(--text-primary); }
+.dsf-login-s { font-size: 12px; color: var(--text-muted); margin: 7px 0 14px; line-height: 1.55; }
+.dsf-login-err, .dsf-form-err {
+  font-size: 12px; color: var(--red-over); margin-top: 9px; min-height: 16px;
+}
+
+/* ── Form ─────────────────────────────────────────────────── */
+.dsf-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 15px;
+}
+.dsf-form-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.dsf-form-t { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+.dsf-x {
+  background: transparent; border: none;
+  color: var(--text-muted); font-size: 17px;
+  cursor: pointer; padding: 2px 6px;
+}
+.dsf-lbl {
+  display: block;
+  font-size: 11px; letter-spacing: .05em;
+  color: var(--gold-dim);
+  margin: 14px 0 6px;
+}
+.dsf-input {
+  width: 100%;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: inherit; font-size: 14px;
+  padding: 10px;
+  margin-bottom: 8px;
+  -webkit-appearance: none; appearance: none;
+}
+.dsf-nota {
+  font-size: 11px; color: var(--text-muted);
+  line-height: 1.5; margin: 6px 0 2px;
+}
+
+.dsf-seg { display: flex; gap: 5px; }
+.dsf-seg-b {
+  flex: 1;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: inherit; font-size: 13px;
+  padding: 9px 4px;
+  cursor: pointer;
+}
+.dsf-seg-b.active {
+  background: var(--gold-fill);
+  color: var(--on-gold);
+  border-color: var(--gold-fill);
+  font-weight: 500;
+}
+
+.dsf-pelotas {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+}
+.dsf-pel-b {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: 'DM Mono', monospace; font-size: 14px;
+  padding: 10px 0;
+  cursor: pointer;
+}
+.dsf-pel-b.active {
+  background: var(--gold-fill);
+  color: var(--on-gold);
+  border-color: var(--gold-fill);
+  font-weight: 500;
+}
+#dsf-enviar { margin-top: 16px; padding: 12px; font-size: 14px; }
+
+/* ── Vacío / error ────────────────────────────────────────── */
+.dsf-empty {
+  text-align: center;
+  font-size: 13px; color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 22px 14px;
+  line-height: 1.6;
+}
+.dsf-empty--err { color: var(--red-over); border-color: var(--red-over); }
+.dsf-empty--err span { display: block; color: var(--text-muted); font-size: 12px; margin: 6px 0 12px; }
+.dsf-empty--err .dsf-btn { margin: 0 auto; }
