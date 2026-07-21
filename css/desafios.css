@@ -298,6 +298,15 @@
 }
 #dsf-enviar { margin-top: 16px; padding: 12px; font-size: 14px; }
 
+/* ── Pie de jornada ───────────────────────────────────────── */
+.dsf-pie {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  text-align: center;
+  margin: 18px 4px 0;
+}
+
 /* ── Vacío / error ────────────────────────────────────────── */
 .dsf-empty {
   text-align: center;
