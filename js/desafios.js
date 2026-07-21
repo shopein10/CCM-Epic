@@ -197,6 +197,63 @@
   }
 
   // ══════════════════════════════════════════════════════════
+  // Jornada — qué desafíos están vigentes
+  // ══════════════════════════════════════════════════════════
+  //
+  // La liquidación NO guarda el resultado: lo calcula en vivo contra los scores
+  // que hay AHORA en la planilla del torneo. Si dejáramos ver los desafíos de la
+  // semana pasada, al limpiar los scores para la vuelta nueva se re-liquidarían
+  // contra datos que no son los suyos y darían cualquier cosa.
+  //
+  // Por eso solo se muestra y se liquida la JORNADA VIGENTE: el día calendario
+  // del desafío más reciente. Los anteriores quedan guardados en la planilla,
+  // pero la app no los toca. La jornada avanza sola: el primero que cuelga un
+  // desafío un día nuevo, mueve la jornada a ese día.
+
+  /** "2026-07-21" en hora local (la del teléfono, o sea Argentina). */
+  function jornadaDe(ts) {
+    if (!ts) return null;
+    var d = new Date(ts);
+    if (isNaN(d.getTime())) return null;
+    return d.getFullYear() + "-" +
+           String(d.getMonth() + 1).padStart(2, "0") + "-" +
+           String(d.getDate()).padStart(2, "0");
+  }
+
+  function jornadaVigente() {
+    var ds = (S.data && S.data.desafios) || [];
+    var max = null;
+    for (var i = 0; i < ds.length; i++) {
+      var j = jornadaDe(ds[i].ts);
+      if (j && (max === null || j > max)) max = j;   // ISO ordena como string
+    }
+    return max || jornadaDe(Date.now());
+  }
+
+  /** Los de la jornada vigente. Uno sin fecha se considera vigente (fail-open). */
+  function desafiosVigentes() {
+    var hoy = jornadaVigente();
+    return ((S.data && S.data.desafios) || []).filter(function (d) {
+      var j = jornadaDe(d.ts);
+      return j === null || j === hoy;
+    });
+  }
+
+  function cuantosViejos() {
+    var total = ((S.data && S.data.desafios) || []).length;
+    return total - desafiosVigentes().length;
+  }
+
+  function jornadaLbl() {
+    var j = jornadaVigente();
+    if (!j) return "";
+    var p = j.split("-");
+    var hoy = jornadaDe(Date.now());
+    if (j === hoy) return "hoy";
+    return p[2] + "/" + p[1];
+  }
+
+  // ══════════════════════════════════════════════════════════
   // Liquidación — se calcula acá, con los scores que ya tiene la app
   // ══════════════════════════════════════════════════════════
   //
@@ -281,7 +338,7 @@
     var res = { ganadas: 0, perdidas: 0, pendientes: 0, filas: [] };
     if (!yo || !S.data) return res;
 
-    S.data.desafios.forEach(function (d) {
+    desafiosVigentes().forEach(function (d) {
       if (d.estado !== "aceptado") return;
       var enA = d.equipoA.indexOf(yo) !== -1;
       var enB = d.equipoB.indexOf(yo) !== -1;
@@ -431,7 +488,7 @@
 
   // ── Solapa 1: Desafíos ───────────────────────────────────
   function htmlSolapaDesafios() {
-    var ds = (S.data && S.data.desafios) || [];
+    var ds = desafiosVigentes();
     var yo = S.yo.nombre;
 
     var meTocan = ds.filter(function (d) {
@@ -464,7 +521,16 @@
       h += seccion("SE CAYERON", cerrados.map(function (d) { return tarjetaMuerta(d); }).join(""));
     }
 
+    h += htmlPieJornada();
     return h;
+  }
+
+  function htmlPieJornada() {
+    var viejos = cuantosViejos();
+    if (!viejos) return "";
+    return '<p class="dsf-pie">Se muestra solo la jornada del ' + esc(jornadaLbl()) +
+           '. Hay ' + viejos + (viejos === 1 ? " desafío" : " desafíos") +
+           ' de jornadas anteriores, guardados pero fuera de juego.</p>';
   }
 
   function seccion(titulo, contenido) {
@@ -491,7 +557,11 @@
       ? esc(nombresLbl(d.equipoA)) + ' <span class="dsf-dim">le tira a cualquiera</span>'
       : esc(nombresLbl(d.equipoA)) + ' <span class="dsf-dim">vs</span> ' + esc(nombresLbl(d.equipoB));
 
-    var falta = d.requeridos.filter(function (n) { return d.confirmados.indexOf(n) === -1; });
+    // Los que faltan confirmar, SIN contarme a mí: si me toca a mí, ya lo dicen
+    // los botones de Acepto/Paso. Nombrarme en el cartel es ruido.
+    var falta = d.requeridos.filter(function (n) {
+      return n !== yo && d.confirmados.indexOf(n) === -1;
+    });
 
     var acciones = "";
     if (cerrado) {
@@ -539,7 +609,7 @@
 
   // ── Solapa 2: En juego ───────────────────────────────────
   function htmlSolapaEnJuego() {
-    var ds = ((S.data && S.data.desafios) || []).filter(function (d) { return d.estado === "aceptado"; });
+    var ds = desafiosVigentes().filter(function (d) { return d.estado === "aceptado"; });
 
     if (!ds.length) {
       return '<div class="dsf-empty">Todavía no hay ningún desafío cerrado. Andá a la otra solapa y tirá uno.</div>';
@@ -552,6 +622,7 @@
     if (mios.length) h += seccion("LOS TUYOS", mios.map(tarjetaJuego).join(""));
     if (otros.length) h += seccion("EL RESTO DE LA MESA", otros.map(tarjetaJuego).join(""));
     h += htmlCuenta();
+    h += htmlPieJornada();
     return h;
   }
 
@@ -599,9 +670,12 @@
     var neto = c.ganadas - c.perdidas;
     return '' +
       '<div class="dsf-cuenta">' +
-        '<p class="dsf-cuenta-t">TU CUENTA DEL DÍA</p>' +
-        '<div class="dsf-cuenta-r"><span>Te deben</span><span class="pos">+' + c.ganadas + '</span></div>' +
-        '<div class="dsf-cuenta-r"><span>Debés</span><span class="neg">−' + c.perdidas + '</span></div>' +
+        '<p class="dsf-cuenta-t">TU CUENTA DE LA JORNADA · ' + esc(jornadaLbl()) + '</p>' +
+        // El signo solo si hay algo: "−0" queda horrible.
+        '<div class="dsf-cuenta-r"><span>Te deben</span><span class="pos">' +
+          (c.ganadas ? "+" + c.ganadas : "0") + '</span></div>' +
+        '<div class="dsf-cuenta-r"><span>Debés</span><span class="neg">' +
+          (c.perdidas ? "−" + c.perdidas : "0") + '</span></div>' +
         (c.pendientes ? '<div class="dsf-cuenta-r"><span>En juego</span><span>' + c.pendientes + '</span></div>' : "") +
         '<div class="dsf-cuenta-neto"><span>Neto</span><span>' +
           (neto > 0 ? "+" : "") + neto + " " + (Math.abs(neto) === 1 ? "pelota" : "pelotas") +
@@ -866,6 +940,13 @@
   window.Desafios = {
     cargar: cargar,
     estado: S,
-    _test: { liquidar: liquidar, cuentaDelDia: cuentaDelDia, hoyosJugados: hoyosJugados },
+    _test: {
+      liquidar: liquidar,
+      cuentaDelDia: cuentaDelDia,
+      hoyosJugados: hoyosJugados,
+      jornadaDe: jornadaDe,
+      jornadaVigente: jornadaVigente,
+      desafiosVigentes: desafiosVigentes,
+    },
   };
 })();
