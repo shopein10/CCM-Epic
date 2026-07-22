@@ -1016,10 +1016,27 @@ async function mostrarTarjetaCuarto(cuartoId) {
 function calcularMatch(data, cuartoId) {
   const det = (data && data.cuartosDetalle && data.cuartosDetalle[cuartoId]) || null;
   const m   = (data && data.matchsData    && data.matchsData[cuartoId])    || null;
-  if (!det || !m || !m.a || !m.b) return null;
+  if (!det) return null;
 
   const split = t => String(t).trim().split(/\s+/).filter(n => det[n]);
-  const A = split(m.a), B = split(m.b);
+  let A = (m && m.a) ? split(m.a) : [];
+  let B = (m && m.b) ? split(m.b) : [];
+
+  // Las parejas del sheet (A89/B89) recién se llenan cuando arranca la vuelta.
+  // Antes de eso vienen null y el match no se podía mostrar. Las derivamos del
+  // ORDEN del roster —los dos primeros contra los dos últimos, misma regla que el
+  // sorteo (filas 45-48)— así el match se ve con los HDC ya ajustados a cero
+  // aunque no haya un solo golpe cargado. Cuando el sheet cargue las parejas
+  // reales, esas mandan (no se deriva).
+  let derivado = false;
+  if (!A.length || !B.length) {
+    const roster = Object.keys(det).filter(n => n !== "VACIO");
+    if (roster.length < 2) return null;
+    const mitad = Math.ceil(roster.length / 2);
+    A = roster.slice(0, mitad);
+    B = roster.slice(mitad);
+    derivado = true;
+  }
   if (!A.length || !B.length) return null;
 
   // El mínimo se toma sobre los 4 que EFECTIVAMENTE juegan el match (A ∪ B),
@@ -1075,37 +1092,33 @@ function calcularMatch(data, cuartoId) {
   const faltan = roster.filter(n => enM.indexOf(n) === -1);
   const sinHdc = enM.filter(n => det[n].hdc85 == null);
   let aviso = null;
-  if (faltan.length) aviso = `En la pestaña juegan ${roster.length} (${roster.join(", ")}) pero el match solo nombra a ${enM.length}. Falta(n): ${faltan.join(", ")}. Revisá A89/B89.`;
+  // Si derivamos las parejas del roster, A∪B cubre exacto y no hay falso "faltan".
+  if (!derivado && faltan.length) aviso = `En la pestaña juegan ${roster.length} (${roster.join(", ")}) pero el match solo nombra a ${enM.length}. Falta(n): ${faltan.join(", ")}. Revisá A89/B89.`;
   else if (sinHdc.length) aviso = `Sin HDC 85% en la planilla: ${sinHdc.join(", ")}. El ajuste se calcula sin ellos.`;
 
-  return { A, B, hoyos, ptsA: pa, ptsB: pb, dif: pa - pb, min: mn, ajustados, aviso };
+  return { A, B, hoyos, ptsA: pa, ptsB: pb, dif: pa - pb, min: mn, ajustados, aviso, derivado };
 }
 
 // ── RENDER: MATCHS ───────────────────────────────────────────
 function renderMatchs(data) {
   const el = document.getElementById("matchs-list");
   if (!el) return;
-  const matchs = data.matchsData;
-  if (!matchs || !Object.keys(matchs).length) {
+  const cd = data.cuartosDetalle || {};
+  // Se muestra un match por cada cuarto que tenga jugadores en la planilla, aunque
+  // no haya scores ni parejas cargadas todavía (calcularMatch deriva las parejas).
+  const hayAlguno = CONFIG.CUARTOS.some(c =>
+    cd[c.id] && Object.keys(cd[c.id]).filter(n => n !== "VACIO").length);
+  if (!hayAlguno) {
     el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚔️</div><p>Los datos de match aparecen acá durante el torneo</p></div>`;
     return;
   }
   el.innerHTML = CONFIG.CUARTOS.map(c => {
-    const m = matchs[c.id];
-    if (!m || (!m.a && !m.b)) return "";
+    const det = cd[c.id];
+    const roster = det ? Object.keys(det).filter(n => n !== "VACIO") : [];
+    if (!roster.length) return "";   // cuarto vacío → no se muestra
 
     const mc = calcularMatch(data, c.id);
-    if (!mc) {
-      return `
-      <div class="match-card">
-        <div class="match-card-hdr"><span class="match-cuarto-lbl">${c.nombre}</span></div>
-        <div class="match-teams">
-          <span class="match-team">${m.a || "–"}</span>
-          <span class="match-vs">vs</span>
-          <span class="match-team match-team-r">${m.b || "–"}</span>
-        </div>
-      </div>`;
-    }
+    if (!mc) return "";
 
     const jugados = mc.hoyos.filter(h => h.jugado).length;
     const decidido = jugados > 0 && mc.dif !== 0;
@@ -1159,7 +1172,7 @@ function renderMatchs(data) {
       <div class="match-card">
         <div class="match-card-hdr">
           <span class="match-cuarto-lbl">${c.nombre}</span>
-          <span class="match-hdc-note">HDC 85% ajustado · el mejor a 0</span>
+          <span class="match-hdc-note">HDC 85% ajustado · el mejor a 0${mc.derivado ? " · parejas por orden de salida" : ""}</span>
         </div>
         <div class="match-teams">
           <div class="match-col${decidido ? (ganaA ? ' match-team--win' : ' match-team--loss') : ''}">
