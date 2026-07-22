@@ -458,32 +458,29 @@ function findCuartoDeJugador(data, nombre) {
 
 // El 85% viene calculado sobre el index en la planilla (B10/B19/B28/B37);
 // no lo derivamos acá, lo recibimos en hdc85 desde el getAll.
+// base  = golpes al 85% CRUDO (con "+" ámbar si el jugador es plus, hdc85 < 0).
+// match = golpes al 85% AJUSTADO (el mejor del cuarto a 0): max(0, hdc85 - min).
 // minMatch = min(hdc85) del cuarto; si no se pasa, no se ajusta (0).
-function computeReparto(hdc, hdc85, minMatch) {
+function computeReparto(hdc85, minMatch) {
   const mn = minMatch || 0;
   const ajust = hdc85 == null ? null : Math.max(0, hdc85 - mn);
-  return { juego: repartirGolpes(hdc), match: repartirGolpes(ajust) };
+  return { base: repartirGolpes(hdc85), match: repartirGolpes(ajust) };
 }
 
-// Puntitos de hándicap en la esquina de la celda.
-// verde = golpe al 100% (juego); verde con aro rojo = golpe también al 85% (match);
-// doble golpe = 2 puntos; hándicap negativo = "+" ámbar (devuelve golpe).
-function repartoDots(j, m) {
-  if (!j && !m) return "";
+// Puntitos de hándicap en la esquina de la celda. DOS marcas INDEPENDIENTES:
+//   • verde (rep-juego) = golpe al 85% CRUDO (b). Si b < 0 (jugador plus) → "+" ámbar (devuelve golpe).
+//   • azul  (rep-match) = golpe en el MATCH (m, 85% ajustado con el mejor del cuarto a 0).
+// Un hoyo puede tener las dos → se ven dos puntos distintos, uno de cada color.
+function repartoDots(b, m) {
+  b = b || 0; m = m || 0;
+  if (!b && !m) return "";
   let out = "";
-  // El "+" (devuelve golpe) se marca respecto del JUEGO individual (100%), que es
-  // el único donde puede haber hándicap negativo. En el MATCH ya no pasa nunca:
-  // con el ajuste (el mejor del cuarto a 0) nadie queda por debajo de 0.
-  if (j < 0) {
-    for (let k = 0; k < Math.abs(j); k++) out += `<span class="rep-give">+</span>`;
+  if (b < 0) {
+    for (let k = 0; k < Math.abs(b); k++) out += `<span class="rep-give">+</span>`;
+  } else {
+    for (let k = 0; k < b; k++) out += `<span class="rep-dot rep-juego"></span>`;
   }
-  // Ojo: el 85% AJUSTADO puede ser MAYOR que el hdc 100% (pasa cuando en el cuarto
-  // hay un hándicap negativo, que empuja para arriba a los otros tres). Por eso se
-  // itera hasta el máximo de los dos y no hasta j, que se comía esos golpes.
-  const n = Math.max(Math.max(0, j), Math.max(0, m));
-  for (let d = 0; d < n; d++) {
-    out += `<span class="rep-dot ${d < m ? "rep-both" : "rep-juego"}"></span>`;
-  }
+  for (let k = 0; k < m; k++) out += `<span class="rep-dot rep-match"></span>`;
   return out ? `<span class="rep-wrap">${out}</span>` : "";
 }
 
@@ -499,11 +496,10 @@ function buildScorecardHTML(cuartoConfig, detalle, evo, minMatch) {
     const info = detalle[jugador];
     if (!info) return "";
     const g = info.golpes;
-    const hdcCel = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
-    const rep = hdcCel != null ? computeReparto(hdcCel, info.hdc85, mnMatch) : null;
+    const rep = info.hdc85 != null ? computeReparto(info.hdc85, mnMatch) : null;
 
     const cel = (v, i) => {
-      const dots = rep ? repartoDots(rep.juego[i], rep.match[i]) : "";
+      const dots = rep ? repartoDots(rep.base[i], rep.match[i]) : "";
       return v == null
         ? `<td class="cell-par sc-cell">–${dots}</td>`
         : `<td class="${Sheets.cellClass(v, pars[i])} sc-cell"><span class="sc-badge">${v}</span>${dots}</td>`;
@@ -583,8 +579,8 @@ function buildScorecardHTML(cuartoConfig, detalle, evo, minMatch) {
       <tbody>${filas}${filaEvo}</tbody>
     </table>
     <div class="rep-legend">
-      <span><span class="rep-dot rep-juego"></span> golpe 100% (juego)</span>
-      <span><span class="rep-dot rep-both"></span> también 85% ajustado (match)</span>
+      <span><span class="rep-dot rep-juego"></span> golpe 85%</span>
+      <span><span class="rep-dot rep-match"></span> golpe match (85% ajustado)</span>
       <span><span class="rep-give">+</span> devuelve golpe (hdc &minus;)</span>
     </div>`;
 }
