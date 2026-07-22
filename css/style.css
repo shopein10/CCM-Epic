@@ -38,6 +38,7 @@
   --dot-juego:   #57c77a;
   --dot-ring:    #e24b4a;
   --dot-give:    #e2b04a;
+  --dot-match:   #4a90e2;
   --warn:        #f5a623;
   --warn-bg:     rgba(245,166,35,0.10);
   --warn-bd:     rgba(245,166,35,0.40);
@@ -236,6 +237,7 @@ html, body {
   border-radius: 50%;
 }
 .rep-juego { background: var(--dot-juego); }
+.rep-match { background: var(--dot-match); }
 .rep-both  { background: var(--dot-juego); box-shadow: 0 0 0 1.5px var(--dot-ring); }
 .rep-give  { color: var(--dot-give); font-weight: 700; font-size: 12px; line-height: 1; font-family: sans-serif; }
 .rep-legend {
@@ -473,6 +475,7 @@ html, body {
   --dot-juego:   #2b8a52;
   --dot-ring:    #b3261e;
   --dot-give:    #8a6a12;
+  --dot-match:   #2f6db3;
   --warn:        #7d4a00;
   --warn-bg:     rgba(201,140,0,0.13);
   --warn-bd:     rgba(160,105,0,0.45);
