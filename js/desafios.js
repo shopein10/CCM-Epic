@@ -210,27 +210,36 @@
   // pero la app no los toca. La jornada avanza sola: el primero que cuelga un
   // desafío un día nuevo, mueve la jornada a ese día.
 
-  /** "2026-07-21" en hora local (la del teléfono, o sea Argentina). */
+  /**
+   * Bucket SEMANAL: devuelve la fecha del LUNES 08:00 (hora local del teléfono,
+   * o sea Argentina) que abre la semana en la que cae ese ts, como "2026-07-20".
+   * La semana corre de lunes 08:00 a lunes 08:00: todo lo colgado entre esos dos
+   * lunes comparte bucket y se ve junto; el lunes a las 08:00 el bucket cambia y
+   * los de la semana anterior quedan "colgados" fuera de juego automáticamente.
+   */
   function jornadaDe(ts) {
     if (!ts) return null;
     var d = new Date(ts);
     if (isNaN(d.getTime())) return null;
-    return d.getFullYear() + "-" +
-           String(d.getMonth() + 1).padStart(2, "0") + "-" +
-           String(d.getDate()).padStart(2, "0");
+    var x = new Date(d.getTime());
+    var diasDesdeLunes = (x.getDay() + 6) % 7;   // Lun=0, Mar=1, … Dom=6
+    x.setDate(x.getDate() - diasDesdeLunes);
+    x.setHours(8, 0, 0, 0);                       // lunes 08:00 de esa semana
+    if (d.getTime() < x.getTime()) x.setDate(x.getDate() - 7); // antes del lunes 8am → semana previa
+    return x.getFullYear() + "-" +
+           String(x.getMonth() + 1).padStart(2, "0") + "-" +
+           String(x.getDate()).padStart(2, "0");
   }
 
+  /**
+   * Reset por RELOJ, no por evento: la semana vigente es la de AHORA. Así el corte
+   * ocurre solo, todos los lunes 08:00, aunque nadie cuelgue un desafío nuevo.
+   */
   function jornadaVigente() {
-    var ds = (S.data && S.data.desafios) || [];
-    var max = null;
-    for (var i = 0; i < ds.length; i++) {
-      var j = jornadaDe(ds[i].ts);
-      if (j && (max === null || j > max)) max = j;   // ISO ordena como string
-    }
-    return max || jornadaDe(Date.now());
+    return jornadaDe(Date.now());
   }
 
-  /** Los de la jornada vigente. Uno sin fecha se considera vigente (fail-open). */
+  /** Los de la semana vigente. Uno sin fecha se considera vigente (fail-open). */
   function desafiosVigentes() {
     var hoy = jornadaVigente();
     return ((S.data && S.data.desafios) || []).filter(function (d) {
@@ -248,9 +257,7 @@
     var j = jornadaVigente();
     if (!j) return "";
     var p = j.split("-");
-    var hoy = jornadaDe(Date.now());
-    if (j === hoy) return "hoy";
-    return p[2] + "/" + p[1];
+    return "semana del " + p[2] + "/" + p[1];
   }
 
   // ══════════════════════════════════════════════════════════
@@ -528,9 +535,9 @@
   function htmlPieJornada() {
     var viejos = cuantosViejos();
     if (!viejos) return "";
-    return '<p class="dsf-pie">Se muestra solo la jornada vigente · ' + esc(jornadaLbl()) +
+    return '<p class="dsf-pie">Se muestra solo la ' + esc(jornadaLbl()) +
            '. Hay ' + viejos + (viejos === 1 ? " desafío" : " desafíos") +
-           ' de jornadas anteriores, fuera de juego.</p>';
+           ' de semanas anteriores, fuera de juego.</p>';
   }
 
   function seccion(titulo, contenido) {
@@ -670,7 +677,7 @@
     var neto = c.ganadas - c.perdidas;
     return '' +
       '<div class="dsf-cuenta">' +
-        '<p class="dsf-cuenta-t">TU CUENTA DE LA JORNADA · ' + esc(jornadaLbl()) + '</p>' +
+        '<p class="dsf-cuenta-t">TU CUENTA · ' + esc(jornadaLbl()) + '</p>' +
         // El signo solo si hay algo: "−0" queda horrible.
         '<div class="dsf-cuenta-r"><span>Te deben</span><span class="pos">' +
           (c.ganadas ? "+" + c.ganadas : "0") + '</span></div>' +
