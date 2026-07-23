@@ -30,6 +30,7 @@ async function initApp() {
   setupRefresh();
   setupTema();
   setupTarjetaModal();
+  setupClima();
 
   await loadAndRender(true);
 
@@ -126,6 +127,69 @@ function setupTema() {
     const actual = document.documentElement.getAttribute("data-theme");
     aplicarTema(actual === "light" ? "dark" : "light");
   });
+}
+
+// ── Clima del header (Open-Meteo, sin API key) ───────────────
+// Falla silenciosa: si no responde, el bloque queda oculto y no rompe nada.
+// Se refresca cada 15 min (el clima no cambia tan rápido; NO cuelga del polling
+// de 30s del leaderboard).
+const CLIMA_REFRESH_MIN = 15;
+
+// Código WMO de Open-Meteo → emoji del estado del cielo.
+function climaIcono(code, esDia) {
+  if (code === 0) return esDia ? "☀️" : "🌙";
+  if (code === 1 || code === 2) return esDia ? "🌤️" : "☁️";
+  if (code === 3) return "☁️";
+  if (code === 45 || code === 48) return "🌫️";
+  if (code >= 51 && code <= 57) return "🌦️";
+  if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return "🌧️";
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "🌨️";
+  if (code >= 95) return "⛈️";
+  return "🌡️";
+}
+
+function climaRumbo(dir) {
+  return ["N","NE","E","SE","S","SO","O","NO"][Math.round(dir / 45) % 8];
+}
+
+async function cargarClima() {
+  const el = document.getElementById("clima");
+  if (!el || !CONFIG.CLIMA) return;
+  const { lat, lon } = CONFIG.CLIMA;
+  const url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon +
+    "&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,is_day" +
+    "&wind_speed_unit=kmh&timezone=America%2FArgentina%2FMendoza";
+  try {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(to);
+    if (!res.ok) throw new Error("clima HTTP " + res.status);
+    const c = (await res.json()).current;
+    if (!c || c.temperature_2m == null) throw new Error("sin datos current");
+    const temp = Math.round(c.temperature_2m);
+    const icono = climaIcono(c.weather_code, c.is_day === 1);
+    const viento = Math.round(c.wind_speed_10m);
+    const dir = c.wind_direction_10m || 0;
+    // wind_direction_10m es de DÓNDE viene el viento. La flecha apunta HACIA
+    // dónde sopla (lo intuitivo para el jugador), por eso +180.
+    const rot = (dir + 180) % 360;
+    el.innerHTML =
+      '<span class="clima-icon">' + icono + '</span>' +
+      '<span class="clima-temp">' + temp + '°</span>' +
+      '<span class="clima-wind" title="Viento ' + viento + ' km/h del ' + climaRumbo(dir) + '">' +
+        '<span class="clima-arrow" style="transform:rotate(' + rot + 'deg)">↑</span>' + viento +
+      '</span>';
+    el.classList.remove("hidden");
+  } catch (e) {
+    console.warn("Clima no disponible:", e);
+    el.classList.add("hidden");
+  }
+}
+
+function setupClima() {
+  cargarClima();
+  setInterval(cargarClima, CLIMA_REFRESH_MIN * 60 * 1000);
 }
 
 // ── Refresh ──────────────────────────────────────────────────

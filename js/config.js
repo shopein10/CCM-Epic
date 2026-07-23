@@ -6,7 +6,12 @@
 const CONFIG = {
 
   // Versión del front — mantener en sincronía con el ?v=N de index.html
-  APP_VERSION: 23,
+  APP_VERSION: 24,
+
+  // Clima del header — Open-Meteo (gratis, sin API key, con CORS).
+  // Coordenadas del Club de Campo Mendoza (Guaymallén). La grilla del modelo
+  // es de varios km, así que no hace falta más precisión que esta.
+  CLIMA: { lat: -32.90, lon: -68.79 },
 
   // Token compartido para guardarScores (validado por el Apps Script)
   SCORE_TOKEN: "ccm-epic-2026",
