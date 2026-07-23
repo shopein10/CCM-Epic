@@ -1079,22 +1079,28 @@ function calcularMatch(data, cuartoId) {
   if (!det) return null;
 
   const split = t => String(t).trim().split(/\s+/).filter(n => det[n]);
-  let A = (m && m.a) ? split(m.a) : [];
-  let B = (m && m.b) ? split(m.b) : [];
+  const sheetA = (m && m.a) ? split(m.a) : [];
+  const sheetB = (m && m.b) ? split(m.b) : [];
 
-  // Las parejas del sheet (A89/B89) recién se llenan cuando arranca la vuelta.
-  // Antes de eso vienen null y el match no se podía mostrar. Las derivamos del
-  // ORDEN del roster —los dos primeros contra los dos últimos, misma regla que el
-  // sorteo (filas 45-48)— así el match se ve con los HDC ya ajustados a cero
-  // aunque no haya un solo golpe cargado. Cuando el sheet cargue las parejas
-  // reales, esas mandan (no se deriva).
-  let derivado = false;
-  if (!A.length || !B.length) {
-    const roster = Object.keys(det).filter(n => n !== "VACIO");
-    if (roster.length < 2) return null;
-    const mitad = Math.ceil(roster.length / 2);
-    A = roster.slice(0, mitad);
-    B = roster.slice(mitad);
+  // Las parejas del sheet (A89/B89) recién se llenan cuando arranca la vuelta, y a
+  // veces quedan INCOMPLETAS (nombran a 3 de 4 porque alguien rearmó el cuarto y no
+  // tocó A89/B89). En cualquiera de esos casos derivamos las parejas del ORDEN del
+  // roster —los dos primeros contra los dos últimos, misma regla que el sorteo
+  // (filas 45-48)—, así el match se arma SOLO, sin depender de que A89/B89 estén
+  // completas. Solo respetamos A89/B89 cuando cubren EXACTO el roster del cuarto.
+  const rosterAll = Object.keys(det).filter(n => n !== "VACIO");
+  const named = sheetA.concat(sheetB);
+  const cubreTodo = named.length === rosterAll.length &&
+                    rosterAll.every(n => named.indexOf(n) !== -1);
+
+  let A, B, derivado;
+  if (sheetA.length && sheetB.length && cubreTodo) {
+    A = sheetA; B = sheetB; derivado = false;
+  } else {
+    if (rosterAll.length < 2) return null;
+    const mitad = Math.ceil(rosterAll.length / 2);
+    A = rosterAll.slice(0, mitad);
+    B = rosterAll.slice(mitad);
     derivado = true;
   }
   if (!A.length || !B.length) return null;
@@ -1147,14 +1153,21 @@ function calcularMatch(data, cuartoId) {
   // roster de la pestaña (filas 45-48). Si alguien rearma el cuarto y se olvida de
   // actualizar las parejas, el match se calcularía sobre gente equivocada en
   // silencio. Preferimos gritarlo en pantalla.
-  const roster = Object.keys(det).filter(n => n !== "VACIO");
   const enM = A.concat(B);
-  const faltan = roster.filter(n => enM.indexOf(n) === -1);
   const sinHdc = enM.filter(n => det[n].hdc85 == null);
   let aviso = null;
-  // Si derivamos las parejas del roster, A∪B cubre exacto y no hay falso "faltan".
-  if (!derivado && faltan.length) aviso = `En la pestaña juegan ${roster.length} (${roster.join(", ")}) pero el match solo nombra a ${enM.length}. Falta(n): ${faltan.join(", ")}. Revisá A89/B89.`;
-  else if (sinHdc.length) aviso = `Sin HDC 85% en la planilla: ${sinHdc.join(", ")}. El ajuste se calcula sin ellos.`;
+  // Ya NO avisamos por parejas incompletas: el match se arma solo por orden de
+  // salida. Solo gritamos si A89/B89 nombró a alguien en un lado que la derivación
+  // puso en el otro (dato CONTRADICTORIO, no solo incompleto) — ahí sí conviene
+  // revisar la planilla porque el orden del cuarto y las parejas no coinciden.
+  if (derivado) {
+    const cruzados = sheetA.filter(n => A.indexOf(n) === -1)
+                     .concat(sheetB.filter(n => B.indexOf(n) === -1));
+    if (cruzados.length)
+      aviso = `A89/B89 no coincide con el orden del cuarto (${cruzados.join(", ")}). Se armó por orden de salida: ${A.join("/")} vs ${B.join("/")}. Revisá A89/B89.`;
+  }
+  if (!aviso && sinHdc.length)
+    aviso = `Sin HDC 85% en la planilla: ${sinHdc.join(", ")}. El ajuste se calcula sin ellos.`;
 
   return { A, B, hoyos, ptsA: pa, ptsB: pb, dif: pa - pb, min: mn, ajustados, aviso, derivado };
 }

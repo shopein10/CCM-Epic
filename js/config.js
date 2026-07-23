@@ -6,7 +6,7 @@
 const CONFIG = {
 
   // Versión del front — mantener en sincronía con el ?v=N de index.html
-  APP_VERSION: 25,
+  APP_VERSION: 26,
 
   // Clima del header — Open-Meteo (gratis, sin API key, con CORS).
   // Coordenadas del Club de Campo Mendoza (Guaymallén). La grilla del modelo
