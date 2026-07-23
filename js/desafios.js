@@ -24,6 +24,7 @@
   };
 
   var LS_YO = "ccm-desafios-yo";
+  var LS_CACHE = "ccm-desafios-cache";   // última respuesta de `listar`, para pintar al instante
 
   var S = {
     yo: null,              // { nombre, pin, deviceId }
@@ -375,10 +376,49 @@
   // Carga
   // ══════════════════════════════════════════════════════════
 
+  // Persistimos la última respuesta de `listar` en el teléfono. NO es un caché de
+  // red (no evita la llamada): sirve para PINTAR al instante lo último conocido
+  // mientras el Apps Script —que tarda sus ~4s— responde por detrás.
+  function guardarCache() {
+    if (!S.data) return;
+    // Guardamos también el torneo: sin él, el pintado instantáneo mostraría la
+    // liquidación de "En juego" en "–" hasta que llegue el dato fresco (parpadeo).
+    try { localStorage.setItem(LS_CACHE, JSON.stringify({ t: Date.now(), data: S.data, torneo: S.torneo })); } catch (e) {}
+  }
+
+  function leerCache() {
+    try {
+      var o = JSON.parse(localStorage.getItem(LS_CACHE));
+      return (o && o.data) ? o : null;
+    } catch (e) { return null; }
+  }
+
   async function cargar(mostrarSpinner) {
+    // Stale-while-revalidate: si no hay datos en memoria pero quedó algo de la
+    // última vez, lo levantamos y lo PINTAMOS YA (0ms) — antes de cualquier
+    // guard, así aunque haya un fetch en vuelo (el prefetch del arranque) el tap
+    // muestra lo cacheado al instante en vez de dejar la solapa en blanco.
+    if (!S.data || !S.torneo) {
+      var c = leerCache();
+      if (c) {
+        if (!S.data) S.data = c.data;
+        if (!S.torneo && c.torneo) S.torneo = c.torneo;
+      }
+    }
+
+    // Si tenemos algo que mostrar (logueado + datos, aunque sean viejos), lo
+    // pintamos en vez del spinner: abrir la solapa se siente instantáneo. El
+    // spinner "Cargando…" queda solo para la PRIMERA vez, cuando no hay nada.
+    var hayAlgoQueMostrar = !!(S.yo && S.data);
+    if (mostrarSpinner) {
+      if (hayAlgoQueMostrar) pintar(); else pintarCargando();
+    }
+
+    // Si ya hay una carga en vuelo (típicamente el prefetch del arranque), no
+    // lanzamos otra: cuando termine, pinta ella. Arriba ya mostramos lo cacheado.
     if (S.cargando) return;
     S.cargando = true;
-    if (mostrarSpinner) pintarCargando();
+
     try {
       var tareas = [apiGet()];
       // Sheets.getAll() usa su propia caché: no genera tráfico extra ni la invalida.
@@ -386,9 +426,12 @@
       var r = await Promise.all(tareas);
       S.data = r[0];
       if (r[1]) S.torneo = r[1];
+      guardarCache();
       pintar();
     } catch (e) {
-      pintarError(e.message || String(e));
+      // Si ya había algo pintado de la caché, no lo tapamos con un error:
+      // se queda lo viejo y el próximo polling reintenta solo.
+      if (!hayAlgoQueMostrar) pintarError(e.message || String(e));
     } finally {
       S.cargando = false;
     }
@@ -922,6 +965,11 @@
     if (!btn) return; // el HTML no tiene la solapa: el módulo no hace nada
 
     cargarYo();
+
+    // Prefetch: apenas carga la app calentamos los datos en segundo plano (solo
+    // si ya sos usuario de Desafíos). Así, cuando tocás la solapa, el dato ya
+    // está —o está por llegar— y no ves el "Cargando…" de ~4s parado ahí.
+    if (S.yo) cargar(false);
 
     // Listener propio, adicional al de app.js. No lo reemplaza.
     btn.addEventListener("click", function () {
