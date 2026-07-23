@@ -76,14 +76,12 @@ html, body {
 }
 #splash.fade-out { opacity: 0; visibility: hidden; }
 .splash-inner { text-align: center; }
-.splash-flag { font-size: 56px; display: block; margin-bottom: 16px; animation: flag-bounce .8s ease infinite alternate; }
-@keyframes flag-bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+.splash-logo { display: block; height: 140px; width: auto; margin: 0 auto 20px; filter: drop-shadow(0 6px 16px rgba(0,0,0,.28)); animation: splash-logo-in .5s ease both, splash-logo-pulse 1.8s ease-in-out .5s infinite; }
+@keyframes splash-logo-in { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: scale(1); } }
+@keyframes splash-logo-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
 .splash-title { font-family: 'DM Serif Display', serif; font-size: 42px; letter-spacing: -1px; color: var(--cream); }
 .splash-title span { color: var(--gold); }
 .splash-sub { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: 4px; text-transform: uppercase; color: var(--text-muted); margin-top: 6px; }
-.splash-loader { margin: 32px auto 0; width: 40px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
-.splash-loader div { width: 40%; height: 100%; background: var(--gold-fill); border-radius: 2px; animation: loader-slide 1s ease infinite; }
-@keyframes loader-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
 
 /* APP SHELL */
 #app { height: 100vh; display: flex; flex-direction: column; }
