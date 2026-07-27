@@ -31,7 +31,7 @@
   function repartir(h) {
     var st = new Array(18).fill(0);
     if (!h || h <= 0) return st;
-    var SI = (window.CONFIG && CONFIG.STROKE_INDEX) || [];
+    var SI = (typeof CONFIG !== "undefined" && CONFIG.STROKE_INDEX) || [];
     var base = Math.floor(h / 18);
     var resto = h % 18;
     for (var i = 0; i < 18; i++) {
@@ -143,7 +143,7 @@
     // Puntos individuales de singles por jugador { nombre: {g, p, e, pts, equipo} }
     var jugMon = {}, jugLag = {};
 
-    (window.CONFIG ? CONFIG.CUARTOS : []).forEach(function (c) {
+    (typeof CONFIG !== "undefined" ? CONFIG.CUARTOS : []).forEach(function (c) {
       var det = cd[c.id];
       if (!det) return;
       var cm = cuartoMatches(det, salidas[c.id] || 1);
