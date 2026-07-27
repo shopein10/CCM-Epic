@@ -25,16 +25,13 @@
 <link rel="stylesheet" href="css/style.css?v=25">
 <link rel="stylesheet" href="css/desafios.css?v=2">
 <link rel="stylesheet" href="css/sorteo.css?v=1">
+<link rel="stylesheet" href="css/ryder.css?v=1">
 </head>
 <body>
 
-<!-- SPLASH -->
+<!-- SPLASH — Segunda Fecha / Mini Ryder -->
 <div id="splash">
-<div class="splash-inner">
-<img src="logo.png?v=25" class="splash-logo" alt="Club de Campo Mendoza">
-<h1 class="splash-title">CCM <span>&</span> Epic</h1>
-<p class="splash-sub">Golf Tournament</p>
-</div>
+<img src="ryder-splash.png?v=27" class="ryder-splash-img" alt="Segunda Fecha — Mini Ryder">
 </div>
 
 <!-- APP SHELL -->
@@ -54,41 +51,47 @@
 </div>
 </header>
 
-<!-- NAV -->
+<!-- NAV — Mini Ryder (Segunda Fecha). Las solapas del torneo normal
+     (Ranking, Cuartos, Matchs viejo, Desafíos, Sorteo) quedan en el DOM
+     más abajo, apagadas: se re-prenden restaurando este bloque del backup. -->
 <nav class="bottom-nav">
-<button class="nav-item active" data-view="leaderboard">
+<button class="nav-item active" data-view="resultado">
 <span class="nav-icon">🏆</span>
-<span>Ranking</span>
+<span>Ryder</span>
 </button>
-<button class="nav-item" data-view="cuartos">
-<span class="nav-icon">👥</span>
-<span>Cuartos</span>
+<button class="nav-item" data-view="rmatchs">
+<span class="nav-icon">⚔️</span>
+<span>Matchs</span>
 </button>
 <button class="nav-item nav-cta" data-view="cargar">
 <span class="nav-icon">✚</span>
 <span>Cargar</span>
-</button>
-<button class="nav-item" data-view="matchs">
-<span class="nav-icon">⚔️</span>
-<span>Matchs</span>
-</button>
-<!-- Historial queda en el código pero fuera del nav (no se activó nunca).
-     Su <section id="view-historial"> sigue abajo, intacta. -->
-<button class="nav-item" data-view="desafios">
-<span class="nav-icon">🔥</span>
-<span>Desafíos</span>
-</button>
-<button class="nav-item" data-view="sorteo">
-<span class="nav-icon">🎲</span>
-<span>Sorteo</span>
 </button>
 </nav>
 
 <!-- VIEWS -->
 <main class="view-container">
 
+<!-- ══ MINI RYDER ══ (pintadas por js/ryder.js) -->
+<!-- RESULTADO -->
+<section id="view-resultado" class="view active">
+<div class="view-header">
+<h2>Mini Ryder</h2>
+<span id="last-update" class="update-time"></span>
+</div>
+<div id="ryder-resultado"></div>
+</section>
+
+<!-- MATCHS RYDER -->
+<section id="view-rmatchs" class="view">
+<div class="view-header">
+<h2>Matchs</h2>
+</div>
+<div id="ryder-matchs"></div>
+</section>
+
 <!-- LEADERBOARD -->
-<section id="view-leaderboard" class="view active">
+<section id="view-leaderboard" class="view">
 <div class="view-header">
 <h2>Leaderboard</h2>
 <span id="last-update" class="update-time"></span>
@@ -223,12 +226,13 @@
 </div>
 </div>
 
-<script src="js/config.js?v=26"></script>
+<script src="js/config.js?v=27"></script>
 <script src="js/sheets.js?v=21"></script>
-<script src="js/app.js?v=26"></script>
-<!-- Módulo aparte. Si falla o no carga, el torneo sigue andando igual. -->
+<script src="js/app.js?v=27"></script>
+<!-- Módulos aparte. Si fallan o no cargan, el resto sigue andando igual. -->
 <script src="js/desafios.js?v=7"></script>
 <script src="js/sorteo.js?v=2"></script>
+<script src="js/ryder.js?v=1"></script>
 <script>
 if ('serviceWorker' in navigator) {
 navigator.serviceWorker.register('sw.js');
