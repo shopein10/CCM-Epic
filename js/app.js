@@ -57,6 +57,7 @@ async function loadAndRender(showSkeleton = false, force = false) {
     renderMatchs(data);
     renderTarjetas(data);
     renderHistorial(data);
+    if (window.Ryder) Ryder.render(data);   // Mini Ryder (módulo aparte)
     updateLiveBadge(data);
     updateLastUpdate(data);
   } catch (err) {
