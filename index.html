@@ -63,6 +63,10 @@
 <span class="nav-icon">⚔️</span>
 <span>Matchs</span>
 </button>
+<button class="nav-item" data-view="leaderboard">
+<span class="nav-icon">📋</span>
+<span>Ranking</span>
+</button>
 <button class="nav-item nav-cta" data-view="cargar">
 <span class="nav-icon">✚</span>
 <span>Cargar</span>
@@ -93,14 +97,18 @@
 <!-- LEADERBOARD -->
 <section id="view-leaderboard" class="view">
 <div class="view-header">
-<h2>Leaderboard</h2>
+<h2>Ranking individual</h2>
 <span id="last-update" class="update-time"></span>
 </div>
 
-<div class="tabs">
+<p style="margin:0 0 10px;font-size:12px;color:var(--text-muted)">Tocá un nombre para ver su tarjeta y chequear los hoyos.</p>
+
+<!-- Solo Individual visible en la Segunda Fecha / Mini Ryder. Las tabs Parejas y
+     Cuartos quedan en el DOM apagadas (display:none): se re-prenden restaurando este bloque. -->
+<div class="tabs" style="display:none">
 <button class="tab active" data-tab="individual">Individual</button>
-<button class="tab" data-tab="parejas">Parejas</button>
-<button class="tab" data-tab="cuartos-rank">Cuartos</button>
+<button class="tab" data-tab="parejas" style="display:none">Parejas</button>
+<button class="tab" data-tab="cuartos-rank" style="display:none">Cuartos</button>
 </div>
 
 <div id="tab-individual" class="tab-content active">
