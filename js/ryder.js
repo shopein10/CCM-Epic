@@ -149,6 +149,7 @@
       var cm = cuartoMatches(det, salidas[c.id] || 1);
       if (!cm) return;
       cm.id = c.id; cm.nombre = c.nombre;
+      cm.det = det; cm.salida = salidas[c.id] || 1;   // para pintar la tarjeta de los 4
       cuartos.push(cm);
       totMon += cm.ptsMon; totLag += cm.ptsLag;
 
@@ -312,6 +313,33 @@
     el.innerHTML = R.cuartos.map(function (c) {
       var mon = c.mon, lag = c.lag;
 
+      // PRESENTACIÓN de los dos equipos (arriba de todo)
+      var present =
+        '<div class="ryd-present">' +
+          '<div class="ryd-present-side monchitos">' +
+            '<div class="ryd-present-team">Monchitos</div>' +
+            '<div class="ryd-present-names">' + esc(mon.join(" / ")) + '</div>' +
+          '</div>' +
+          '<div class="ryd-present-vs">vs</div>' +
+          '<div class="ryd-present-side lagartos ryd-present-r">' +
+            '<div class="ryd-present-team">Lagartos</div>' +
+            '<div class="ryd-present-names">' + esc(lag.join(" / ")) + '</div>' +
+          '</div>' +
+        '</div>';
+
+      // TARJETA de los 4 (misma que el modal individual). Sirve para auditar
+      // que los golpes estén bien anotados. Se reusa buildScorecardHTML de app.js;
+      // el min del match del fourball alinea los puntitos azules con el fourball.
+      var tarjeta = "";
+      if (typeof buildScorecardHTML === "function") {
+        var cfg = { nombre: c.nombre, jugadores: mon.concat(lag) };
+        tarjeta =
+          '<div class="ryd-sc-lbl">Tarjeta de los 4 · revisá que esté bien anotado</div>' +
+          '<div class="ryd-sc-wrap">' +
+            buildScorecardHTML(cfg, c.det, null, c.fourball.mn) +
+          '</div>';
+      }
+
       // FOURBALL
       var eF = golfEstado(c.fourball, 3, false);
       var four =
@@ -346,7 +374,7 @@
         '<div class="ryd-cuarto-hdr"><span>' + esc(c.nombre) + '</span>' +
           '<span class="ryd-cuarto-tot"><b class="ryd-t-m">' + fmtPts(c.ptsMon) + '</b> – ' +
           '<b class="ryd-t-l">' + fmtPts(c.ptsLag) + '</b></span></div>' +
-        four + sing +
+        present + tarjeta + four + sing +
       '</div>';
     }).join("");
   }
