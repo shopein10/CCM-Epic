@@ -106,6 +106,11 @@
 /* tarjeta de los 4 (scorecard reusado) con scroll horizontal en el teléfono */
 .ryd-sc-lbl { font-size: 10px; letter-spacing: .05em; text-transform: uppercase; color: var(--gold-dim); text-align: center; margin-bottom: 5px; }
 .ryd-sc-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 12px; padding-bottom: 2px; }
+/* Esta semana: sin puntitos de hándicap en la tarjeta del Matchs (hay muchos matchs
+   y saturaban). Solo acá; el modal individual y el detalle de cuartos los mantienen.
+   Para volver a mostrarlos, borrar estas dos líneas. */
+.ryd-sc-wrap .rep-wrap { display: none; }
+.ryd-sc-wrap .rep-legend { display: none; }
 
 .ryd-match { border-radius: 12px; padding: 9px 10px; margin-bottom: 8px; background: var(--bg-raised); }
 .ryd-match:last-child { margin-bottom: 0; }
