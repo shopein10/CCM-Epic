@@ -103,11 +103,11 @@
 
 <p style="margin:0 0 10px;font-size:12px;color:var(--text-muted)">Tocá un nombre para ver su tarjeta y chequear los hoyos.</p>
 
-<!-- Solo Individual visible en la Segunda Fecha / Mini Ryder. Las tabs Parejas y
-     Cuartos quedan en el DOM apagadas (display:none): se re-prenden restaurando este bloque. -->
-<div class="tabs" style="display:none">
+<!-- Segunda Fecha / Mini Ryder: se muestran Individual y Parejas como pestañas.
+     Cuartos queda apagado (display:none): se re-prende sacándole el style. -->
+<div class="tabs">
 <button class="tab active" data-tab="individual">Individual</button>
-<button class="tab" data-tab="parejas" style="display:none">Parejas</button>
+<button class="tab" data-tab="parejas">Parejas</button>
 <button class="tab" data-tab="cuartos-rank" style="display:none">Cuartos</button>
 </div>
 
@@ -115,8 +115,7 @@
 <div id="podio" class="podio"></div>
 <div id="tabla-individual" class="score-table"></div>
 </div>
-<div id="tab-parejas" class="tab-content active" style="margin-top:28px">
-<div class="view-header"><h2>Ranking parejas</h2></div>
+<div id="tab-parejas" class="tab-content">
 <div id="tabla-parejas" class="score-table"></div>
 </div>
 <div id="tab-cuartos-rank" class="tab-content">
