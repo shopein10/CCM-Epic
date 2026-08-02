@@ -57,7 +57,6 @@ async function loadAndRender(showSkeleton = false, force = false) {
     renderMatchs(data);
     renderTarjetas(data);
     renderHistorial(data);
-    if (window.Ryder) Ryder.render(data);   // Mini Ryder (módulo aparte)
     updateLiveBadge(data);
     updateLastUpdate(data);
   } catch (err) {
@@ -1199,12 +1198,36 @@ function renderMatchs(data) {
     const ganaA = mc.dif > 0;
     const lider = ganaA ? mc.A.join(" ") : mc.B.join(" ");
 
-    const standingText = jugados === 0
-      ? `<span style="color:var(--text-muted)">SIN JUGAR</span>`
-      : decidido
-        ? `${lider} <span class="mh-lead">+${Math.abs(mc.dif)}</span>`
-        : `<span style="color:var(--text-muted)">EMPATADOS</span>`;
-    const standingCls = !decidido ? "mh-standing-even" : (ganaA ? "mh-standing-a" : "mh-standing-b");
+    // ¿El match ya está cerrado? En un fourball se ganan hasta 3 puntos por hoyo
+    // (2 mejor bola + 1 peor), así que es IRREMONTABLE cuando la ventaja supera
+    // 3 × (hoyos por jugar). Ahí se muestra en notación golf "X/Y": X arriba,
+    // Y hoyos sin jugar — igual que se canta en la cancha (ej. "3/2").
+    const PER_HOYO = 3;
+    let cerrado = null;
+    for (let i = 0; i < mc.hoyos.length; i++) {
+      const h = mc.hoyos[i];
+      if (!h.jugado) continue;
+      const rem = 18 - (i + 1);
+      const up = Math.abs(h.pa - h.pb);
+      if (rem > 0 && up > PER_HOYO * rem) { cerrado = { up, rem, sign: h.pa - h.pb }; break; }
+    }
+
+    let standingText, standingCls;
+    if (jugados === 0) {
+      standingText = `<span style="color:var(--text-muted)">SIN JUGAR</span>`;
+      standingCls = "mh-standing-even";
+    } else if (cerrado) {
+      const nmC = cerrado.sign > 0 ? mc.A.join(" ") : mc.B.join(" ");
+      standingText = `${nmC} <span class="mh-lead">${cerrado.up}/${cerrado.rem}</span>`;
+      standingCls = cerrado.sign > 0 ? "mh-standing-a" : "mh-standing-b";
+    } else if (decidido) {
+      const suf = jugados === 18 ? " · final" : "";
+      standingText = `${lider} <span class="mh-lead">+${Math.abs(mc.dif)}</span>${suf}`;
+      standingCls = ganaA ? "mh-standing-a" : "mh-standing-b";
+    } else {
+      standingText = `<span style="color:var(--text-muted)">EMPATADOS</span>`;
+      standingCls = "mh-standing-even";
+    }
 
     // Cada jugador con SU hándicap de match (85% ya ajustado, el mejor del cuarto
     // en 0). Va pegado al nombre para que se pueda auditar de dónde sale el neto.
