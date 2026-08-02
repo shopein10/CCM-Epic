@@ -22,16 +22,15 @@
   if (m) m.setAttribute('content', t === 'light' ? '#f2efe4' : '#0c1a0f');
 })();
 </script>
-<link rel="stylesheet" href="css/style.css?v=25">
+<link rel="stylesheet" href="css/style.css?v=26">
 <link rel="stylesheet" href="css/desafios.css?v=2">
 <link rel="stylesheet" href="css/sorteo.css?v=1">
-<link rel="stylesheet" href="css/ryder.css?v=3">
 </head>
 <body>
 
-<!-- SPLASH — Segunda Fecha / Mini Ryder -->
+<!-- SPLASH -->
 <div id="splash">
-<img src="ryder-splash.png?v=27" class="ryder-splash-img" alt="Segunda Fecha — Mini Ryder">
+<img src="splash-golf.jpg?v=1" class="splash-photo" alt="CCM & Epic Golf">
 </div>
 
 <!-- APP SHELL -->
@@ -51,64 +50,50 @@
 </div>
 </header>
 
-<!-- NAV — Mini Ryder (Segunda Fecha). Las solapas del torneo normal
-     (Ranking, Cuartos, Matchs viejo, Desafíos, Sorteo) quedan en el DOM
-     más abajo, apagadas: se re-prenden restaurando este bloque del backup. -->
+<!-- NAV -->
 <nav class="bottom-nav">
-<button class="nav-item active" data-view="resultado">
+<button class="nav-item active" data-view="leaderboard">
 <span class="nav-icon">🏆</span>
-<span>Ryder</span>
-</button>
-<button class="nav-item" data-view="rmatchs">
-<span class="nav-icon">⚔️</span>
-<span>Matchs</span>
-</button>
-<button class="nav-item" data-view="leaderboard">
-<span class="nav-icon">📋</span>
 <span>Ranking</span>
+</button>
+<button class="nav-item" data-view="cuartos">
+<span class="nav-icon">👥</span>
+<span>Cuartos</span>
 </button>
 <button class="nav-item nav-cta" data-view="cargar">
 <span class="nav-icon">✚</span>
 <span>Cargar</span>
+</button>
+<button class="nav-item" data-view="matchs">
+<span class="nav-icon">⚔️</span>
+<span>Matchs</span>
+</button>
+<!-- Historial queda en el código pero fuera del nav (no se activó nunca).
+     Su <section id="view-historial"> sigue abajo, intacta. -->
+<button class="nav-item" data-view="desafios">
+<span class="nav-icon">🔥</span>
+<span>Desafíos</span>
+</button>
+<button class="nav-item" data-view="sorteo">
+<span class="nav-icon">🎲</span>
+<span>Sorteo</span>
 </button>
 </nav>
 
 <!-- VIEWS -->
 <main class="view-container">
 
-<!-- ══ MINI RYDER ══ (pintadas por js/ryder.js) -->
-<!-- RESULTADO -->
-<section id="view-resultado" class="view active">
-<div class="view-header">
-<h2>Mini Ryder</h2>
-<span id="last-update" class="update-time"></span>
-</div>
-<div id="ryder-resultado"></div>
-</section>
-
-<!-- MATCHS RYDER -->
-<section id="view-rmatchs" class="view">
-<div class="view-header">
-<h2>Matchs</h2>
-</div>
-<div id="ryder-matchs"></div>
-</section>
-
 <!-- LEADERBOARD -->
-<section id="view-leaderboard" class="view">
+<section id="view-leaderboard" class="view active">
 <div class="view-header">
-<h2>Ranking individual</h2>
+<h2>Leaderboard</h2>
 <span id="last-update" class="update-time"></span>
 </div>
 
-<p style="margin:0 0 10px;font-size:12px;color:var(--text-muted)">Tocá un nombre para ver su tarjeta y chequear los hoyos.</p>
-
-<!-- Segunda Fecha / Mini Ryder: se muestran Individual y Parejas como pestañas.
-     Cuartos queda apagado (display:none): se re-prende sacándole el style. -->
 <div class="tabs">
 <button class="tab active" data-tab="individual">Individual</button>
 <button class="tab" data-tab="parejas">Parejas</button>
-<button class="tab" data-tab="cuartos-rank" style="display:none">Cuartos</button>
+<button class="tab" data-tab="cuartos-rank">Cuartos</button>
 </div>
 
 <div id="tab-individual" class="tab-content active">
@@ -234,13 +219,12 @@
 </div>
 </div>
 
-<script src="js/config.js?v=27"></script>
+<script src="js/config.js?v=28"></script>
 <script src="js/sheets.js?v=21"></script>
-<script src="js/app.js?v=27"></script>
-<!-- Módulos aparte. Si fallan o no cargan, el resto sigue andando igual. -->
+<script src="js/app.js?v=28"></script>
+<!-- Módulo aparte. Si falla o no carga, el torneo sigue andando igual. -->
 <script src="js/desafios.js?v=7"></script>
 <script src="js/sorteo.js?v=2"></script>
-<script src="js/ryder.js?v=3"></script>
 <script>
 if ('serviceWorker' in navigator) {
 navigator.serviceWorker.register('sw.js');
