@@ -1075,34 +1075,22 @@ async function mostrarTarjetaCuarto(cuartoId) {
 // Se recorre en ORDEN DE JUEGO: un cuarto que sale del 10 empieza por el 10.
 function calcularMatch(data, cuartoId) {
   const det = (data && data.cuartosDetalle && data.cuartosDetalle[cuartoId]) || null;
-  const m   = (data && data.matchsData    && data.matchsData[cuartoId])    || null;
   if (!det) return null;
 
-  const split = t => String(t).trim().split(/\s+/).filter(n => det[n]);
-  const sheetA = (m && m.a) ? split(m.a) : [];
-  const sheetB = (m && m.b) ? split(m.b) : [];
-
-  // Las parejas del sheet (A89/B89) recién se llenan cuando arranca la vuelta, y a
-  // veces quedan INCOMPLETAS (nombran a 3 de 4 porque alguien rearmó el cuarto y no
-  // tocó A89/B89). En cualquiera de esos casos derivamos las parejas del ORDEN del
-  // roster —los dos primeros contra los dos últimos, misma regla que el sorteo
-  // (filas 45-48)—, así el match se arma SOLO, sin depender de que A89/B89 estén
-  // completas. Solo respetamos A89/B89 cuando cubren EXACTO el roster del cuarto.
+  // Las parejas se arman SIEMPRE por el ORDEN DE JUEGO del cuarto (filas 45-48):
+  // los dos primeros contra los dos últimos, igual que en la cancha. Ya NO se leen
+  // A89/B89 (matchsData.a/.b): son fórmulas que se llenan tarde y quedan
+  // incompletas, y además venían como nombres pegados por espacio ("Nico DP
+  // Principe"). Partir por espacios rompía los nombres con espacio ("Nico DP",
+  // "Juan Fra B") y dejaba afuera al jugador → el match creía que faltaba gente,
+  // se caía a la derivación y encima tiraba un falso aviso de inconsistencia.
+  // El orden del roster viene de la lectura de las filas 45-48, o sea el orden de
+  // salida, así que derivar de acá es el criterio correcto y no depende de nada más.
   const rosterAll = Object.keys(det).filter(n => n !== "VACIO");
-  const named = sheetA.concat(sheetB);
-  const cubreTodo = named.length === rosterAll.length &&
-                    rosterAll.every(n => named.indexOf(n) !== -1);
-
-  let A, B, derivado;
-  if (sheetA.length && sheetB.length && cubreTodo) {
-    A = sheetA; B = sheetB; derivado = false;
-  } else {
-    if (rosterAll.length < 2) return null;
-    const mitad = Math.ceil(rosterAll.length / 2);
-    A = rosterAll.slice(0, mitad);
-    B = rosterAll.slice(mitad);
-    derivado = true;
-  }
+  if (rosterAll.length < 2) return null;
+  const mitad = Math.ceil(rosterAll.length / 2);
+  const A = rosterAll.slice(0, mitad);
+  const B = rosterAll.slice(mitad);
   if (!A.length || !B.length) return null;
 
   // El mínimo se toma sobre los 4 que EFECTIVAMENTE juegan el match (A ∪ B),
@@ -1149,27 +1137,16 @@ function calcularMatch(data, cuartoId) {
     ajustados[n] = det[n].hdc85 != null ? Math.max(0, det[n].hdc85 - mn) : null;
   });
 
-  // Chequeo de consistencia: los nombres de A89/B89 tienen que cubrir EXACTO el
-  // roster de la pestaña (filas 45-48). Si alguien rearma el cuarto y se olvida de
-  // actualizar las parejas, el match se calcularía sobre gente equivocada en
-  // silencio. Preferimos gritarlo en pantalla.
+  // Único aviso que queda: si algún jugador del match no tiene HDC 85% cargado en
+  // la planilla, el ajuste se calcula sin él. El falso aviso de "A89/B89 no coincide"
+  // se eliminó: ya no leemos A89/B89, las parejas salen del orden de juego.
   const enM = A.concat(B);
   const sinHdc = enM.filter(n => det[n].hdc85 == null);
-  let aviso = null;
-  // Ya NO avisamos por parejas incompletas: el match se arma solo por orden de
-  // salida. Solo gritamos si A89/B89 nombró a alguien en un lado que la derivación
-  // puso en el otro (dato CONTRADICTORIO, no solo incompleto) — ahí sí conviene
-  // revisar la planilla porque el orden del cuarto y las parejas no coinciden.
-  if (derivado) {
-    const cruzados = sheetA.filter(n => A.indexOf(n) === -1)
-                     .concat(sheetB.filter(n => B.indexOf(n) === -1));
-    if (cruzados.length)
-      aviso = `A89/B89 no coincide con el orden del cuarto (${cruzados.join(", ")}). Se armó por orden de salida: ${A.join("/")} vs ${B.join("/")}. Revisá A89/B89.`;
-  }
-  if (!aviso && sinHdc.length)
-    aviso = `Sin HDC 85% en la planilla: ${sinHdc.join(", ")}. El ajuste se calcula sin ellos.`;
+  const aviso = sinHdc.length
+    ? `Sin HDC 85% en la planilla: ${sinHdc.join(", ")}. El ajuste se calcula sin ellos.`
+    : null;
 
-  return { A, B, hoyos, ptsA: pa, ptsB: pb, dif: pa - pb, min: mn, ajustados, aviso, derivado };
+  return { A, B, hoyos, ptsA: pa, ptsB: pb, dif: pa - pb, min: mn, ajustados, aviso, derivado: true };
 }
 
 // ── RENDER: MATCHS ───────────────────────────────────────────
