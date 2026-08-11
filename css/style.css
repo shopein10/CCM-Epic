@@ -526,3 +526,45 @@ html, body {
 /* Ver aplicarTema() en app.js: sin esto, los elementos con `transition: color`
    (nav de abajo, iconos del header) quedan con el color del tema anterior. */
 .theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }
+
+/* ── Tamaño de letra A / A+ / A++ (botón #btn-fuente del header) ──
+   Sube SOLO el texto de LECTURA: ranking (individual/parejas/cuartos), tarjetas
+   de cuartos, nombres del match, tabs y nav. A propósito NO toca .scorecard-table
+   ni las grillas de hoyos (.hoyo-grid / .golpes-grid): tienen ancho fijo y scrollean
+   horizontal, agrandarlas las desborda. Es un override aditivo: para revertir,
+   borrar este bloque + el atributo data-fontscale. El botón cicla normal→lg→xl. */
+.fuente-btn { font-size: 15px; font-weight: 700; letter-spacing: -.5px; }
+
+/* A+  (~+13%) */
+[data-fontscale="lg"] .tab              { font-size: 15px; }
+[data-fontscale="lg"] .row-name         { font-size: 17px; }
+[data-fontscale="lg"] .row-score        { font-size: 18px; }
+[data-fontscale="lg"] .row-hdc,
+[data-fontscale="lg"] .row-pos,
+[data-fontscale="lg"] .row-hoyo         { font-size: 13px; }
+[data-fontscale="lg"] .podio-name       { font-size: 14px; }
+[data-fontscale="lg"] .podio-score      { font-size: 16px; }
+[data-fontscale="lg"] .podio-hdc        { font-size: 12px; }
+[data-fontscale="lg"] .cuarto-btn-names { font-size: 14px; }
+[data-fontscale="lg"] .cuarto-btn-score { font-size: 22px; }
+[data-fontscale="lg"] .cuarto-btn-title,
+[data-fontscale="lg"] .cuarto-btn-hole  { font-size: 13px; }
+[data-fontscale="lg"] .match-team       { font-size: 15px; }
+[data-fontscale="lg"] .nav-item         { font-size: 11px; }
+
+/* A++ (~+27%) */
+[data-fontscale="xl"] .tab              { font-size: 16px; }
+[data-fontscale="xl"] .row-name         { font-size: 19px; }
+[data-fontscale="xl"] .row-score        { font-size: 20px; }
+[data-fontscale="xl"] .row-hdc,
+[data-fontscale="xl"] .row-pos,
+[data-fontscale="xl"] .row-hoyo         { font-size: 14px; }
+[data-fontscale="xl"] .podio-name       { font-size: 15px; }
+[data-fontscale="xl"] .podio-score      { font-size: 17px; }
+[data-fontscale="xl"] .podio-hdc        { font-size: 13px; }
+[data-fontscale="xl"] .cuarto-btn-names { font-size: 15px; }
+[data-fontscale="xl"] .cuarto-btn-score { font-size: 24px; }
+[data-fontscale="xl"] .cuarto-btn-title,
+[data-fontscale="xl"] .cuarto-btn-hole  { font-size: 14px; }
+[data-fontscale="xl"] .match-team       { font-size: 16px; }
+[data-fontscale="xl"] .nav-item         { font-size: 12px; }
