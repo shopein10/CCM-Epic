@@ -258,6 +258,17 @@
   line-height: 1.5; margin: 6px 0 2px;
 }
 
+/* Caja de la pareja del finde (fija, no se elige a dedo) */
+.dsf-pareja-fija {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 14px; font-weight: 600;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+
 .dsf-seg { display: flex; gap: 5px; }
 .dsf-seg-b {
   flex: 1;
