@@ -528,11 +528,13 @@ html, body {
 .theme-switching *, .theme-switching *::before, .theme-switching *::after { transition: none !important; }
 
 /* ── Tamaño de letra A / A+ / A++ (botón #btn-fuente del header) ──
-   Sube SOLO el texto de LECTURA: ranking (individual/parejas/cuartos), tarjetas
-   de cuartos, nombres del match, tabs y nav. A propósito NO toca .scorecard-table
-   ni las grillas de hoyos (.hoyo-grid / .golpes-grid): tienen ancho fijo y scrollean
-   horizontal, agrandarlas las desborda. Es un override aditivo: para revertir,
-   borrar este bloque + el atributo data-fontscale. El botón cicla normal→lg→xl. */
+   Sube el texto de LECTURA de toda la app: ranking (individual/parejas/cuartos),
+   tarjetas de cuartos, Matchs (completa), tarjetas/scorecard + modal individual,
+   Desafíos (ver bloque gemelo al final de desafios.css), tabs y nav.
+   El scorecard scrollea en horizontal, así que agrandarlo solo estira el scroll.
+   A propósito NO toca las grillas de CARGA (.hoyo-grid / .golpes-grid): son inputs
+   de ancho fijo, no texto de lectura. Es un override aditivo: para revertir, borrar
+   este bloque (+ el de desafios.css) y el atributo data-fontscale. Cicla normal→lg→xl. */
 .fuente-btn { font-size: 15px; font-weight: 700; letter-spacing: -.5px; }
 
 /* A+  (~+13%) */
@@ -551,6 +553,23 @@ html, body {
 [data-fontscale="lg"] .cuarto-btn-hole  { font-size: 13px; }
 [data-fontscale="lg"] .match-team       { font-size: 15px; }
 [data-fontscale="lg"] .nav-item         { font-size: 11px; }
+/* Matchs — resto de la tarjeta */
+[data-fontscale="lg"] .match-cuarto-lbl,
+[data-fontscale="lg"] .match-result-badge,
+[data-fontscale="lg"] .match-live-badge,
+[data-fontscale="lg"] .match-vs,
+[data-fontscale="lg"] .match-standing   { font-size: 13px; }
+[data-fontscale="lg"] .mh-cell          { font-size: 13px; width: 26px; height: 26px; }
+[data-fontscale="lg"] .mh-lead          { font-size: 15px; }
+/* Tarjetas (scorecard + modal individual). El scorecard scrollea en horizontal,
+   así que agrandar la letra solo estira el scroll, no rompe el layout. */
+[data-fontscale="lg"] .scorecard-table          { font-size: 13px; }
+[data-fontscale="lg"] .scorecard-table .td-name { font-size: 14px; }
+[data-fontscale="lg"] .sc-badge         { width: 24px; height: 24px; }
+[data-fontscale="lg"] .cuarto-detail h3 { font-size: 22px; }
+[data-fontscale="lg"] .ti-name          { font-size: 19px; }
+[data-fontscale="lg"] .ti-hdc-val       { font-size: 16px; }
+[data-fontscale="lg"] .ti-hdc-lbl       { font-size: 12px; }
 
 /* A++ (~+27%) */
 [data-fontscale="xl"] .tab              { font-size: 16px; }
@@ -568,3 +587,19 @@ html, body {
 [data-fontscale="xl"] .cuarto-btn-hole  { font-size: 14px; }
 [data-fontscale="xl"] .match-team       { font-size: 16px; }
 [data-fontscale="xl"] .nav-item         { font-size: 12px; }
+/* Matchs — resto de la tarjeta */
+[data-fontscale="xl"] .match-cuarto-lbl,
+[data-fontscale="xl"] .match-result-badge,
+[data-fontscale="xl"] .match-live-badge,
+[data-fontscale="xl"] .match-vs,
+[data-fontscale="xl"] .match-standing   { font-size: 14px; }
+[data-fontscale="xl"] .mh-cell          { font-size: 14px; width: 28px; height: 28px; }
+[data-fontscale="xl"] .mh-lead          { font-size: 16px; }
+/* Tarjetas (scorecard + modal individual) */
+[data-fontscale="xl"] .scorecard-table          { font-size: 14px; }
+[data-fontscale="xl"] .scorecard-table .td-name { font-size: 15px; }
+[data-fontscale="xl"] .sc-badge         { width: 26px; height: 26px; }
+[data-fontscale="xl"] .cuarto-detail h3 { font-size: 24px; }
+[data-fontscale="xl"] .ti-name          { font-size: 21px; }
+[data-fontscale="xl"] .ti-hdc-val       { font-size: 17px; }
+[data-fontscale="xl"] .ti-hdc-lbl       { font-size: 13px; }

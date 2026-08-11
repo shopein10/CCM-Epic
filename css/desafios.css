@@ -331,3 +331,64 @@
 .dsf-empty--err { color: var(--red-over); border-color: var(--red-over); }
 .dsf-empty--err span { display: block; color: var(--text-muted); font-size: 12px; margin: 6px 0 12px; }
 .dsf-empty--err .dsf-btn { margin: 0 auto; }
+
+/* ── Tamaño de letra A / A+ / A++ (botón #btn-fuente del header) ──
+   Bloque gemelo del de style.css. El atributo data-fontscale se setea en el <html>,
+   así que estas reglas descendientes aplican igual desde acá. Sube el texto de
+   lectura de la solapa Desafíos. NO toca los inputs de carga (.dsf-input) ni las
+   grillas de pelotas (.dsf-pel-b): son controles de ancho fijo, no texto de lectura.
+   Para revertir: borrar este bloque. Cicla normal→lg→xl. */
+
+/* A+ (~+13%) */
+[data-fontscale="lg"] .dsf-tab            { font-size: 14px; }
+[data-fontscale="lg"] .dsf-yo             { font-size: 13px; }
+[data-fontscale="lg"] .dsf-sec,
+[data-fontscale="lg"] .dsf-cuenta-t       { font-size: 12px; }
+[data-fontscale="lg"] .dsf-card-t         { font-size: 15px; }
+[data-fontscale="lg"] .dsf-card-s         { font-size: 13px; }
+[data-fontscale="lg"] .dsf-pel            { font-size: 18px; }
+[data-fontscale="lg"] .dsf-pel span       { font-size: 11px; }
+[data-fontscale="lg"] .dsf-tag            { font-size: 11px; }
+[data-fontscale="lg"] .dsf-falta,
+[data-fontscale="lg"] .dsf-cerrado        { font-size: 12px; }
+[data-fontscale="lg"] .dsf-lado-n         { font-size: 15px; }
+[data-fontscale="lg"] .dsf-lado-v         { font-size: 22px; }
+[data-fontscale="lg"] .dsf-lado-h,
+[data-fontscale="lg"] .dsf-vs-lbl         { font-size: 12px; }
+[data-fontscale="lg"] .dsf-st             { font-size: 13px; }
+[data-fontscale="lg"] .dsf-cuenta-r       { font-size: 14px; }
+[data-fontscale="lg"] .dsf-cuenta-neto    { font-size: 15px; }
+[data-fontscale="lg"] .dsf-cuenta-neto span:last-child { font-size: 19px; }
+[data-fontscale="lg"] .dsf-btn            { font-size: 14px; }
+[data-fontscale="lg"] .dsf-login-t        { font-size: 18px; }
+[data-fontscale="lg"] .dsf-login-s        { font-size: 13px; }
+[data-fontscale="lg"] .dsf-form-t         { font-size: 17px; }
+[data-fontscale="lg"] .dsf-empty          { font-size: 14px; }
+[data-fontscale="lg"] .dsf-pie            { font-size: 12px; }
+
+/* A++ (~+27%) */
+[data-fontscale="xl"] .dsf-tab            { font-size: 15px; }
+[data-fontscale="xl"] .dsf-yo             { font-size: 14px; }
+[data-fontscale="xl"] .dsf-sec,
+[data-fontscale="xl"] .dsf-cuenta-t       { font-size: 13px; }
+[data-fontscale="xl"] .dsf-card-t         { font-size: 16px; }
+[data-fontscale="xl"] .dsf-card-s         { font-size: 14px; }
+[data-fontscale="xl"] .dsf-pel            { font-size: 20px; }
+[data-fontscale="xl"] .dsf-pel span       { font-size: 12px; }
+[data-fontscale="xl"] .dsf-tag            { font-size: 12px; }
+[data-fontscale="xl"] .dsf-falta,
+[data-fontscale="xl"] .dsf-cerrado        { font-size: 13px; }
+[data-fontscale="xl"] .dsf-lado-n         { font-size: 16px; }
+[data-fontscale="xl"] .dsf-lado-v         { font-size: 24px; }
+[data-fontscale="xl"] .dsf-lado-h,
+[data-fontscale="xl"] .dsf-vs-lbl         { font-size: 13px; }
+[data-fontscale="xl"] .dsf-st             { font-size: 14px; }
+[data-fontscale="xl"] .dsf-cuenta-r       { font-size: 15px; }
+[data-fontscale="xl"] .dsf-cuenta-neto    { font-size: 16px; }
+[data-fontscale="xl"] .dsf-cuenta-neto span:last-child { font-size: 21px; }
+[data-fontscale="xl"] .dsf-btn            { font-size: 15px; }
+[data-fontscale="xl"] .dsf-login-t        { font-size: 20px; }
+[data-fontscale="xl"] .dsf-login-s        { font-size: 14px; }
+[data-fontscale="xl"] .dsf-form-t         { font-size: 18px; }
+[data-fontscale="xl"] .dsf-empty          { font-size: 15px; }
+[data-fontscale="xl"] .dsf-pie            { font-size: 13px; }
