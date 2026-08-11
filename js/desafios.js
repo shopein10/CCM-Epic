@@ -185,6 +185,63 @@
     return d.golpes.filter(function (g) { return g != null && g !== "" && Number(g) > 0; }).length;
   }
 
+  // ── Parejas del finde ─────────────────────────────────────
+  // La pareja de un desafío NO se elige a dedo: es la que te tocó ese fin de
+  // semana. Se deriva del ORDEN DE JUEGO del cuarto (primeros dos vs últimos
+  // dos), la misma regla con la que se arma el match y el ranking de Parejas.
+  // Como nunca partimos nombres por espacios, "Nico DP"/"Juan Fra B" no rompen.
+  function parejasDelFinde() {
+    var t = S.torneo;
+    if (!t || !t.cuartosDetalle) return [];
+    var out = [];
+    Object.keys(t.cuartosDetalle).forEach(function (cid) {
+      var det = t.cuartosDetalle[cid];
+      var ros = Object.keys(det).filter(function (n) { return n !== "VACIO"; });
+      if (ros.length < 4) return;                 // cuarto incompleto → sin parejas
+      var A = ros.slice(0, 2), B = ros.slice(2, 4);
+      if (typeof calcularMatch === "function") {
+        try {
+          var mc = calcularMatch(t, cid);
+          if (mc && mc.A && mc.B && mc.A.length === 2 && mc.B.length === 2) { A = mc.A; B = mc.B; }
+        } catch (e) {}
+      }
+      out.push({ miembros: A.slice(0, 2), cuarto: cid });
+      out.push({ miembros: B.slice(0, 2), cuarto: cid });
+    });
+    return out;
+  }
+
+  /** La pareja del jugador este finde: { companero, miembros:[a,b], cuarto } o null. */
+  function miPareja(nombre) {
+    var ps = parejasDelFinde();
+    for (var i = 0; i < ps.length; i++) {
+      if (ps[i].miembros.indexOf(nombre) !== -1) {
+        var comp = ps[i].miembros.filter(function (n) { return n !== nombre; })[0] || "";
+        return { companero: comp, miembros: ps[i].miembros.slice(), cuarto: ps[i].cuarto };
+      }
+    }
+    return null;
+  }
+
+  /** Las demás parejas del finde (rivales posibles). */
+  function parejasRivales(nombre) {
+    return parejasDelFinde().filter(function (p) { return p.miembros.indexOf(nombre) === -1; });
+  }
+
+  function parejaLbl(m) { return (m || []).join(" + "); }
+
+  // Neto POR HOYO con hdc85 CRUDO (mismo criterio que el ranking de Parejas del
+  // torneo). Devuelve un array de 18 con null en los hoyos sin cargar.
+  function netoPorHoyo(nombre) {
+    var det = detalleDe(nombre);
+    if (!det || !det.golpes) return null;
+    var h = det.hdc85 != null ? det.hdc85 : (det.hdc != null ? det.hdc : 0);
+    var st = (typeof repartirGolpes === "function") ? repartirGolpes(h) : new Array(18).fill(0);
+    return det.golpes.map(function (g, i) {
+      return (g == null || g === "" || Number(g) <= 0) ? null : Number(g) - (st[i] || 0);
+    });
+  }
+
   function yaSalio(nombres) {
     // El backend manda `salieron` (autoritativo). Esto es solo para la UI:
     // deshabilitar botones antes de que el servidor los rechace.
@@ -269,8 +326,61 @@
   //             valorA, valorB, etiqueta, detalle }
 
   function liquidar(d) {
+    // Parejas → SIEMPRE fourball americano (best ball), sin importar con qué modo
+    // haya quedado guardado. Individual conserva neto/match como antes.
+    if (d.tipo === "parejas") return liquidarFourball(d);
     if (d.modo === "match") return liquidarMatch(d);
     return liquidarNeto(d);
+  }
+
+  function fmtPar(v) {
+    if (v == null) return "–";
+    return v === 0 ? "E" : (v > 0 ? "+" + v : "" + v);
+  }
+
+  // Fourball americano / best ball: por hoyo se toma la MEJOR bola neta de la
+  // pareja (hdc85 crudo) y se suman los 18; gana el total más bajo. NO es match.
+  // Método verificado 12/12 contra el ranking de Parejas del torneo.
+  function liquidarFourball(d) {
+    var A = d.equipoA, B = d.equipoB;
+    if (!A || !B || !A.length || !B.length) {
+      return { estado: "esperando", ganador: null, etiqueta: "Esperando rival" };
+    }
+    var par = (typeof CONFIG !== "undefined" && CONFIG.PAR_HOYOS) || [];
+
+    var bola = function (lado) {
+      var nets = lado.map(netoPorHoyo);
+      if (nets.some(function (n) { return n == null; })) return { vsPar: null, hoyos: 0, completo: false };
+      var suma = 0, parC = 0;
+      for (var i = 0; i < 18; i++) {
+        var disp = nets.map(function (n) { return n[i]; }).filter(function (v) { return v != null; });
+        if (!disp.length) continue;
+        suma += Math.min.apply(null, disp);       // la MEJOR bola de la pareja en ese hoyo
+        parC += (par[i] || 0);
+      }
+      var minHoyos = Math.min.apply(null, lado.map(hoyosJugados));
+      var completo = lado.every(function (n) { return hoyosJugados(n) >= 18; });
+      return { vsPar: suma - parC, hoyos: minHoyos, completo: completo };
+    };
+
+    var a = bola(A), b = bola(B);
+    if (a.vsPar == null || b.vsPar == null) {
+      return { estado: "jugando", ganador: null, valorA: fmtPar(a.vsPar), valorB: fmtPar(b.vsPar),
+               hoyosA: a.hoyos, hoyosB: b.hoyos, etiqueta: "Sin score todavía" };
+    }
+    var listo = a.completo && b.completo;
+    var ganador = a.vsPar < b.vsPar ? "A" : (b.vsPar < a.vsPar ? "B" : "empate");
+    return {
+      estado: listo ? "listo" : "jugando",
+      ganador: listo ? ganador : null,
+      valorA: fmtPar(a.vsPar), valorB: fmtPar(b.vsPar),
+      hoyosA: a.hoyos, hoyosB: b.hoyos,
+      // Mientras no terminen los cuatro, comparar es engañoso (uno puede ir por el
+      // 9 y el otro por el 18). Por eso no se declara ganador parcial: se muestran
+      // los hoyos de cada lado, igual que en el desafío por neto.
+      etiqueta: listo ? "Fourball final" : "Todavía en la cancha",
+      detalle: "best ball " + fmtPar(a.vsPar) + " vs " + fmtPar(b.vsPar),
+    };
   }
 
   function liquidarNeto(d) {
@@ -593,8 +703,8 @@
   }
 
   function modoLbl(d) {
-    return (d.modo === "match" ? "Match" : "Score neto") +
-           (d.tipo === "parejas" ? " · parejas" : " · individual");
+    if (d.tipo === "parejas") return "Fourball · parejas";
+    return (d.modo === "match" ? "Match" : "Score neto") + " · individual";
   }
 
   function tarjeta(d, accionable) {
@@ -620,7 +730,7 @@
       acciones = '<button class="dsf-btn dsf-btn-line dsf-btn-full" data-dsf-anular="' + esc(d.id) + '">Bajarlo de la pared</button>';
     } else if (accionable && abierto) {
       acciones = d.tipo === "parejas"
-        ? '<button class="dsf-btn dsf-btn-oro dsf-btn-full" data-dsf-agarrar="' + esc(d.id) + '">Se la acepto (elijo compañero)</button>'
+        ? '<button class="dsf-btn dsf-btn-oro dsf-btn-full" data-dsf-agarrar="' + esc(d.id) + '">Se la acepto (con mi pareja)</button>'
         : '<button class="dsf-btn dsf-btn-oro dsf-btn-full" data-dsf-agarrar="' + esc(d.id) + '">Se la acepto</button>';
     } else if (accionable) {
       acciones =
@@ -742,6 +852,7 @@
       companero: "",
       rival1: "",
       rival2: "",
+      rivalParejaVal: "",   // "nombre1|nombre2" de la pareja rival elegida
       abierto: true,
       agarrarId: null,
       error: "",
@@ -759,19 +870,41 @@
     return '<select id="' + id + '" class="dsf-input"><option value="">' + esc(placeholder) + "</option>" + opts + "</select>";
   }
 
+  // Selector de PAREJA rival: solo parejas reales del finde (no jugadores sueltos).
+  function selectParejaRival(id, valor) {
+    var rivales = parejasRivales(S.yo.nombre);
+    if (!rivales.length) {
+      return '<p class="dsf-nota">No hay otras parejas armadas este finde todavía.</p>';
+    }
+    var opts = rivales.map(function (p) {
+      var v = p.miembros.join("|");
+      return '<option value="' + esc(v) + '"' + (v === valor ? " selected" : "") + ">" + esc(parejaLbl(p.miembros)) + "</option>";
+    }).join("");
+    return '<select id="' + id + '" class="dsf-input"><option value="">— elegí la pareja rival —</option>' + opts + "</select>";
+  }
+
   function htmlForm() {
     var f = S.form;
     var yo = S.yo.nombre;
     var agarrando = !!f.agarrarId;
+    var mp = miPareja(yo);
+    var puedeEnviar = true;
 
     var h = '<div class="dsf-form">';
     h += '<div class="dsf-form-hdr"><p class="dsf-form-t">' +
-         (agarrando ? "Elegí tu compañero" : "Tirar un desafío") +
+         (agarrando ? "Aceptar el desafío" : "Tirar un desafío") +
          '</p><button class="dsf-x" id="dsf-cerrar" aria-label="Cerrar">✕</button></div>';
 
     if (agarrando) {
-      h += '<label class="dsf-lbl">Con quién jugás</label>' +
-           selectJug("f-companero", f.companero, [yo], "— elegí compañero —");
+      // Aceptar un desafío de parejas abierto: entrás con tu pareja fija del finde.
+      if (!mp || !mp.companero) {
+        h += '<p class="dsf-form-err">No tenés pareja asignada este finde (tu cuarto no está completo), así que no podés aceptar un desafío de parejas.</p>';
+        puedeEnviar = false;
+      } else {
+        h += '<label class="dsf-lbl">Entrás con tu pareja del finde</label>';
+        h += '<div class="dsf-pareja-fija">' + esc(yo) + " + " + esc(mp.companero) + "</div>";
+        h += '<p class="dsf-nota">Fourball best ball · se juegan ' + esc(pelotasLbl(f.pelotas)) + ".</p>";
+      }
     } else {
       h += '<label class="dsf-lbl">Tipo</label>' +
            '<div class="dsf-seg">' +
@@ -779,19 +912,22 @@
              '<button class="dsf-seg-b' + (f.tipo === "parejas" ? " active" : "") + '" data-f-tipo="parejas">Parejas</button>' +
            '</div>';
 
-      h += '<label class="dsf-lbl">Qué se mide</label>' +
-           '<div class="dsf-seg">' +
-             '<button class="dsf-seg-b' + (f.modo === "neto" ? " active" : "") + '" data-f-modo="neto">Score neto</button>' +
-             '<button class="dsf-seg-b' + (f.modo === "match" ? " active" : "") + '" data-f-modo="match">Match</button>' +
-           '</div>';
-
-      if (f.modo === "match") {
-        h += '<p class="dsf-nota">El match solo se puede liquidar entre las dos parejas de un mismo cuarto (las de A89/B89). Si no, usá score neto.</p>';
-      }
-
-      if (f.tipo === "parejas") {
-        h += '<label class="dsf-lbl">Tu compañero <span class="dsf-dim">(te tiene que confirmar)</span></label>' +
-             selectJug("f-companero", f.companero, [yo], "— elegí compañero —");
+      if (f.tipo === "individual") {
+        h += '<label class="dsf-lbl">Qué se mide</label>' +
+             '<div class="dsf-seg">' +
+               '<button class="dsf-seg-b' + (f.modo === "neto" ? " active" : "") + '" data-f-modo="neto">Score neto</button>' +
+               '<button class="dsf-seg-b' + (f.modo === "match" ? " active" : "") + '" data-f-modo="match">Match</button>' +
+             '</div>';
+      } else {
+        // Parejas: SIEMPRE fourball, pareja fija del finde. No se elige nada de esto.
+        h += '<p class="dsf-nota">Fourball best ball: por hoyo se toma la mejor bola neta (hdc 85%) de cada pareja y se suman los 18; gana el total más bajo.</p>';
+        if (!mp || !mp.companero) {
+          h += '<p class="dsf-form-err">No tenés pareja asignada este finde (tu cuarto no está completo). Elegí Individual o esperá a que se arme tu cuarto.</p>';
+          puedeEnviar = false;
+        } else {
+          h += '<label class="dsf-lbl">Tu pareja del finde</label>';
+          h += '<div class="dsf-pareja-fija">' + esc(yo) + " + " + esc(mp.companero) + "</div>";
+        }
       }
 
       h += '<label class="dsf-lbl">Contra quién</label>' +
@@ -801,23 +937,28 @@
            '</div>';
 
       if (!f.abierto) {
-        h += selectJug("f-rival1", f.rival1, [yo, f.companero].filter(Boolean), "— rival —");
         if (f.tipo === "parejas") {
-          h += selectJug("f-rival2", f.rival2, [yo, f.companero, f.rival1].filter(Boolean), "— rival 2 —");
+          h += selectParejaRival("f-rivalpareja", f.rivalParejaVal);
+        } else {
+          h += selectJug("f-rival1", f.rival1, [yo], "— rival —");
         }
       }
     }
 
-    h += '<label class="dsf-lbl">Cuántas pelotas</label><div class="dsf-pelotas">';
-    for (var p = 1; p <= DSF_CONFIG.MAX_PELOTAS; p++) {
-      h += '<button class="dsf-pel-b' + (f.pelotas === p ? " active" : "") + '" data-f-pel="' + p + '">' + p + "</button>";
+    if (!agarrando) {
+      h += '<label class="dsf-lbl">Cuántas pelotas</label><div class="dsf-pelotas">';
+      for (var p = 1; p <= DSF_CONFIG.MAX_PELOTAS; p++) {
+        h += '<button class="dsf-pel-b' + (f.pelotas === p ? " active" : "") + '" data-f-pel="' + p + '">' + p + "</button>";
+      }
+      h += "</div>";
     }
-    h += "</div>";
 
     if (f.error) h += '<p class="dsf-form-err">' + esc(f.error) + "</p>";
 
-    h += '<button class="dsf-btn dsf-btn-oro dsf-btn-full" id="dsf-enviar">' +
-         (agarrando ? "Aceptar el desafío" : "Colgarlo en la pared") + "</button>";
+    if (puedeEnviar) {
+      h += '<button class="dsf-btn dsf-btn-oro dsf-btn-full" id="dsf-enviar">' +
+           (agarrando ? "Aceptar el desafío" : "Colgarlo en la pared") + "</button>";
+    }
     h += "</div>";
     return h;
   }
@@ -831,7 +972,9 @@
     document.querySelectorAll("[data-f-tipo]").forEach(function (el) {
       el.addEventListener("click", function () {
         f.tipo = el.dataset.fTipo;
-        if (f.tipo === "individual") { f.companero = ""; f.rival2 = ""; }
+        // Al cambiar de tipo limpiamos la selección de rival que no aplica.
+        if (f.tipo === "individual") { f.rivalParejaVal = ""; }
+        else { f.rival1 = ""; }
         pintar();
       });
     });
@@ -845,16 +988,11 @@
       el.addEventListener("click", function () { f.pelotas = Number(el.dataset.fPel); pintar(); });
     });
 
-    ["f-companero", "f-rival1", "f-rival2"].forEach(function (id) {
-      var el = $(id);
-      if (!el) return;
-      el.addEventListener("change", function () {
-        if (id === "f-companero") f.companero = el.value;
-        if (id === "f-rival1") f.rival1 = el.value;
-        if (id === "f-rival2") f.rival2 = el.value;
-        pintar();
-      });
-    });
+    var rp = $("f-rivalpareja");
+    if (rp) rp.addEventListener("change", function () { f.rivalParejaVal = rp.value; pintar(); });
+
+    var r1 = $("f-rival1");
+    if (r1) r1.addEventListener("change", function () { f.rival1 = r1.value; pintar(); });
 
     var env = $("dsf-enviar");
     if (env) env.addEventListener("click", enviarForm);
@@ -864,29 +1002,39 @@
     var f = S.form, yo = S.yo.nombre;
     var btn = $("dsf-enviar");
     f.error = "";
+    var mp = miPareja(yo);
 
     var payload;
     if (f.agarrarId) {
-      if (f.companero === "") { f.error = "Elegí tu compañero."; pintar(); return; }
+      // Aceptar un abierto de parejas: entrás con tu pareja fija (no se elige).
+      if (!mp || !mp.companero) { f.error = "No tenés pareja asignada este finde."; pintar(); return; }
       payload = { action: "responder", nombre: yo, pin: S.yo.pin, desafioId: f.agarrarId,
-                  respuesta: "aceptar", companero: f.companero };
-    } else {
-      var equipoA = [yo];
-      if (f.tipo === "parejas") {
-        if (!f.companero) { f.error = "Elegí tu compañero."; pintar(); return; }
-        equipoA.push(f.companero);
-      }
+                  respuesta: "aceptar", companero: mp.companero };
+    } else if (f.tipo === "parejas") {
+      if (!mp || !mp.companero) { f.error = "No tenés pareja asignada este finde."; pintar(); return; }
+      var equipoA = [yo, mp.companero];
       var equipoB = [];
       if (!f.abierto) {
-        if (!f.rival1) { f.error = "Elegí contra quién."; pintar(); return; }
-        equipoB.push(f.rival1);
-        if (f.tipo === "parejas") {
-          if (!f.rival2) { f.error = "Falta el segundo rival."; pintar(); return; }
-          equipoB.push(f.rival2);
+        if (!f.rivalParejaVal) { f.error = "Elegí contra qué pareja."; pintar(); return; }
+        equipoB = f.rivalParejaVal.split("|");
+        if (equipoB.length !== 2) { f.error = "Pareja rival inválida."; pintar(); return; }
+        if (equipoB.indexOf(yo) !== -1 || equipoB.indexOf(mp.companero) !== -1) {
+          f.error = "No podés jugar contra tu propia pareja."; pintar(); return;
         }
       }
-      payload = { action: "crear", creador: yo, pin: S.yo.pin, tipo: f.tipo, modo: f.modo,
+      // modo va "neto" por compatibilidad con el backend; la liquidación es por
+      // tipo=parejas → fourball, así que el valor de modo es indistinto acá.
+      payload = { action: "crear", creador: yo, pin: S.yo.pin, tipo: "parejas", modo: "neto",
                   pelotas: f.pelotas, equipoA: equipoA, equipoB: equipoB };
+    } else {
+      // Individual (sin cambios).
+      var eqA = [yo], eqB = [];
+      if (!f.abierto) {
+        if (!f.rival1) { f.error = "Elegí contra quién."; pintar(); return; }
+        eqB.push(f.rival1);
+      }
+      payload = { action: "crear", creador: yo, pin: S.yo.pin, tipo: "individual", modo: f.modo,
+                  pelotas: f.pelotas, equipoA: eqA, equipoB: eqB };
     }
 
     if (btn) { btn.disabled = true; btn.textContent = "Mandando…"; }

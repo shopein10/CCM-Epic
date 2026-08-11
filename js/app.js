@@ -1177,8 +1177,8 @@ function renderMatchs(data) {
 
     // ¿El match ya está cerrado? En un fourball se ganan hasta 3 puntos por hoyo
     // (2 mejor bola + 1 peor), así que es IRREMONTABLE cuando la ventaja supera
-    // 3 × (hoyos por jugar). Ahí se muestra en notación golf "X/Y": X arriba,
-    // Y hoyos sin jugar — igual que se canta en la cancha (ej. "3/2").
+    // 3 × (hoyos por jugar). Ahí se muestra "X/Y": X = puntos arriba,
+    // Y = PUNTOS que restan jugarse (3 × hoyos por jugar), no hoyos.
     const PER_HOYO = 3;
     let cerrado = null;
     for (let i = 0; i < mc.hoyos.length; i++) {
@@ -1186,7 +1186,7 @@ function renderMatchs(data) {
       if (!h.jugado) continue;
       const rem = 18 - (i + 1);
       const up = Math.abs(h.pa - h.pb);
-      if (rem > 0 && up > PER_HOYO * rem) { cerrado = { up, rem, sign: h.pa - h.pb }; break; }
+      if (rem > 0 && up > PER_HOYO * rem) { cerrado = { up, rem, ptsRest: PER_HOYO * rem, sign: h.pa - h.pb }; break; }
     }
 
     let standingText, standingCls;
@@ -1195,7 +1195,7 @@ function renderMatchs(data) {
       standingCls = "mh-standing-even";
     } else if (cerrado) {
       const nmC = cerrado.sign > 0 ? mc.A.join(" ") : mc.B.join(" ");
-      standingText = `${nmC} <span class="mh-lead">${cerrado.up}/${cerrado.rem}</span>`;
+      standingText = `${nmC} <span class="mh-lead">${cerrado.up}/${cerrado.ptsRest}</span>`;
       standingCls = cerrado.sign > 0 ? "mh-standing-a" : "mh-standing-b";
     } else if (decidido) {
       const suf = jugados === 18 ? " · final" : "";
