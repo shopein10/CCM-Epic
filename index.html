@@ -20,9 +20,14 @@
   document.documentElement.setAttribute('data-theme', t);
   var m = document.querySelector('meta[name="theme-color"]');
   if (m) m.setAttribute('content', t === 'light' ? '#f2efe4' : '#0c1a0f');
+  // Tamaño de letra ANTES del paint, igual que el tema: si se aplicara en app.js
+  // se vería un salto de tamaño al abrir la app.
+  var f = null;
+  try { f = localStorage.getItem('ccm-fontscale'); } catch (e) {}
+  if (f === 'lg' || f === 'xl') document.documentElement.setAttribute('data-fontscale', f);
 })();
 </script>
-<link rel="stylesheet" href="css/style.css?v=26">
+<link rel="stylesheet" href="css/style.css?v=27">
 <link rel="stylesheet" href="css/desafios.css?v=3">
 <link rel="stylesheet" href="css/sorteo.css?v=1">
 </head>
@@ -45,6 +50,7 @@
 <div class="header-right">
 <span id="clima" class="clima hidden" aria-label="Clima"></span>
 <span id="live-badge" class="live-badge hidden">EN VIVO</span>
+<button class="icon-btn fuente-btn" id="btn-fuente" title="Tamaño de letra" aria-label="Tamaño de letra">A</button>
 <button class="icon-btn theme-btn" id="btn-theme" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
 <button class="icon-btn" id="btn-refresh" title="Actualizar">↻</button>
 </div>
@@ -219,9 +225,9 @@
 </div>
 </div>
 
-<script src="js/config.js?v=30"></script>
+<script src="js/config.js?v=31"></script>
 <script src="js/sheets.js?v=21"></script>
-<script src="js/app.js?v=30"></script>
+<script src="js/app.js?v=31"></script>
 <!-- Módulo aparte. Si falla o no carga, el torneo sigue andando igual. -->
 <script src="js/desafios.js?v=8"></script>
 <script src="js/sorteo.js?v=2"></script>
