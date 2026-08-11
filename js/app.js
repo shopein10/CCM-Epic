@@ -29,6 +29,7 @@ async function initApp() {
   setupForm();
   setupRefresh();
   setupTema();
+  setupFuente();
   setupTarjetaModal();
   setupClima();
 
@@ -126,6 +127,45 @@ function setupTema() {
   btn.addEventListener("click", () => {
     const actual = document.documentElement.getAttribute("data-theme");
     aplicarTema(actual === "light" ? "dark" : "light");
+  });
+}
+
+// ── Tamaño de letra A / A+ / A++ ─────────────────────────────
+// Igual que el tema: el atributo data-fontscale se setea en el <script> inline
+// del <head> ANTES del paint (para no ver un salto de tamaño al abrir). Acá solo
+// el botón que cicla normal → lg → xl. Los tamaños los aplica el CSS
+// [data-fontscale="lg"|"xl"], que sube SOLO el texto de lectura (no el scorecard).
+const FONT_KEY = "ccm-fontscale";
+const FONT_CICLO = ["normal", "lg", "xl"];
+const FONT_LABEL = { normal: "A", lg: "A+", xl: "A++" };
+
+function aplicarFuente(f) {
+  if (FONT_CICLO.indexOf(f) === -1) f = "normal";
+  // Reusamos la misma guarda que el tema: apagar transiciones durante el cambio.
+  const root = document.documentElement;
+  root.classList.add("theme-switching");
+  void root.offsetHeight;
+  if (f === "lg" || f === "xl") root.setAttribute("data-fontscale", f);
+  else root.removeAttribute("data-fontscale");
+  void root.offsetHeight;
+  root.classList.remove("theme-switching");
+  const btn = document.getElementById("btn-fuente");
+  if (btn) {
+    btn.textContent = FONT_LABEL[f];
+    btn.title = "Tamaño de letra: " + FONT_LABEL[f] + " (tocá para cambiar)";
+  }
+  try { localStorage.setItem(FONT_KEY, f); } catch (e) {}
+}
+
+function setupFuente() {
+  const btn = document.getElementById("btn-fuente");
+  if (!btn) return;
+  const attr = document.documentElement.getAttribute("data-fontscale");
+  aplicarFuente(attr === "lg" || attr === "xl" ? attr : "normal");
+  btn.addEventListener("click", () => {
+    const a = document.documentElement.getAttribute("data-fontscale");
+    const cur = (a === "lg" || a === "xl") ? a : "normal";
+    aplicarFuente(FONT_CICLO[(FONT_CICLO.indexOf(cur) + 1) % FONT_CICLO.length]);
   });
 }
 
