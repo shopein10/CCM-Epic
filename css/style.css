@@ -603,3 +603,14 @@ html, body {
 [data-fontscale="xl"] .ti-name          { font-size: 21px; }
 [data-fontscale="xl"] .ti-hdc-val       { font-size: 17px; }
 [data-fontscale="xl"] .ti-hdc-lbl       { font-size: 13px; }
+
+
+/* ── STABLEFORD ──────────────────────────────────────────── */
+.tabs .tab { font-size: 13px; }
+.stb-subtabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.stb-subtab { flex: 1; background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; padding: 7px 4px; border-radius: var(--radius-sm); transition: background .2s, color .2s; }
+.stb-subtab.active { background: var(--gold-fill); color: var(--on-gold); border-color: var(--gold-fill); }
+.stb-pane { display: none; }
+.stb-pane.active { display: block; }
+.stb-note { font-size: 11px; color: var(--text-muted); padding: 2px 4px 10px; letter-spacing: .2px; }
+.row-score.stb-pts { color: var(--gold); font-weight: 800; }
