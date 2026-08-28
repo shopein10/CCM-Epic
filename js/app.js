@@ -26,6 +26,7 @@ async function initApp() {
   buildFormCuartos();
   setupNav();
   setupTabs();
+  setupStablefordSubtabs();
   setupForm();
   setupRefresh();
   setupTema();
@@ -264,6 +265,7 @@ function renderLeaderboard(data) {
   renderIndividual(data.leaderboard || []);
   renderParejas(data.parejas || []);
   renderCuartosRank(data.cuartosRank || []);
+  renderStableford(data);
 }
 
 function renderIndividual(rows) {
@@ -299,10 +301,140 @@ function renderIndividual(rows) {
 // ── TARJETA INDIVIDUAL (click en un nombre del ranking) ──────
 // El click se resuelve por NOMBRE (data-jugador), no por posición en la
 // tabla; por eso el reordenamiento del ranking no rompe nada.
+// ── STABLEFORD (individual, parejas y cuarto — handicap COMPLETO) ─────
+// Se calcula 100% en el front desde cuartosDetalle (golpes brutos + hdc) y el
+// STROKE_INDEX del campo. NO toca el backend ni la carga de scores. Mas puntos
+// = mejor. Puntos por hoyo = max(0, 2 - (neto - par)); neto = bruto - golpes de
+// handicap del hoyo (handicap COMPLETO repartido por stroke index).
+//   - Individual: total propio.
+//   - Parejas:    suma de los DOS jugadores por hoyo (agregado).
+//   - Cuarto:     suma de los 3 MEJORES puntajes por hoyo (descarta el peor de 4).
+function stablefordArray(info) {
+  const out = new Array(18).fill(null);
+  if (!info || !info.golpes) return out;
+  const rep = repartirGolpes(info.hdc || 0);
+  const pars = CONFIG.PAR_HOYOS;
+  for (let h = 0; h < 18; h++) {
+    const g = info.golpes[h];
+    if (g == null) continue;
+    const p = 2 - ((g - rep[h]) - pars[h]);
+    out[h] = p > 0 ? p : 0;
+  }
+  return out;
+}
+
+// Combina varios arrays de puntos por hoyo quedandose con los `mejores` de cada
+// hoyo (mejores = null -> todos). Devuelve { total, jugados }.
+function stablefordCombina(arrays, mejores) {
+  let total = 0, jugados = 0;
+  for (let h = 0; h < 18; h++) {
+    let vals = arrays.map(x => x[h]).filter(v => v != null);
+    if (!vals.length) continue;
+    jugados++;
+    if (mejores != null && vals.length > mejores) {
+      vals = vals.sort((x, y) => y - x).slice(0, mejores);
+    }
+    total += vals.reduce((x, y) => x + y, 0);
+  }
+  return { total, jugados };
+}
+
+function jugadoresDeCuarto(cuarto) {
+  return Object.keys(cuarto || {}).filter(n => n !== "VACIO" && cuarto[n] && cuarto[n].golpes);
+}
+
+// Fila del ranking: mismo markup que renderIndividual (comparte estilos).
+function stbFilas(rows) {
+  rows.sort((a, b) => b.puntos - a.puntos || b.jugados - a.jugados);
+  const cnt = {};
+  rows.forEach(r => { cnt[r.puntos] = (cnt[r.puntos] || 0) + 1; });
+  return rows.map(r => {
+    const rank = rows.filter(x => x.puntos > r.puntos).length + 1;
+    const posStr = cnt[r.puntos] > 1 ? "T" + rank : String(rank);
+    const extra = r.click ? ` data-jugador="${r.nombre}"` : "";
+    const cls = r.click ? "row-name row-name-click" : "row-name";
+    return `
+      <div class="score-row ${rank <= 3 ? "top-3" : ""}">
+        <span class="row-pos">${posStr}</span>
+        <span class="${cls}"${extra}>${r.nombre}</span>
+        <span class="row-hoyo">${r.jugados > 0 && r.jugados < 18 ? r.jugados + "h" : ""}</span>
+        <span class="row-score stb-pts">${r.puntos}</span>
+      </div>`;
+  }).join("");
+}
+
+function renderStableford(data) {
+  const cd = (data && data.cuartosDetalle) || {};
+
+  const ind = [];
+  for (const cid in cd) {
+    for (const n of jugadoresDeCuarto(cd[cid])) {
+      const c = stablefordCombina([stablefordArray(cd[cid][n])], null);
+      if (c.jugados > 0) ind.push({ nombre: n, puntos: c.total, jugados: c.jugados, click: true });
+    }
+  }
+
+  // Parejas: los dos primeros vs los dos ultimos del cuarto (orden de juego).
+  const par = [];
+  for (const cid in cd) {
+    const js = jugadoresDeCuarto(cd[cid]);
+    for (const p of [js.slice(0, 2), js.slice(2, 4)]) {
+      if (p.length < 2) continue;
+      const c = stablefordCombina(p.map(n => stablefordArray(cd[cid][n])), null);
+      if (c.jugados > 0) par.push({ nombre: p.join(" / "), puntos: c.total, jugados: c.jugados });
+    }
+  }
+
+  // Cuarto: suma de los 3 mejores puntajes por hoyo.
+  const cua = [];
+  for (const cid in cd) {
+    const js = jugadoresDeCuarto(cd[cid]);
+    if (!js.length) continue;
+    const cfg = CONFIG.CUARTOS.find(x => x.id === cid);
+    const c = stablefordCombina(js.map(n => stablefordArray(cd[cid][n])), 3);
+    if (c.jugados > 0) cua.push({ nombre: cfg ? cfg.nombre : cid, puntos: c.total, jugados: c.jugados });
+  }
+
+  const cap = {
+    "stb-ind": "Individual - handicap completo",
+    "stb-par": "Parejas - suma de los dos - handicap completo",
+    "stb-cua": "Cuarto - 3 mejores por hoyo - handicap completo",
+  };
+  const vacio = txt => `<div class="empty-state"><div class="empty-icon">🎯</div><p>${txt}</p></div>`;
+  const set = (id, rows, txt) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = rows.length ? `<div class="stb-note">${cap[id]}</div>` + stbFilas(rows) : vacio(txt);
+  };
+  set("stb-ind", ind, "El Stableford individual aparece aca durante el torneo");
+  set("stb-par", par, "El Stableford de parejas aparece aca durante el torneo");
+  set("stb-cua", cua, "El Stableford por cuarto aparece aca durante el torneo");
+}
+
+// Sub-selector Individual / Parejas / Cuarto. Usa .stb-subtab (NO .tab) para no
+// chocar con setupTabs (ver bug #15).
+function setupStablefordSubtabs() {
+  document.querySelectorAll(".stb-subtab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.stb;
+      document.querySelectorAll(".stb-subtab").forEach(b => b.classList.toggle("active", b.dataset.stb === id));
+      document.querySelectorAll(".stb-pane").forEach(p => p.classList.toggle("active", p.id === `stb-${id}`));
+    });
+  });
+}
+
 function setupTarjetaModal() {
   const tabla = document.getElementById("tabla-individual");
   if (tabla) {
     tabla.addEventListener("click", e => {
+      const el = e.target.closest("[data-jugador]");
+      if (!el) return;
+      abrirTarjetaIndividual(el.dataset.jugador);
+    });
+  }
+  const tablaStb = document.getElementById("stb-ind");
+  if (tablaStb) {
+    tablaStb.addEventListener("click", e => {
       const el = e.target.closest("[data-jugador]");
       if (!el) return;
       abrirTarjetaIndividual(el.dataset.jugador);
