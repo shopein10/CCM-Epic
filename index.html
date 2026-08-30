@@ -27,7 +27,7 @@
   if (f === 'lg' || f === 'xl') document.documentElement.setAttribute('data-fontscale', f);
 })();
 </script>
-<link rel="stylesheet" href="css/style.css?v=29">
+<link rel="stylesheet" href="css/style.css?v=30">
 <link rel="stylesheet" href="css/desafios.css?v=4">
 <link rel="stylesheet" href="css/sorteo.css?v=1">
 </head>
@@ -35,7 +35,7 @@
 
 <!-- SPLASH -->
 <div id="splash">
-<img src="splash-ccm.jpg?v=1" class="splash-photo" alt="CCM & Epic Golf">
+<img src="splash-golf.jpg?v=2" class="splash-photo" alt="CCM & Epic Golf">
 </div>
 
 <!-- APP SHELL -->
@@ -100,7 +100,6 @@
 <button class="tab active" data-tab="individual">Individual</button>
 <button class="tab" data-tab="parejas">Parejas</button>
 <button class="tab" data-tab="cuartos-rank">Cuartos</button>
-<button class="tab" data-tab="stableford">Stableford</button>
 </div>
 
 <div id="tab-individual" class="tab-content active">
@@ -112,16 +111,6 @@
 </div>
 <div id="tab-cuartos-rank" class="tab-content">
 <div id="tabla-cuartos" class="score-table"></div>
-</div>
-<div id="tab-stableford" class="tab-content">
-<div class="stb-subtabs">
-<button class="stb-subtab active" data-stb="ind">Individual</button>
-<button class="stb-subtab" data-stb="par">Parejas</button>
-<button class="stb-subtab" data-stb="cua">Cuarto</button>
-</div>
-<div id="stb-ind" class="stb-pane score-table active"></div>
-<div id="stb-par" class="stb-pane score-table"></div>
-<div id="stb-cua" class="stb-pane score-table"></div>
 </div>
 </section>
 
@@ -236,9 +225,9 @@
 </div>
 </div>
 
-<script src="js/config.js?v=33"></script>
+<script src="js/config.js?v=34"></script>
 <script src="js/sheets.js?v=21"></script>
-<script src="js/app.js?v=33"></script>
+<script src="js/app.js?v=34"></script>
 <!-- Módulo aparte. Si falla o no carga, el torneo sigue andando igual. -->
 <script src="js/desafios.js?v=8"></script>
 <script src="js/sorteo.js?v=2"></script>
