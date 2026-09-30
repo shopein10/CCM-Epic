@@ -603,3 +603,104 @@ html, body {
 [data-fontscale="xl"] .ti-name          { font-size: 21px; }
 [data-fontscale="xl"] .ti-hdc-val       { font-size: 17px; }
 [data-fontscale="xl"] .ti-hdc-lbl       { font-size: 13px; }
+
+/* ============================================================
+   CLUB ANDINO — diseño azul / rojo / blanco (Golf Club Andino)
+   Se activa con <html data-club="andino"> (lo pone el script inline de index.html,
+   constante CLUB). Para volver al diseño CCM: CLUB = "ccm" en index.html (y el logo del
+   header/splash). Solo PISA variables de los dos temas + header en banda azul.
+   Mantener la regla: todo color nuevo definido en LOS DOS bloques (oscuro y claro).
+   ============================================================ */
+html[data-club="andino"] {
+  /* --- oscuro --- */
+  --club-navy:   #1b2a63;
+  --club-red:    #c8283d;
+  --on-navy:     #ffffff;
+  --on-navy-mut: #c9d3f2;
+  --on-navy-acc: #ff9aa4;
+
+  --bg:          #060a18;
+  --bg-card:     #0c132e;
+  --bg-raised:   #131c3f;
+  --border:      #233062;
+
+  --gold:        #ff7582;
+  --gold-fill:   #c8283d;
+  --on-gold:     #ffffff;
+  --gold-dim:    #e88a93;
+  --gold-bright: #ff97a1;
+
+  --sand:        #e6ebf8;
+  --cream:       #f3f5fb;
+  --text-primary:#f3f5fb;
+  --text-muted:  #97a5cf;
+  --text-dim:    #2b375f;
+
+  --avatar-alt:  #3c4c86;
+  --on-avatar:   #ffffff;
+  --splash-a:    #1b2a63;
+  --splash-b:    #060a18;
+  --scrim:       rgba(3,6,18,.74);
+  --copper:      #ff7582;
+  --copper-dim:  #8a2a36;
+}
+html[data-club="andino"][data-theme="light"] {
+  /* --- claro (por defecto): fondo blanco azulado, sin blanco puro de fondo --- */
+  --club-navy:   #1b2a63;
+  --club-red:    #b8202f;
+  --on-navy:     #ffffff;
+  --on-navy-mut: #c9d3f2;
+  --on-navy-acc: #ff9aa4;
+
+  --bg:          #eef1f8;
+  --bg-card:     #ffffff;
+  --bg-raised:   #e3e8f4;
+  --border:      #c7cfe3;
+
+  --gold:        #a81b2c;
+  --gold-fill:   #b8202f;
+  --on-gold:     #ffffff;
+  --gold-dim:    #9a2231;
+  --gold-bright: #86121f;
+
+  --sand:        #24305a;
+  --cream:       #121c45;
+  --text-primary:#121c45;
+  --text-muted:  #4a5680;
+  --text-dim:    #aeb7cf;
+
+  --avatar-alt:  #3c4c86;
+  --on-avatar:   #ffffff;
+  --splash-a:    #ffffff;
+  --splash-b:    #dde3f1;
+  --scrim:       rgba(18,28,69,.45);
+  --shadow-lg:   0 18px 44px rgba(18,28,69,.22);
+  --copper:      #a81b2c;
+  --copper-dim:  #c98a92;
+}
+
+/* Header: banda azul del club con filete rojo (en los dos temas) */
+html[data-club="andino"] .app-header { background: var(--club-navy); border-bottom: 3px solid var(--club-red); }
+html[data-club="andino"] .header-title { color: var(--on-navy); }
+html[data-club="andino"] .header-title em { color: var(--on-navy-acc); }
+html[data-club="andino"] .app-header .icon-btn { color: var(--on-navy-mut); }
+html[data-club="andino"] .app-header .icon-btn:hover { color: var(--on-navy); }
+html[data-club="andino"] .app-header .clima,
+html[data-club="andino"] .app-header .clima-temp { color: var(--on-navy); }
+html[data-club="andino"] .app-header .clima-wind { color: var(--on-navy-acc); }
+html[data-club="andino"] .app-header .live-badge { color: var(--on-navy); border-color: var(--on-navy); background: var(--club-red); animation: none; }
+html[data-club="andino"] .header-logo-img { height: 30px; width: auto; display: block; flex-shrink: 0; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+html[data-club="andino"] .header-left { gap: 8px; min-width: 0; }
+html[data-club="andino"] .header-title { font-size: 18px; line-height: .95; }
+html[data-club="andino"] .app-header .live-badge { white-space: nowrap; letter-spacing: 1px; padding: 2px 5px; }
+html[data-club="andino"] .header-right { gap: 6px; }
+html[data-club="andino"] .bottom-nav { border-top: 2px solid var(--club-navy); }
+html[data-club="andino"] .podio-item:nth-child(2) .podio-avatar { box-shadow: 0 0 20px rgba(200,40,61,.35); }
+
+/* Splash con el escudo */
+html[data-club="andino"] .splash-title span { color: var(--gold); }
+html[data-club="andino"] .splash-sub { letter-spacing: 3px; }
+/* Teléfonos angostos (≤380px): sin el viento en el header para que entre el título */
+@media (max-width: 380px) {
+  html[data-club="andino"] .app-header .clima-wind { display: none; }
+}
