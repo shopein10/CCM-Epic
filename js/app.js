@@ -116,7 +116,9 @@ function aplicarTema(t) {
     btn.title = t === "light" ? "Modo oscuro" : "Modo claro";
   }
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", THEME_COLOR[t] || THEME_COLOR.light);
+  // Con diseño de club Andino el header es siempre azul: la barra del sistema va azul en los dos temas.
+  const club = document.documentElement.getAttribute("data-club");
+  if (meta) meta.setAttribute("content", club === "andino" ? "#1b2a63" : (THEME_COLOR[t] || THEME_COLOR.light));
   try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
 }
 

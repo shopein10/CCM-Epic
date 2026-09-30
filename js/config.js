@@ -6,12 +6,12 @@
 const CONFIG = {
 
   // Versión del front — mantener en sincronía con el ?v=N de index.html
-  APP_VERSION: 34,
+  APP_VERSION: 35,
 
-  // Clima del header — Open-Meteo (gratis, sin API key, con CORS).
-  // Coordenadas del Club de Campo Mendoza (Guaymallén). La grilla del modelo
-  // es de varios km, así que no hace falta más precisión que esta.
-  CLIMA: { lat: -32.90, lon: -68.79 },
+  // CANCHA ACTIVA: "ANDINO" o "CCM". Define par, stroke index, par total y clima (ver CANCHAS
+  // al final del archivo). Tiene que coincidir con lo que dejó cancha.gs en la planilla
+  // (usarCanchaAndino / usarCanchaCCM). El diseño (logo/colores) va aparte: CLUB en index.html.
+  CANCHA: "ANDINO",
 
   // Token compartido para guardarScores (validado por el Apps Script)
   SCORE_TOKEN: "ccm-epic-2026",
@@ -27,8 +27,6 @@ const CONFIG = {
   // Nombre del torneo actual (aparece en toda la app)
   TORNEO_ACTUAL: "Torneo CCM & Epic 2025",
 
-  // Par total del campo
-  PAR_TOTAL: 72,
 
   // Cada cuántos segundos se refresca el leaderboard automáticamente
   REFRESH_INTERVAL: 30,
@@ -47,10 +45,33 @@ const CONFIG = {
     { id: "Cuarto8", nombre: "Cuarto 8", jugadores: ["J1", "J2", "J3", "J4"] },
   ],
 
-  // Par de cada hoyo — debe coincidir con el campo
-  PAR_HOYOS: [4, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5],
-
-  // Stroke index (handicap del hoyo) por hoyo REAL 1..18 — leído de la planilla.
-  // Es fijo del campo; se usa para repartir los golpes de hándicap por hoyo.
-  STROKE_INDEX: [11, 3, 9, 17, 15, 5, 7, 13, 1, 16, 14, 2, 8, 12, 4, 18, 10, 6],
 };
+
+// ============================================================
+// CANCHAS — datos por cancha (hoyos REALES 1..18). Se copian a CONFIG según CONFIG.CANCHA.
+// CLIMA: coordenadas para Open-Meteo (la grilla es de varios km, alcanza con 2 decimales).
+// ============================================================
+const CANCHAS = {
+  CCM: {
+    nombre: "Club de Campo Mendoza",
+    PAR_TOTAL: 72,
+    PAR_HOYOS:    [4, 4, 5, 3, 4, 4, 5, 3, 4, 4, 3, 4, 5, 4, 4, 3, 4, 5],
+    STROKE_INDEX: [11, 3, 9, 17, 15, 5, 7, 13, 1, 16, 14, 2, 8, 12, 4, 18, 10, 6],
+    CLIMA: { lat: -32.90, lon: -68.79 },   // Guaymallén
+  },
+  ANDINO: {
+    nombre: "Golf Club Andino",
+    PAR_TOTAL: 70,
+    PAR_HOYOS:    [5, 3, 4, 4, 3, 5, 4, 3, 4, 4, 3, 5, 4, 3, 5, 4, 3, 4],
+    STROKE_INDEX: [9, 15, 1, 5, 13, 3, 7, 17, 11, 2, 18, 14, 16, 10, 4, 8, 12, 6],
+    CLIMA: { lat: -32.89, lon: -68.87 },   // Parque General San Martín
+  },
+};
+(function () {
+  var c = CANCHAS[CONFIG.CANCHA] || CANCHAS.CCM;
+  CONFIG.CANCHA_NOMBRE = c.nombre;
+  CONFIG.PAR_TOTAL     = c.PAR_TOTAL;
+  CONFIG.PAR_HOYOS     = c.PAR_HOYOS;
+  CONFIG.STROKE_INDEX  = c.STROKE_INDEX;
+  CONFIG.CLIMA         = c.CLIMA;
+})();
