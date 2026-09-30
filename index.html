@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CCM & Epic">
-<meta name="theme-color" content="#f2efe4">
+<meta name="theme-color" content="#1b2a63">
 <title>CCM & Epic Golf</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -14,12 +14,16 @@
      se vería un flash del tema equivocado al abrir la app. -->
 <script>
 (function () {
+  // Diseño del club: "andino" (azul/rojo/blanco, escudo del Golf Club Andino) o "ccm"
+  // (verde/dorado original). Pisa solo variables de color: ver bloque CLUB ANDINO en style.css.
+  var CLUB = 'andino';
+  document.documentElement.setAttribute('data-club', CLUB);
   var t = null;
   try { t = localStorage.getItem('ccm-theme'); } catch (e) {}
   if (t !== 'light' && t !== 'dark') t = 'light';
   document.documentElement.setAttribute('data-theme', t);
   var m = document.querySelector('meta[name="theme-color"]');
-  if (m) m.setAttribute('content', t === 'light' ? '#f2efe4' : '#0c1a0f');
+  if (m) m.setAttribute('content', CLUB === 'andino' ? '#1b2a63' : (t === 'light' ? '#f2efe4' : '#0c1a0f'));
   // Tamaño de letra ANTES del paint, igual que el tema: si se aplicara en app.js
   // se vería un salto de tamaño al abrir la app.
   var f = null;
@@ -27,7 +31,7 @@
   if (f === 'lg' || f === 'xl') document.documentElement.setAttribute('data-fontscale', f);
 })();
 </script>
-<link rel="stylesheet" href="css/style.css?v=30">
+<link rel="stylesheet" href="css/style.css?v=31">
 <link rel="stylesheet" href="css/desafios.css?v=4">
 <link rel="stylesheet" href="css/sorteo.css?v=1">
 </head>
@@ -35,7 +39,11 @@
 
 <!-- SPLASH -->
 <div id="splash">
-<img src="splash-ccm.jpg?v=1" class="splash-photo" alt="CCM & Epic Golf">
+<div class="splash-inner">
+<img src="andino-logo.png?v=1" class="splash-logo" alt="Golf Club Andino">
+<div class="splash-title">CCM <span>&amp;</span> Epic</div>
+<div class="splash-sub">Golf Club Andino</div>
+</div>
 </div>
 
 <!-- APP SHELL -->
@@ -44,8 +52,8 @@
 <!-- HEADER -->
 <header class="app-header">
 <div class="header-left">
-<span class="header-logo">⛳</span>
-<span class="header-title">CCM <em>&</em> Epic</span>
+<img src="andino-logo.png?v=1" class="header-logo-img" alt="Golf Club Andino">
+<span class="header-title">CCM <em>&amp;</em>&nbsp;Epic</span>
 </div>
 <div class="header-right">
 <span id="clima" class="clima hidden" aria-label="Clima"></span>
@@ -225,9 +233,9 @@
 </div>
 </div>
 
-<script src="js/config.js?v=34"></script>
+<script src="js/config.js?v=35"></script>
 <script src="js/sheets.js?v=21"></script>
-<script src="js/app.js?v=34"></script>
+<script src="js/app.js?v=35"></script>
 <!-- Módulo aparte. Si falla o no carga, el torneo sigue andando igual. -->
 <script src="js/desafios.js?v=8"></script>
 <script src="js/sorteo.js?v=2"></script>
