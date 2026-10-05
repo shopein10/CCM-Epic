@@ -6,12 +6,12 @@
 const CONFIG = {
 
   // Versión del front — mantener en sincronía con el ?v=N de index.html
-  APP_VERSION: 35,
+  APP_VERSION: 36,
 
   // CANCHA ACTIVA: "ANDINO" o "CCM". Define par, stroke index, par total y clima (ver CANCHAS
   // al final del archivo). Tiene que coincidir con lo que dejó cancha.gs en la planilla
   // (usarCanchaAndino / usarCanchaCCM). El diseño (logo/colores) va aparte: CLUB en index.html.
-  CANCHA: "ANDINO",
+  CANCHA: "CCM",
 
   // Token compartido para guardarScores (validado por el Apps Script)
   SCORE_TOKEN: "ccm-epic-2026",
