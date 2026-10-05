@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CCM & Epic">
-<meta name="theme-color" content="#1b2a63">
+<meta name="theme-color" content="#f2efe4">
 <title>CCM & Epic Golf</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -16,7 +16,7 @@
 (function () {
   // Diseño del club: "andino" (azul/rojo/blanco, escudo del Golf Club Andino) o "ccm"
   // (verde/dorado original). Pisa solo variables de color: ver bloque CLUB ANDINO en style.css.
-  var CLUB = 'andino';
+  var CLUB = 'ccm';
   document.documentElement.setAttribute('data-club', CLUB);
   var t = null;
   try { t = localStorage.getItem('ccm-theme'); } catch (e) {}
@@ -39,11 +39,7 @@
 
 <!-- SPLASH -->
 <div id="splash">
-<div class="splash-inner">
-<img src="andino-logo.png?v=1" class="splash-logo" alt="Golf Club Andino">
-<div class="splash-title">CCM <span>&amp;</span> Epic</div>
-<div class="splash-sub">Golf Club Andino</div>
-</div>
+<img src="splash-ccm.jpg?v=1" class="splash-photo" alt="CCM & Epic Golf">
 </div>
 
 <!-- APP SHELL -->
@@ -52,7 +48,7 @@
 <!-- HEADER -->
 <header class="app-header">
 <div class="header-left">
-<img src="andino-logo.png?v=1" class="header-logo-img" alt="Golf Club Andino">
+<span class="header-logo">⛳</span>
 <span class="header-title">CCM <em>&amp;</em>&nbsp;Epic</span>
 </div>
 <div class="header-right">
@@ -233,7 +229,7 @@
 </div>
 </div>
 
-<script src="js/config.js?v=35"></script>
+<script src="js/config.js?v=36"></script>
 <script src="js/sheets.js?v=21"></script>
 <script src="js/app.js?v=35"></script>
 <!-- Módulo aparte. Si falla o no carga, el torneo sigue andando igual. -->
