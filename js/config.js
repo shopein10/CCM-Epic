@@ -6,12 +6,12 @@
 const CONFIG = {
 
   // Versión del front — mantener en sincronía con el ?v=N de index.html
-  APP_VERSION: 36,
+  APP_VERSION: 37,
 
   // CANCHA ACTIVA: "ANDINO" o "CCM". Define par, stroke index, par total y clima (ver CANCHAS
   // al final del archivo). Tiene que coincidir con lo que dejó cancha.gs en la planilla
   // (usarCanchaAndino / usarCanchaCCM). El diseño (logo/colores) va aparte: CLUB en index.html.
-  CANCHA: "CCM",
+  CANCHA: "VACHERIA",
 
   // Token compartido para guardarScores (validado por el Apps Script)
   SCORE_TOKEN: "ccm-epic-2026",
@@ -65,6 +65,13 @@ const CANCHAS = {
     PAR_HOYOS:    [5, 3, 4, 4, 3, 5, 4, 3, 4, 4, 3, 5, 4, 3, 5, 4, 3, 4],
     STROKE_INDEX: [9, 15, 1, 5, 13, 3, 7, 17, 11, 2, 18, 14, 16, 10, 4, 8, 12, 6],
     CLIMA: { lat: -32.89, lon: -68.87 },   // Parque General San Martín
+  },
+  VACHERIA: {
+    nombre: "La Vachería",
+    PAR_TOTAL: 72,
+    PAR_HOYOS:    [4, 4, 3, 4, 4, 3, 5, 4, 5, 4, 4, 3, 4, 4, 3, 5, 4, 5],
+    STROKE_INDEX: [15, 11, 13, 5, 7, 1, 17, 3, 9, 18, 6, 14, 10, 12, 4, 16, 2, 8],
+    CLIMA: { lat: -32.90, lon: -68.79 },   // PENDIENTE: coordenadas de La Vachería (hoy copia de CCM)
   },
 };
 (function () {
