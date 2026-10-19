@@ -34,6 +34,7 @@
 <link rel="stylesheet" href="css/style.css?v=31">
 <link rel="stylesheet" href="css/desafios.css?v=4">
 <link rel="stylesheet" href="css/sorteo.css?v=1">
+<link rel="stylesheet" href="css/deudas.css?v=1">
 </head>
 <body>
 
@@ -87,6 +88,10 @@
 <button class="nav-item" data-view="sorteo">
 <span class="nav-icon">🎲</span>
 <span>Sorteo</span>
+</button>
+<button class="nav-item" data-view="deudas">
+<span class="nav-icon">📒</span>
+<span>Deudas</span>
 </button>
 </nav>
 
@@ -210,6 +215,14 @@
 <div id="sorteo-body"></div>
 </section>
 
+<!-- DEUDAS — todo el contenido lo pinta js/deudas.js -->
+<section id="view-deudas" class="view">
+<div class="view-header">
+<h2>Deudas de pelotas</h2>
+</div>
+<div id="deudas-body"></div>
+</section>
+
 <!-- HISTORIAL -->
 <section id="view-historial" class="view">
 <div class="view-header">
@@ -235,6 +248,7 @@
 <!-- Módulo aparte. Si falla o no carga, el torneo sigue andando igual. -->
 <script src="js/desafios.js?v=8"></script>
 <script src="js/sorteo.js?v=2"></script>
+<script src="js/deudas.js?v=1"></script>
 <script>
 if ('serviceWorker' in navigator) {
 navigator.serviceWorker.register('sw.js');
