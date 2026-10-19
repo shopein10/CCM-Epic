@@ -101,3 +101,15 @@
 [data-fontscale="lg"] .deu-chip, [data-fontscale="lg"] .deu-fila { font-size: 14px; }
 [data-fontscale="xl"] .deu-chip, [data-fontscale="xl"] .deu-fila { font-size: 15px; }
 [data-fontscale="xl"] .deu-res-l { font-size: 13px; }
+
+/* Lista pública ("X le debe N pelotas a Y") */
+.deu-pub { padding: 10px 12px; border-top: 1px solid var(--border); }
+.deu-pub:first-child { border-top: none; }
+.deu-pub-t { font-size: 14px; color: var(--text-primary); line-height: 1.35; }
+.deu-pub-t b { font-weight: 600; }
+.deu-pub-n { color: var(--red-over); white-space: nowrap; }
+.deu-pub-s { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.deu-pub--mia { background: var(--bg-raised); }
+.dsf-login + .dsf-sec { margin-top: 18px; }
+[data-fontscale="lg"] .deu-pub-t { font-size: 15px; }
+[data-fontscale="xl"] .deu-pub-t { font-size: 16px; }
