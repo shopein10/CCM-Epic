@@ -1,0 +1,103 @@
+/* ============================================================
+   CCM & Epic — DEUDAS DE PELOTAS
+   ============================================================
+   Reusa las clases dsf-* de desafios.css (cards, botones, login, form).
+   Acá solo lo propio (deu-*). Sin hex hardcodeados: todo sale de las
+   variables de style.css, así anda en los dos temas.
+   ============================================================ */
+
+#view-deudas { padding-bottom: 24px; }
+
+.deu-hdr { justify-content: space-between; }
+.deu-hola { font-size: 13px; color: var(--text-muted); letter-spacing: .03em; }
+
+.deu-resumen {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  margin-bottom: 12px;
+}
+.deu-res-b {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.deu-res-n { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--text-primary); }
+.deu-res-b--pos .deu-res-n, .deu-res-n.pos { color: var(--green-bright); }
+.deu-res-b--neg .deu-res-n, .deu-res-n.neg { color: var(--red-over); }
+.deu-res-l { font-size: 12px; color: var(--text-muted); }
+
+.deu-nueva { margin-bottom: 6px; padding: 12px; font-size: 14px; }
+.dsf-card > .dsf-btn-full { margin-top: 10px; }
+.deu-confirmar { outline: 2px solid var(--red-over); outline-offset: 1px; }
+
+.deu-vacio {
+  text-align: center; color: var(--text-muted);
+  font-size: 13px; padding: 22px 8px;
+}
+
+/* Lista compacta (las demás / saldadas) */
+.deu-lista {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.deu-fila {
+  display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center;
+  padding: 9px 12px; font-size: 13px; color: var(--text-primary);
+  border-top: 1px solid var(--border);
+}
+.deu-fila:first-child { border-top: none; }
+.deu-fila-q { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deu-fila-q b { font-weight: 600; }
+.deu-fila-m { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.deu-fila-p {
+  font-family: 'DM Mono', monospace; font-size: 14px; color: var(--gold);
+  min-width: 20px; text-align: right;
+}
+.deu-lista--muerta .deu-fila { color: var(--text-muted); }
+.deu-lista--muerta .deu-fila-p { color: var(--text-muted); }
+
+.deu-toggle {
+  display: block; width: 100%; text-align: left;
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-family: inherit; font-size: 13px;
+  padding: 16px 2px 8px;
+}
+
+/* Form: atajos + chips de jugadores */
+.deu-atajos { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.deu-atajo {
+  background: transparent;
+  border: 1px dashed var(--gold);
+  color: var(--gold);
+  border-radius: 999px;
+  font-family: inherit; font-size: 12px;
+  padding: 6px 11px; cursor: pointer;
+}
+.deu-atajo--x { border-color: var(--border); color: var(--text-muted); }
+
+.deu-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.deu-chip {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 999px;
+  font-family: inherit; font-size: 13px;
+  padding: 7px 12px; cursor: pointer;
+}
+.deu-chip.active {
+  background: var(--gold-fill);
+  border-color: var(--gold-fill);
+  color: var(--on-gold);
+  font-weight: 500;
+}
+
+.deu-motivos { display: grid; grid-template-columns: 1fr 1fr; }
+.deu-otro { margin-top: 8px; }
+.deu-enviar { margin-top: 16px; padding: 12px; font-size: 14px; }
+
+[data-fontscale="lg"] .deu-chip, [data-fontscale="lg"] .deu-fila { font-size: 14px; }
+[data-fontscale="xl"] .deu-chip, [data-fontscale="xl"] .deu-fila { font-size: 15px; }
+[data-fontscale="xl"] .deu-res-l { font-size: 13px; }
