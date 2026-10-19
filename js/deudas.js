@@ -232,7 +232,8 @@
       '<select id="deu-nombre" class="dsf-input"><option value="">— elegí tu nombre —</option>' + opts + "</select>" +
       '<input id="deu-pin" class="dsf-input" type="tel" inputmode="numeric" maxlength="4" placeholder="PIN de 4 dígitos">' +
       '<button id="deu-entrar" class="dsf-btn dsf-btn-oro">Entrar</button>' +
-      '<p class="dsf-login-err" id="deu-login-err"></p></div>';
+      '<p class="dsf-login-err" id="deu-login-err"></p></div>' +
+      (S.data ? htmlPublica() : "");
   }
   function enganchesLogin() {
     var btn = $("deu-entrar"); if (!btn) return;
@@ -282,14 +283,7 @@
       h += '<p class="deu-vacio">No debés nada ni te deben nada. Cuentas claras.</p>';
     }
 
-    if (c.otras.length) {
-      h += '<p class="dsf-sec">LAS DEMÁS</p><div class="deu-lista">' +
-        c.otras.slice().sort(function (a, b) { return a.deudor.localeCompare(b.deudor); }).map(function (d) {
-          return '<div class="deu-fila"><span class="deu-fila-q"><b>' + esc(d.deudor) + '</b> <span class="dsf-dim">→</span> ' + esc(d.acreedor) + "</span>" +
-                 '<span class="deu-fila-m">' + esc(d.motivo || "") + "</span>" +
-                 '<span class="deu-fila-p">' + d.pelotas + "</span></div>";
-        }).join("") + "</div>";
-    }
+    h += htmlPublica();
 
     var sald = (S.data && S.data.saldadas) || [];
     if (sald.length) {
@@ -304,6 +298,35 @@
       }
     }
     return h;
+  }
+
+  // Lista PÚBLICA: todas las deudas pendientes, escritas como frase.
+  // Se ve aunque no estés logueado. Ordenada por el que más debe (total),
+  // y dentro de cada deudor, la más vieja primero.
+  function haceLbl(ts) {
+    if (!ts) return "";
+    var dias = Math.floor((Date.now() - ts) / 86400000);
+    return dias <= 0 ? "hoy" : dias === 1 ? "hace 1 día" : "hace " + dias + " días";
+  }
+  function htmlPublica() {
+    var pend = ((S.data && S.data.pendientes) || []).slice();
+    var h = '<p class="dsf-sec">LA LISTA PÚBLICA</p>';
+    if (!pend.length) return h + '<p class="deu-vacio">Nadie le debe nada a nadie. Raro.</p>';
+    var tot = {};
+    pend.forEach(function (d) { tot[d.deudor] = (tot[d.deudor] || 0) + (d.pelotas || 0); });
+    pend.sort(function (a, b) {
+      return (tot[b.deudor] - tot[a.deudor]) || a.deudor.localeCompare(b.deudor) || ((a.ts || 0) - (b.ts || 0));
+    });
+    var yo = S.yo && S.yo.nombre;
+    return h + '<div class="deu-lista deu-publica">' + pend.map(function (d) {
+      var mia = yo && (mismo(d.deudor, yo) || mismo(d.acreedor, yo));
+      var sub = [d.motivo, haceLbl(d.ts)].filter(Boolean).join(" · ");
+      return '<div class="deu-pub' + (mia ? " deu-pub--mia" : "") + '">' +
+          '<p class="deu-pub-t"><b>' + esc(d.deudor) + '</b> le debe <b class="deu-pub-n">' + d.pelotas + " " + pelLbl(d.pelotas) +
+          '</b> a <b>' + esc(d.acreedor) + "</b></p>" +
+          (sub ? '<p class="deu-pub-s">' + esc(sub) + "</p>" : "") +
+        "</div>";
+    }).join("") + "</div>";
   }
 
   function tarjeta(d, lado) {
