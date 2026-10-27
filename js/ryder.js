@@ -304,47 +304,80 @@
       '<span class="ryd-chip-h">' + (a != null ? a : "–") + '</span></span>';
   }
 
-  // ── MATCHS: por cuarto, el fourball + los 4 individuales ────
+  // ── MATCHS: lista plegable. Cada partido es UNA fila (2 vs 2, parcial,
+  // un puntito por match). Al tocarla se abre el detalle; la grilla hoyo por
+  // hoyo y la tarjeta de los 4 quedan detrás de botones propios.
+  // El estado abierto/cerrado sobrevive al refresco de 30s (y se recuerda en
+  // este teléfono vía localStorage, envuelto en try/catch).
+  var LS_KEY = "ccm-ryder-abiertos";
+  var UI = { open: {}, grid: {}, sc: {} };
+  try { var g0 = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); if (g0 && g0.open) UI.open = g0.open; } catch (e) {}
+  function guardarUI() { try { localStorage.setItem(LS_KEY, JSON.stringify({ open: UI.open })); } catch (e) {} }
+  var lastR = null;
+
+  function pill(st, big) {
+    var c = st.estado === "a" ? "m" : st.estado === "b" ? "l" : st.estado === "empate" ? "e" : "s";
+    return '<span class="rdm-pill rdm-' + c + (big ? " rdm-big" : "") + '"></span>';
+  }
+  function estadoCuarto(c) {
+    var j = c.fourball.jugados;
+    if (!j) return "sin empezar";
+    if (j === 18) return "final";
+    return j + (j === 1 ? " hoyo" : " hoyos");
+  }
+
   function renderMatchsRyder(R) {
     var el = document.getElementById("ryder-matchs");
     if (!el) return;
+    lastR = R;
+    if (!el._rdmBound) {
+      el._rdmBound = true;
+      el.addEventListener("click", function (ev) {
+        var b = ev.target.closest("[data-act]");
+        if (!b || !el.contains(b)) return;
+        var card = b.closest(".rdm-card");
+        if (!card) return;
+        var id = card.getAttribute("data-c"), act = b.getAttribute("data-act");
+        if (act === "toggle") { UI.open[id] = !UI.open[id]; guardarUI(); }
+        else if (act === "grid") UI.grid[id] = !UI.grid[id];
+        else if (act === "sc") UI.sc[id] = !UI.sc[id];
+        if (lastR) renderMatchsRyder(lastR);
+      });
+    }
     if (!R.cuartos.length) { el.innerHTML = VACIO_HTML; return; }
 
-    el.innerHTML = R.cuartos.map(function (c) {
-      var mon = c.mon, lag = c.lag;
+    var hint = '<p class="rdm-hint">Tocá un partido para ver los 5 matchs. Puntito = quién va ganando cada match ' +
+      '(<span class="rdm-pill rdm-m"></span> Osos · <span class="rdm-pill rdm-l"></span> Rusos · ' +
+      '<span class="rdm-pill rdm-e"></span> parejo).</p>';
 
-      // PRESENTACIÓN de los dos equipos (arriba de todo)
-      var present =
-        '<div class="ryd-present">' +
-          '<div class="ryd-present-side monchitos">' +
-            '<div class="ryd-present-team">Osos</div>' +
-            '<div class="ryd-present-names">' + esc(mon.join(" / ")) + '</div>' +
-          '</div>' +
-          '<div class="ryd-present-vs">vs</div>' +
-          '<div class="ryd-present-side lagartos ryd-present-r">' +
-            '<div class="ryd-present-team">Rusos</div>' +
-            '<div class="ryd-present-names">' + esc(lag.join(" / ")) + '</div>' +
-          '</div>' +
-        '</div>';
+    el.innerHTML = hint + R.cuartos.map(function (c) {
+      var mon = c.mon, lag = c.lag, id = c.id;
+      var abierto = !!UI.open[id];
+      var num = String(c.nombre).replace(/\D+/g, "") || "";
+      var lead = c.ptsMon > c.ptsLag ? "m" : c.ptsLag > c.ptsMon ? "l" : "e";
 
-      // TARJETA de los 4 (misma que el modal individual). Sirve para auditar
-      // que los golpes estén bien anotados. Se reusa buildScorecardHTML de app.js;
-      // el min del match del fourball alinea los puntitos azules con el fourball.
-      var tarjeta = "";
-      if (typeof buildScorecardHTML === "function") {
-        var cfg = { nombre: c.nombre, jugadores: mon.concat(lag) };
-        tarjeta =
-          '<div class="ryd-sc-lbl">Tarjeta de los 4 · revisá que esté bien anotado</div>' +
-          '<div class="ryd-sc-wrap">' +
-            buildScorecardHTML(cfg, c.det, null, c.fourball.mn) +
-          '</div>';
-      }
+      var pills = pill(c.pFour, true) + c.singles.map(function (s) { return pill(s.pts, false); }).join("");
 
-      // FOURBALL
+      var sum =
+        '<button type="button" class="rdm-sum" data-act="toggle" aria-expanded="' + abierto + '">' +
+          '<span class="rdm-num">' + esc(num) + '</span>' +
+          '<span class="rdm-team rdm-tm' + (lead === "m" ? " rdm-win" : "") + '">' + esc(mon[0]) + '<br>' + esc(mon[1]) + '</span>' +
+          '<span class="rdm-mid">' +
+            '<span class="rdm-score"><b class="ryd-t-m">' + fmtPts(c.ptsMon) + '</b><i>–</i><b class="ryd-t-l">' + fmtPts(c.ptsLag) + '</b></span>' +
+            '<span class="rdm-pills">' + pills + '</span>' +
+            '<span class="rdm-est">' + estadoCuarto(c) + '</span>' +
+          '</span>' +
+          '<span class="rdm-team rdm-tl' + (lead === "l" ? " rdm-win" : "") + '">' + esc(lag[0]) + '<br>' + esc(lag[1]) + '</span>' +
+          '<span class="rdm-chev" aria-hidden="true">›</span>' +
+        '</button>';
+
+      if (!abierto) return '<div class="rdm-card" data-c="' + esc(id) + '">' + sum + '</div>';
+
+      // FOURBALL (compacto; grilla bajo botón)
       var eF = golfEstado(c.fourball, 3, false);
       var four =
         '<div class="ryd-match ryd-four">' +
-          '<div class="ryd-m-tag">Fourball · 2 mejor bola / 1 peor</div>' +
+          '<div class="ryd-m-tag">Fourball · vale 2</div>' +
           '<div class="ryd-m-row">' +
             '<div class="ryd-m-side monchitos">' + chip(mon[0], c.fourball) + chip(mon[1], c.fourball) + '</div>' +
             '<div class="ryd-m-cen"><span class="ryd-m-pts">' + fmtPts(c.pFour.a) + '</span>' +
@@ -352,30 +385,38 @@
             '<div class="ryd-m-side lagartos ryd-m-side-r">' + chip(lag[0], c.fourball) + chip(lag[1], c.fourball) + '</div>' +
           '</div>' +
           '<div class="ryd-m-est ryd-est-' + eF.cls + '">' + eF.txt + '</div>' +
-          gridMatch(c.fourball) +
+          (c.fourball.hoyos.length
+            ? '<button type="button" class="rdm-btn" data-act="grid">' + (UI.grid[id] ? "Ocultar hoyo por hoyo" : "Ver hoyo por hoyo") + '</button>' +
+              (UI.grid[id] ? gridMatch(c.fourball) : "")
+            : "") +
         '</div>';
 
-      // SINGLES
-      var sing = c.singles.map(function (s) {
+      // INDIVIDUALES (una línea cada uno)
+      var sing = '<div class="rdm-sub">Individuales · vale 1 c/u</div>' + c.singles.map(function (s) {
         var a = s.mc.A[0], b = s.mc.B[0];
         var e = golfEstado(s.mc, 1, true);
-        return '<div class="ryd-match ryd-single">' +
-          '<div class="ryd-m-row">' +
-            '<div class="ryd-m-side monchitos">' + chip(a, s.mc) + '</div>' +
-            '<div class="ryd-m-cen"><span class="ryd-m-pts">' + fmtPts(s.pts.a) + '</span>' +
-              '<span class="ryd-m-x">–</span><span class="ryd-m-pts">' + fmtPts(s.pts.b) + '</span></div>' +
-            '<div class="ryd-m-side lagartos ryd-m-side-r">' + chip(b, s.mc) + '</div>' +
-          '</div>' +
-          '<div class="ryd-m-est ryd-est-' + e.cls + '">' + e.txt + '</div>' +
+        return '<div class="rdm-single">' +
+          '<div class="ryd-m-side monchitos">' + chip(a, s.mc) + '</div>' +
+          '<div class="rdm-s-cen"><span class="ryd-m-pts">' + fmtPts(s.pts.a) + '</span><span class="ryd-m-x">–</span>' +
+            '<span class="ryd-m-pts">' + fmtPts(s.pts.b) + '</span></div>' +
+          '<div class="ryd-m-side lagartos ryd-m-side-r">' + chip(b, s.mc) + '</div>' +
+          '<div class="rdm-s-est ryd-est-' + e.cls + '">' + e.txt + '</div>' +
         '</div>';
       }).join("");
 
-      return '<div class="ryd-cuarto-card">' +
-        '<div class="ryd-cuarto-hdr"><span>' + esc(c.nombre) + '</span>' +
-          '<span class="ryd-cuarto-tot"><b class="ryd-t-m">' + fmtPts(c.ptsMon) + '</b> – ' +
-          '<b class="ryd-t-l">' + fmtPts(c.ptsLag) + '</b></span></div>' +
-        present + tarjeta + four + sing +
-      '</div>';
+      // TARJETA DE LOS 4 (bajo botón)
+      var tarjeta = "";
+      if (typeof buildScorecardHTML === "function") {
+        tarjeta = '<button type="button" class="rdm-btn rdm-btn-sc" data-act="sc">' +
+          (UI.sc[id] ? "Ocultar tarjeta de los 4" : "Ver tarjeta de los 4") + '</button>';
+        if (UI.sc[id]) {
+          var cfg = { nombre: c.nombre, jugadores: mon.concat(lag) };
+          tarjeta += '<div class="ryd-sc-wrap">' + buildScorecardHTML(cfg, c.det, null, c.fourball.mn) + '</div>';
+        }
+      }
+
+      return '<div class="rdm-card rdm-open" data-c="' + esc(id) + '">' + sum +
+        '<div class="rdm-body">' + four + sing + tarjeta + '</div></div>';
     }).join("");
   }
 
