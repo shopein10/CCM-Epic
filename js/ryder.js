@@ -1,15 +1,15 @@
 // ============================================================
-// CCM & Epic Golf — MÓDULO MINI RYDER (Segunda Fecha)
+// CCM & Epic Golf — MÓDULO MINI RYDER (Osos vs Rusos, 31/10/2026)
 // ------------------------------------------------------------
-// Monchitos vs Lagartos. Por cada cuarto (2 Monchitos + 2 Lagartos)
+// Osos vs Rusos (antes Monchitos vs Lagartos). Por cada cuarto (2 Osos + 2 Rusos)
 // se juegan 5 matchs:
 //   • Fourball AB vs CD  → 2 mejor bola / 1 peor bola  → Ryder: gana 2, empate 1-1
 //   • 4 individuales (a-c, a-d, b-c, b-d) → 1 por hoyo  → Ryder: gana 1, empate 0,5
 // En CADA match, el de menor hdc85 de ese match baja a 0 y los demás
 // descuentan lo mismo (nadie queda con hándicap negativo en el match).
 //
-// EQUIPO POR POSICIÓN: en cada cuarto, jugadores 1 y 2 = Monchitos,
-// 3 y 4 = Lagartos. Se deriva de la planilla en runtime, sin roster fijo.
+// EQUIPO POR POSICIÓN: en cada cuarto, jugadores 1 y 2 = Osos,
+// 3 y 4 = Rusos. (Clases CSS internas siguen siendo monchitos/lagartos.) Se deriva de la planilla en runtime, sin roster fijo.
 //
 // Es 100% de lectura: no escribe nada en la planilla. Si falla, el resto
 // de la app sigue andando (está en su propio archivo, igual que Desafíos).
@@ -20,8 +20,8 @@
 
   // Etiquetas y colores de los equipos (los colores viven en ryder.css)
   var EQUIPOS = {
-    monchitos: { nombre: "Monchitos", cls: "monchitos" },
-    lagartos:  { nombre: "Lagartos",  cls: "lagartos"  },
+    monchitos: { nombre: "Osos", cls: "monchitos" },
+    lagartos:  { nombre: "Rusos",  cls: "lagartos"  },
   };
 
   // ── Reparto de golpes de hándicap por hoyo REAL (mismo criterio que el torneo) ──
@@ -199,13 +199,13 @@
     var head =
       '<div class="ryd-score">' +
         '<div class="ryd-score-side monchitos' + (lider === "monchitos" ? " ryd-lead" : "") + '">' +
-          '<div class="ryd-score-name">Monchitos</div>' +
+          '<div class="ryd-score-name">Osos</div>' +
           '<div class="ryd-score-pts">' + fmtPts(R.totMon) + '</div>' +
         '</div>' +
         '<div class="ryd-score-mid"><span class="ryd-vs">vs</span>' +
           '<span class="ryd-score-tot">de ' + totJugar + '</span></div>' +
         '<div class="ryd-score-side lagartos' + (lider === "lagartos" ? " ryd-lead" : "") + '">' +
-          '<div class="ryd-score-name">Lagartos</div>' +
+          '<div class="ryd-score-name">Rusos</div>' +
           '<div class="ryd-score-pts">' + fmtPts(R.totLag) + '</div>' +
         '</div>' +
       '</div>';
@@ -317,12 +317,12 @@
       var present =
         '<div class="ryd-present">' +
           '<div class="ryd-present-side monchitos">' +
-            '<div class="ryd-present-team">Monchitos</div>' +
+            '<div class="ryd-present-team">Osos</div>' +
             '<div class="ryd-present-names">' + esc(mon.join(" / ")) + '</div>' +
           '</div>' +
           '<div class="ryd-present-vs">vs</div>' +
           '<div class="ryd-present-side lagartos ryd-present-r">' +
-            '<div class="ryd-present-team">Lagartos</div>' +
+            '<div class="ryd-present-team">Rusos</div>' +
             '<div class="ryd-present-names">' + esc(lag.join(" / ")) + '</div>' +
           '</div>' +
         '</div>';
@@ -411,8 +411,8 @@
 
     el.innerHTML =
       '<div class="ryd-eq-wrap">' +
-        col("Monchitos", "monchitos", R.totMon, R.jugMon, fbMon) +
-        col("Lagartos", "lagartos", R.totLag, R.jugLag, fbLag) +
+        col("Osos", "monchitos", R.totMon, R.jugMon, fbMon) +
+        col("Rusos", "lagartos", R.totLag, R.jugLag, fbLag) +
       '</div>' +
       '<p class="ryd-foot">G-P-E = ganados, perdidos, empatados en los 2 individuales de cada uno. ' +
       'El total del equipo suma individuales + fourballs.</p>';

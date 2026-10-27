@@ -6,7 +6,7 @@
 const CONFIG = {
 
   // Versión del front — mantener en sincronía con el ?v=N de index.html
-  APP_VERSION: 38,
+  APP_VERSION: 39,
 
   // CANCHA ACTIVA: "ANDINO" o "CCM". Define par, stroke index, par total y clima (ver CANCHAS
   // al final del archivo). Tiene que coincidir con lo que dejó cancha.gs en la planilla

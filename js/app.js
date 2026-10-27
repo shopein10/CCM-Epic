@@ -58,6 +58,7 @@ async function loadAndRender(showSkeleton = false, force = false) {
     renderMatchs(data);
     renderTarjetas(data);
     renderHistorial(data);
+    if (window.Ryder) Ryder.render(data);   // Mini Ryder (módulo aparte, 31/10/2026)
     updateLiveBadge(data);
     updateLastUpdate(data);
   } catch (err) {
