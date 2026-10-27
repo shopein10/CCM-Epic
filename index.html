@@ -35,6 +35,7 @@
 <link rel="stylesheet" href="css/desafios.css?v=4">
 <link rel="stylesheet" href="css/sorteo.css?v=1">
 <link rel="stylesheet" href="css/deudas.css?v=2">
+<link rel="stylesheet" href="css/ryder.css?v=4">
 </head>
 <body>
 
@@ -61,33 +62,24 @@
 </div>
 </header>
 
-<!-- NAV -->
+<!-- NAV — MINI RYDER Osos vs Rusos (31/10/2026). Nav normal en _backups/20261026-preRyderOsosRusos/index.html.
+     Las vistas Cuartos, Matchs viejo, Desafíos y Sorteo quedan en el DOM, apagadas. -->
 <nav class="bottom-nav">
-<button class="nav-item active" data-view="leaderboard">
+<button class="nav-item active" data-view="resultado">
 <span class="nav-icon">🏆</span>
-<span>Ranking</span>
+<span>Ryder</span>
 </button>
-<button class="nav-item" data-view="cuartos">
-<span class="nav-icon">👥</span>
-<span>Cuartos</span>
+<button class="nav-item" data-view="rmatchs">
+<span class="nav-icon">⚔️</span>
+<span>Matchs</span>
 </button>
 <button class="nav-item nav-cta" data-view="cargar">
 <span class="nav-icon">✚</span>
 <span>Cargar</span>
 </button>
-<button class="nav-item" data-view="matchs">
-<span class="nav-icon">⚔️</span>
-<span>Matchs</span>
-</button>
-<!-- Historial queda en el código pero fuera del nav (no se activó nunca).
-     Su <section id="view-historial"> sigue abajo, intacta. -->
-<button class="nav-item" data-view="desafios">
-<span class="nav-icon">🔥</span>
-<span>Desafíos</span>
-</button>
-<button class="nav-item" data-view="sorteo">
-<span class="nav-icon">🎲</span>
-<span>Sorteo</span>
+<button class="nav-item" data-view="leaderboard">
+<span class="nav-icon">📋</span>
+<span>Ranking</span>
 </button>
 <button class="nav-item" data-view="deudas">
 <span class="nav-icon">📒</span>
@@ -98,8 +90,24 @@
 <!-- VIEWS -->
 <main class="view-container">
 
+<!-- ══ MINI RYDER ══ (pintadas por js/ryder.js) -->
+<section id="view-resultado" class="view active">
+<div class="view-header">
+<h2>Mini Ryder · Osos vs Rusos</h2>
+<span id="last-update" class="update-time"></span>
+</div>
+<div id="ryder-resultado"></div>
+</section>
+
+<section id="view-rmatchs" class="view">
+<div class="view-header">
+<h2>Matchs</h2>
+</div>
+<div id="ryder-matchs"></div>
+</section>
+
 <!-- LEADERBOARD -->
-<section id="view-leaderboard" class="view active">
+<section id="view-leaderboard" class="view">
 <div class="view-header">
 <h2>Leaderboard</h2>
 <span id="last-update" class="update-time"></span>
@@ -242,13 +250,14 @@
 </div>
 </div>
 
-<script src="js/config.js?v=38"></script>
+<script src="js/config.js?v=39"></script>
 <script src="js/sheets.js?v=21"></script>
-<script src="js/app.js?v=35"></script>
+<script src="js/app.js?v=36"></script>
 <!-- Módulo aparte. Si falla o no carga, el torneo sigue andando igual. -->
 <script src="js/desafios.js?v=8"></script>
 <script src="js/sorteo.js?v=2"></script>
 <script src="js/deudas.js?v=2"></script>
+<script src="js/ryder.js?v=4"></script>
 <script>
 if ('serviceWorker' in navigator) {
 navigator.serviceWorker.register('sw.js');
