@@ -1,24 +1,24 @@
 /* ============================================================
-   CCM & Epic Golf — MINI RYDER (Segunda Fecha)
-   Monchitos (bordó) vs Lagartos (verde). Colores definidos para
+   CCM & Epic Golf — MINI RYDER — Osos (azul, clase .monchitos) vs Rusos (rojo, clase .lagartos).
+   Contrastes verificados >=5:1 en los dos temas. Colores definidos para
    los DOS temas (si agregás uno nuevo, ponelo en ambos bloques).
    ============================================================ */
 
 :root {
-  --ryd-mon:      #d75a4f;   /* Monchitos - bordó/rojo (oscuro) */
-  --ryd-mon-bg:   rgba(215,90,79,.14);
-  --ryd-mon-bd:   rgba(215,90,79,.45);
-  --ryd-lag:      #77bb4c;   /* Lagartos - verde (oscuro) */
-  --ryd-lag-bg:   rgba(119,187,76,.14);
-  --ryd-lag-bd:   rgba(119,187,76,.45);
+  --ryd-mon:      #6aa6f5;   /* Osos - azul (oscuro) */
+  --ryd-mon-bg:   rgba(106,166,245,.14);
+  --ryd-mon-bd:   rgba(106,166,245,.45);
+  --ryd-lag:      #e0675c;   /* Rusos - rojo (oscuro) */
+  --ryd-lag-bg:   rgba(224,103,92,.14);
+  --ryd-lag-bd:   rgba(224,103,92,.45);
 }
 [data-theme="light"] {
-  --ryd-mon:      #9c2b22;
-  --ryd-mon-bg:   rgba(156,43,34,.09);
-  --ryd-mon-bd:   rgba(156,43,34,.35);
-  --ryd-lag:      #3f7a25;
-  --ryd-lag-bg:   rgba(63,122,37,.09);
-  --ryd-lag-bd:   rgba(63,122,37,.35);
+  --ryd-mon:      #1d5aa3;
+  --ryd-mon-bg:   rgba(29,90,163,.09);
+  --ryd-mon-bd:   rgba(29,90,163,.35);
+  --ryd-lag:      #a3261c;
+  --ryd-lag-bg:   rgba(163,38,28,.09);
+  --ryd-lag-bd:   rgba(163,38,28,.35);
 }
 
 /* ── SPLASH con el poster ────────────────────────────────── */
