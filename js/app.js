@@ -975,6 +975,17 @@ function buildConfirmPreview() {
       </div>`;
   }
 
+  // Primer golpe del cuarto: el servidor fija la salida (B41) segun el hoyo que se carga
+  const hayCache = !!(Sheets._cache && Sheets._cache.cuartosDetalle);
+  const cuartoVacio = hayCache && Object.values(detalleSrv).every(j => !(j.golpes || []).some(g => g != null));
+  if (cuartoVacio) {
+    const salidaNueva = ini >= 10 ? 10 : 1;
+    html += `
+      <div style="margin-top:10px;padding:10px 12px;border-radius:8px;background:rgba(184,115,51,.14);border:1px solid rgba(184,115,51,.45);color:var(--text-primary);font-size:13px;line-height:1.45">
+        ⛳ Es el primer hoyo que se carga en este cuarto: queda con <b>salida por el ${salidaNueva}</b>. Si no salieron por ahí, volvé y elegí el hoyo correcto.
+      </div>`;
+  }
+
   document.getElementById("confirm-preview").innerHTML = html;
 }
 
