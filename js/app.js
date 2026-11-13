@@ -13,12 +13,19 @@ const State = {
     scores: {},
   },
   refreshTimer: null,
+  data: null,      // último dato PINTADO (del servidor o del caché local del arranque)
+  dataTs: 0,       // de cuándo es ese dato
+  lastOk: 0,       // última vez que el servidor respondió bien
 };
 
 // ── Init ────────────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-  setTimeout(initApp, 1200); // Dejar que se vea el splash
-});
+// Arranca YA: antes esperaba 1,2 s mirando el splash sin pedir nada. Ahora el
+// pedido sale en paralelo con el splash (que igual se ve un mínimo, ver SPLASH_MIN).
+document.addEventListener("DOMContentLoaded", initApp);
+
+const SPLASH_MIN = 600;                    // ms mínimos de splash, para que no parpadee
+const LS_TORNEO = "ccm-torneo-cache";      // último getAll bueno, para pintar al instante
+const CACHE_MAX_HORAS = 6;                 // más viejo que esto no se pinta (sería de otra vuelta)
 
 async function initApp() {
   buildCuartoBtns();
@@ -32,20 +39,76 @@ async function initApp() {
   setupFuente();
   setupTarjetaModal();
   setupClima();
+  setupMas();
+  setupVisibilidad();
 
-  await loadAndRender(true);
+  const t0 = Date.now();
+  // Si hay un dato reciente guardado en el teléfono, se pinta YA y el servidor
+  // refresca por detrás (mismo criterio que Desafíos). Si no hay, se espera al
+  // servidor con los skeletons, como siempre.
+  const guardado = leerCacheTorneo();
+  if (guardado) {
+    try {
+      pintarDatos(guardado.data, guardado.t);
+      const el = document.getElementById("last-update");
+      if (el) el.textContent = `${horaLbl(guardado.t)} · actualizando…`;
+      loadAndRender();                       // sin await: no frena la apertura
+    } catch (e) {
+      console.warn("Caché local inservible, se ignora:", e);
+      await loadAndRender(true);
+    }
+  } else {
+    await loadAndRender(true);
+  }
 
-  // Ocultar splash
-  document.getElementById("splash").classList.add("fade-out");
+  // Ocultar splash (respetando el mínimo)
   setTimeout(() => {
-    document.getElementById("splash").style.display = "none";
-    document.getElementById("app").classList.remove("hidden");
-  }, 400);
+    document.getElementById("splash").classList.add("fade-out");
+    setTimeout(() => {
+      document.getElementById("splash").style.display = "none";
+      document.getElementById("app").classList.remove("hidden");
+    }, 400);
+  }, Math.max(0, SPLASH_MIN - (Date.now() - t0)));
 
-  // Auto-refresh
+  // Auto-refresh (no gasta red ni batería con la app en segundo plano)
   State.refreshTimer = setInterval(() => {
+    if (document.hidden) return;
     if (State.view !== "cargar") loadAndRender();
   }, CONFIG.REFRESH_INTERVAL * 1000);
+}
+
+// ── Caché local del torneo (solo para el arranque) ───────────
+// NO reemplaza a Sheets._cache: el pre-llenado y el aviso de pisado de Cargar
+// siguen leyendo únicamente datos que vinieron del servidor en esta sesión.
+function leerCacheTorneo() {
+  try {
+    const o = JSON.parse(localStorage.getItem(LS_TORNEO));
+    if (!o || !o.t || !o.data || !o.data.cuartosDetalle) return null;
+    if (Date.now() - o.t > CACHE_MAX_HORAS * 3600 * 1000) return null;
+    return o;
+  } catch (e) { return null; }
+}
+
+function guardarCacheTorneo(data) {
+  try { localStorage.setItem(LS_TORNEO, JSON.stringify({ t: Date.now(), data })); } catch (e) {}
+}
+
+function horaLbl(ts) {
+  const d = new Date(ts);
+  return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+// ── Volver del segundo plano ─────────────────────────────────
+// Al reabrir la app (o desbloquear el teléfono) los timers de iOS/Android vienen
+// frenados: sin esto se veían datos viejos hasta el próximo tick de 30 s.
+function setupVisibilidad() {
+  const alVolver = () => {
+    if (document.hidden) return;
+    if (State.view === "cargar") return;               // no molestar a quien está anotando
+    if (Date.now() - State.lastOk > 15000) loadAndRender();
+  };
+  document.addEventListener("visibilitychange", alVolver);
+  window.addEventListener("pageshow", e => { if (e.persisted) alVolver(); });
 }
 
 // ── Carga y render ──────────────────────────────────────────
@@ -53,18 +116,33 @@ async function loadAndRender(showSkeleton = false, force = false) {
   if (showSkeleton) renderSkeletons();
   try {
     const data = await Sheets.getAll(force);
-    renderLeaderboard(data);
-    renderCuartos(data);
-    renderMatchs(data);
-    renderTarjetas(data);
-    renderHistorial(data);
-    if (window.Ryder) Ryder.render(data);   // Mini Ryder (módulo aparte, 31/10/2026)
-    updateLiveBadge(data);
+    pintarDatos(data, Date.now());
+    State.lastOk = Date.now();
+    guardarCacheTorneo(data);
     updateLastUpdate(data);
   } catch (err) {
     console.error("Error cargando datos:", err);
-    renderError();
+    // Si ya hay algo pintado NO se tapa con el cartel de error: se deja lo último
+    // conocido y se avisa de cuándo es. El próximo intento reintenta solo.
+    if (State.data) {
+      const el = document.getElementById("last-update");
+      if (el) el.textContent = `sin conexión · datos de ${horaLbl(State.dataTs)}`;
+    } else {
+      renderError();
+    }
   }
+}
+
+function pintarDatos(data, ts) {
+  State.data = data;
+  State.dataTs = ts;
+  renderLeaderboard(data);
+  renderCuartos(data);
+  renderMatchs(data);
+  renderTarjetas(data);
+  renderHistorial(data);
+  if (window.Ryder) Ryder.render(data);   // Mini Ryder (módulo aparte, 31/10/2026)
+  updateLiveBadge(data);
 }
 
 // ── Navegación ───────────────────────────────────────────────
@@ -77,10 +155,28 @@ function setupNav() {
   });
 }
 
+// Desafíos, Sorteo y Deudas viven adentro de "Más": en el nav se ilumina "Más".
+const NAV_GRUPO = { desafios: "mas", sorteo: "mas", deudas: "mas" };
+
 function navigateTo(view) {
   State.view = view;
-  document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+  const navKey = NAV_GRUPO[view] || view;
+  document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.view === navKey));
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id === `view-${view}`));
+}
+
+// ── "Más" ────────────────────────────────────────────────────
+// Las tarjetas de "Más" (y el "‹ Más" de cada sub-solapa) llevan data-goto="vista".
+// No navegan por su cuenta: le hacen click al botón de nav de esa vista, que para
+// desafios/sorteo/deudas quedó OCULTO en el nav (.nav-oculto). Así se disparan
+// los listeners propios de cada módulo (cargar + polling) sin tocar sus archivos.
+function setupMas() {
+  document.addEventListener("click", e => {
+    const el = e.target.closest("[data-goto]");
+    if (!el) return;
+    const btn = document.querySelector('.nav-item[data-view="' + el.dataset.goto + '"]');
+    if (btn) btn.click();
+  });
 }
 
 // ── Tabs ─────────────────────────────────────────────────────
@@ -338,7 +434,7 @@ function abrirTarjetaIndividual(nombre) {
   const modal = document.getElementById("tarjeta-modal");
   const body  = document.getElementById("tarjeta-modal-body");
   if (!modal || !body) return;
-  const info = findJugadorDetalle(Sheets._cache, nombre);
+  const info = findJugadorDetalle(State.data || Sheets._cache, nombre);
   body.innerHTML = info
     ? buildTarjetaIndividualHTML(nombre, info)
     : `<p style="color:var(--text-muted)">Sin datos para ${nombre}.</p>`;
@@ -367,7 +463,7 @@ function buildTarjetaIndividualHTML(nombre, info) {
   const detalle = { [nombre]: info };
   // El ajuste del match depende del CUARTO, no del jugador: buscamos su cuarto
   // real para no calcular el min sobre una sola persona (daría siempre 0).
-  const cuartoDet = findCuartoDeJugador(Sheets._cache, nombre);
+  const cuartoDet = findCuartoDeJugador(State.data || Sheets._cache, nombre);
   const mn = cuartoDet ? minHdc85(cuartoDet) : 0;
   return header + buildScorecardHTML(pseudoConfig, detalle, null, mn);
 }
@@ -816,18 +912,30 @@ function buildInputsGolpes() {
       const jugador = inp.dataset.jugador;
       if (!State.form.scores[jugador]) State.form.scores[jugador] = {};
       State.form.scores[jugador][h] = val;
+
+      // Avance automático: con UN dígito del 2 al 9 ya pasa al siguiente. El "1"
+      // espera el segundo dígito (10, 11, 12); un hoyo en uno se confirma con Enter
+      // o tocando el campo siguiente. Va en "input" y no en "keyup" porque varios
+      // teclados de teléfono no mandan keyup confiable.
+      const txt = inp.value;
+      if (txt.length >= 2 || (txt.length === 1 && txt !== "1" && txt !== "0")) avanzar(inp);
     });
 
-    // Avanzar al siguiente input al completar
-    inp.addEventListener("keyup", e => {
-      if (e.key === "Enter" || inp.value.length >= 2) {
-        const all = [...container.querySelectorAll("input")];
-        const idx = all.indexOf(inp);
-        if (idx < all.length - 1) all[idx + 1].focus();
-        else { collectScores(); goToStep(4); } // último input → ir a revisar
-      }
+    // Al entrar a un campo que ya tiene número, queda seleccionado: lo que se
+    // escribe lo REEMPLAZA (antes se pegaba al lado y un 4 pasaba a ser 45).
+    inp.addEventListener("focus", () => {
+      setTimeout(() => { try { inp.select(); } catch (e) {} }, 0);
     });
+
+    inp.addEventListener("keyup", e => { if (e.key === "Enter") avanzar(inp); });
   });
+
+  function avanzar(inp) {
+    const all = [...container.querySelectorAll("input")];
+    const idx = all.indexOf(inp);
+    if (idx < all.length - 1) all[idx + 1].focus();
+    else { inp.blur(); collectScores(); goToStep(4); } // último input → ir a revisar
+  }
 
   // Botón continuar al paso 4
   let btnCont = container.parentElement.querySelector(".btn-continue-step3");
@@ -871,6 +979,10 @@ function buildInputsGolpes() {
   if (Sheets._cache && Sheets._cache.cuartosDetalle) {
     aplicarPrePopulate(Sheets._cache.cuartosDetalle[_cuartoId]);
   }
+  // Foco directo en el primer jugador: se abre el teclado sin un toque extra.
+  // (Corre dentro del click del hoyo, que es lo que iOS exige para abrir el teclado.)
+  const primero = container.querySelector("input");
+  if (primero) primero.focus();
   // 2) Refrescar del servidor y re-aplicar por si hay datos más nuevos
   (async () => {
     try {
