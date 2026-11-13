@@ -133,6 +133,25 @@ html, body {
 .nav-item.active { color: var(--gold); }
 .nav-cta { color: var(--on-gold) !important; background: var(--gold-fill); border-radius: var(--radius-md); margin: 0 4px; flex: 1.1; }
 .nav-cta .nav-icon { font-size: 22px; }
+/* Botones de nav que existen solo para que los módulos se enganchen (ver index.html) */
+.nav-oculto { display: none !important; }
+/* Nav de 5: hay lugar para letra e ícono más grandes que con 7 */
+.nav-item { font-size: 12px; }
+.nav-item .nav-icon { font-size: 20px; }
+.nav-cta .nav-icon { font-size: 22px; }
+
+/* ── "Más": menú de Desafíos / Deudas / Sorteo ── */
+.mas-grid { display: flex; flex-direction: column; gap: 12px; }
+.mas-card { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 18px 16px; color: var(--text-primary); cursor: pointer; font-family: 'Inter', sans-serif; }
+.mas-card:active { border-color: var(--gold); }
+.mas-icon { font-size: 28px; line-height: 1; }
+.mas-txt { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.mas-tit { font-size: 17px; font-weight: 600; color: var(--cream); }
+.mas-sub { font-size: 13px; color: var(--text-muted); line-height: 1.35; }
+.mas-chev { font-size: 24px; color: var(--text-muted); line-height: 1; }
+.mas-back { background: none; border: none; padding: 4px 8px 10px 0; margin: 0; color: var(--gold); font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; }
+/* Ayuda del paso 3 de Cargar */
+.step-hint { font-size: 13px; color: var(--text-muted); margin: -6px 0 12px; line-height: 1.4; }
 
 /* MAIN */
 .view-container { flex: 1; overflow-y: auto; padding-bottom: calc(var(--nav-h) + 12px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
@@ -552,7 +571,7 @@ html, body {
 [data-fontscale="lg"] .cuarto-btn-title,
 [data-fontscale="lg"] .cuarto-btn-hole  { font-size: 13px; }
 [data-fontscale="lg"] .match-team       { font-size: 15px; }
-[data-fontscale="lg"] .nav-item         { font-size: 11px; }
+[data-fontscale="lg"] .nav-item         { font-size: 13px; }
 /* Matchs — resto de la tarjeta */
 [data-fontscale="lg"] .match-cuarto-lbl,
 [data-fontscale="lg"] .match-result-badge,
@@ -586,7 +605,7 @@ html, body {
 [data-fontscale="xl"] .cuarto-btn-title,
 [data-fontscale="xl"] .cuarto-btn-hole  { font-size: 14px; }
 [data-fontscale="xl"] .match-team       { font-size: 16px; }
-[data-fontscale="xl"] .nav-item         { font-size: 12px; }
+[data-fontscale="xl"] .nav-item         { font-size: 14px; }
 /* Matchs — resto de la tarjeta */
 [data-fontscale="xl"] .match-cuarto-lbl,
 [data-fontscale="xl"] .match-result-badge,
