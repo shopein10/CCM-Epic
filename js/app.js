@@ -434,9 +434,17 @@ function abrirTarjetaIndividual(nombre) {
   const modal = document.getElementById("tarjeta-modal");
   const body  = document.getElementById("tarjeta-modal-body");
   if (!modal || !body) return;
-  const info = findJugadorDetalle(State.data || Sheets._cache, nombre);
-  body.innerHTML = info
-    ? buildTarjetaIndividualHTML(nombre, info)
+  // Un mismo nombre puede estar en más de un cuarto (juega dos días): se muestran
+  // TODAS sus tarjetas, cada una con su cuarto, en vez de abrir siempre la primera.
+  const cd = ((State.data || Sheets._cache) || {}).cuartosDetalle || {};
+  const donde = Object.keys(cd).filter(cid => cd[cid] && cd[cid][nombre]);
+  body.innerHTML = donde.length
+    ? donde.map(cid => {
+        const cfg = CONFIG.CUARTOS.find(c => c.id === cid);
+        const rotulo = donde.length > 1
+          ? `<p style="margin:14px 0 6px;font-weight:600;color:var(--gold)">${cfg ? cfg.nombre : cid}</p>` : "";
+        return rotulo + buildTarjetaIndividualHTML(nombre, cd[cid][nombre], cd[cid]);
+      }).join("")
     : `<p style="color:var(--text-muted)">Sin datos para ${nombre}.</p>`;
   modal.classList.add("open");
   document.body.style.overflow = "hidden";
@@ -450,7 +458,7 @@ function cerrarTarjetaIndividual() {
 }
 
 // Encabezado (nombre + HDC 100% + HDC 85%) + la tarjeta de siempre para un solo jugador.
-function buildTarjetaIndividualHTML(nombre, info) {
+function buildTarjetaIndividualHTML(nombre, info, cuartoDetalle) {
   const hdc   = info.hdc != null ? info.hdc : (info.handicap != null ? info.handicap : null);
   const hdc85 = info.hdc85 != null ? info.hdc85 : null;
   const header = `
@@ -463,7 +471,7 @@ function buildTarjetaIndividualHTML(nombre, info) {
   const detalle = { [nombre]: info };
   // El ajuste del match depende del CUARTO, no del jugador: buscamos su cuarto
   // real para no calcular el min sobre una sola persona (daría siempre 0).
-  const cuartoDet = findCuartoDeJugador(State.data || Sheets._cache, nombre);
+  const cuartoDet = cuartoDetalle || findCuartoDeJugador(State.data || Sheets._cache, nombre);
   const mn = cuartoDet ? minHdc85(cuartoDet) : 0;
   return header + buildScorecardHTML(pseudoConfig, detalle, null, mn);
 }
@@ -506,6 +514,28 @@ function renderCuartosRank(rows) {
         <span class="row-score ${sc}">${Sheets.formatScore(r.score)}</span>
       </div>`;
   }).join("");
+}
+
+// Fila de cuartosRank que corresponde a ESTE cuarto: tiene que nombrar EXACTAMENTE
+// a sus jugadores (ni uno más ni uno menos). Antes alcanzaba con que la fila
+// "contuviera" a cualquiera de ellos: si un jugador figuraba en dos cuartos (juega
+// hoy y mañana), o un nombre era parte de otro ("Adolf" / "Adolf 2", "Nico" /
+// "Nico DP"), un cuarto mostraba el score y el hoyo del OTRO. (13/11/2026)
+function filaRankDeCuarto(rows, jugadores) {
+  const norm = t => String(t == null ? "" : t).replace(/\s+/g, " ").trim();
+  const js = (jugadores || []).map(norm).filter(Boolean).sort((a, b) => b.length - a.length);
+  if (!js.length) return undefined;
+  return (rows || []).find(r => {
+    if (!r || !r.nombres) return false;
+    let resto = " " + norm(r.nombres) + " ";
+    for (const j of js) {
+      const k = " " + j + " ";
+      const i = resto.indexOf(k);
+      if (i === -1) return false;
+      resto = resto.slice(0, i) + " " + resto.slice(i + k.length);
+    }
+    return resto.trim() === "";
+  });
 }
 
 // ── RENDER: CUARTOS DETALLE ──────────────────────────────────
@@ -566,9 +596,7 @@ function renderCuartos(data) {
     const detalle = data.cuartosDetalle[c.id];
     if (!detalle) return;
     // Score del cuarto desde cuartosRank
-    const rankItem = (data.cuartosRank || []).find(r =>
-      c.jugadores.some(j => r.nombres && r.nombres.includes(j))
-    );
+    const rankItem = filaRankDeCuarto(data.cuartosRank, c.jugadores);
     if (rankItem) {
       el.textContent = Sheets.formatScore(rankItem.score);
       el.className = `cuarto-btn-score ${Sheets.scoreClass(rankItem.score)}`;
@@ -1200,9 +1228,7 @@ function renderTarjetas(data) {
   CONFIG.CUARTOS.forEach(c => {
     const scoreEl = document.getElementById(`tarjeta-mini-score-${c.id}`);
     if (!scoreEl) return;
-    const rankItem = (data.cuartosRank || []).find(r =>
-      c.jugadores.some(j => r.nombres && r.nombres.includes(j))
-    );
+    const rankItem = filaRankDeCuarto(data.cuartosRank, c.jugadores);
     if (rankItem) {
       scoreEl.textContent = Sheets.formatScore(rankItem.score);
       scoreEl.className = `cuarto-btn-score ${Sheets.scoreClass(rankItem.score)}`;
