@@ -31,7 +31,7 @@
   if (f === 'lg' || f === 'xl') document.documentElement.setAttribute('data-fontscale', f);
 })();
 </script>
-<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/style.css?v=32">
 <link rel="stylesheet" href="css/desafios.css?v=4">
 <link rel="stylesheet" href="css/sorteo.css?v=1">
 <link rel="stylesheet" href="css/deudas.css?v=2">
@@ -81,18 +81,16 @@
 </button>
 <!-- Historial queda en el código pero fuera del nav (no se activó nunca).
      Su <section id="view-historial"> sigue abajo, intacta. -->
-<button class="nav-item" data-view="desafios">
-<span class="nav-icon">🔥</span>
-<span>Desafíos</span>
+<button class="nav-item" data-view="mas">
+<span class="nav-icon">☰</span>
+<span>Más</span>
 </button>
-<button class="nav-item" data-view="sorteo">
-<span class="nav-icon">🎲</span>
-<span>Sorteo</span>
-</button>
-<button class="nav-item" data-view="deudas">
-<span class="nav-icon">📒</span>
-<span>Deudas</span>
-</button>
+<!-- Desafíos / Sorteo / Deudas se abren desde "Más". Estos tres botones quedan
+     OCULTOS pero NO se borran: desafios.js, sorteo.js y deudas.js se enganchan a
+     ellos (.nav-item[data-view=…]) y las tarjetas de "Más" les hacen click. -->
+<button class="nav-item nav-oculto" data-view="desafios" tabindex="-1" aria-hidden="true"></button>
+<button class="nav-item nav-oculto" data-view="sorteo" tabindex="-1" aria-hidden="true"></button>
+<button class="nav-item nav-oculto" data-view="deudas" tabindex="-1" aria-hidden="true"></button>
 </nav>
 
 <!-- VIEWS -->
@@ -170,6 +168,7 @@
 
 <div class="form-step" id="step-3">
 <p class="step-label">Paso 3 — Golpes por hoyo</p>
+<p class="step-hint">Escribí el número y pasa solo al siguiente. Para 10 o más, los dos dígitos.</p>
 <div id="inputs-golpes" class="golpes-grid"></div>
 </div>
 
@@ -199,8 +198,33 @@
 <div id="matchs-list" class="matchs-list"></div>
 </section>
 
+<!-- MÁS — menú de las solapas de uso ocasional -->
+<section id="view-mas" class="view">
+<div class="view-header">
+<h2>Más</h2>
+</div>
+<div class="mas-grid">
+<button type="button" class="mas-card" data-goto="desafios">
+<span class="mas-icon">🔥</span>
+<span class="mas-txt"><span class="mas-tit">Desafíos</span><span class="mas-sub">Colgá o aceptá un desafío por pelotas</span></span>
+<span class="mas-chev">›</span>
+</button>
+<button type="button" class="mas-card" data-goto="deudas">
+<span class="mas-icon">📒</span>
+<span class="mas-txt"><span class="mas-tit">Deudas</span><span class="mas-sub">Quién le debe pelotas a quién</span></span>
+<span class="mas-chev">›</span>
+</button>
+<button type="button" class="mas-card" data-goto="sorteo">
+<span class="mas-icon">🎲</span>
+<span class="mas-txt"><span class="mas-tit">Sorteo</span><span class="mas-sub">Armar los cuartos de la semana</span></span>
+<span class="mas-chev">›</span>
+</button>
+</div>
+</section>
+
 <!-- DESAFÍOS — todo el contenido lo pinta js/desafios.js -->
 <section id="view-desafios" class="view">
+<button type="button" class="mas-back" data-goto="mas">‹ Más</button>
 <div class="view-header">
 <h2>Desafíos</h2>
 </div>
@@ -209,6 +233,7 @@
 
 <!-- SORTEO — todo el contenido lo pinta js/sorteo.js -->
 <section id="view-sorteo" class="view">
+<button type="button" class="mas-back" data-goto="mas">‹ Más</button>
 <div class="view-header">
 <h2>Sorteo de cuartos</h2>
 </div>
@@ -217,6 +242,7 @@
 
 <!-- DEUDAS — todo el contenido lo pinta js/deudas.js -->
 <section id="view-deudas" class="view">
+<button type="button" class="mas-back" data-goto="mas">‹ Más</button>
 <div class="view-header">
 <h2>Deudas de pelotas</h2>
 </div>
@@ -242,9 +268,9 @@
 </div>
 </div>
 
-<script src="js/config.js?v=41"></script>
+<script src="js/config.js?v=42"></script>
 <script src="js/sheets.js?v=21"></script>
-<script src="js/app.js?v=37"></script>
+<script src="js/app.js?v=38"></script>
 <!-- Módulo aparte. Si falla o no carga, el torneo sigue andando igual. -->
 <script src="js/desafios.js?v=8"></script>
 <script src="js/sorteo.js?v=2"></script>
