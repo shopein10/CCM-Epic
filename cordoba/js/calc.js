@@ -175,9 +175,9 @@
         var four = match(a, b, ctx, salida);
         var singles = [[0, 0], [0, 1], [1, 0], [1, 1]].map(function (x) {
           var mc = match([a[x[0]]], [b[x[1]]], ctx, salida);
-          return { mc: mc, pts: ptsMatch(mc, 1), vale: 1 };
+          return { mc: mc, pts: ptsMatch(mc, 1), vale: 1, a: [a[x[0]]], b: [b[x[1]]] };
         });
-        var partidos = [{ mc: four, pts: ptsMatch(four, 2), vale: 2, fourball: true }].concat(singles);
+        var partidos = [{ mc: four, pts: ptsMatch(four, 2), vale: 2, fourball: true, a: a.slice(), b: b.slice() }].concat(singles);
         var ptsA = 0, ptsB = 0;
         partidos.forEach(function (p) { ptsA += p.pts.a; ptsB += p.pts.b; });
         return { partidos: partidos, ptsA: ptsA, ptsB: ptsB };
@@ -311,6 +311,30 @@
   }
 
   // ── Todo junto ─────────────────────────────────────────────
+  // ── Puntos por jugador: cada uno suma los puntos de los partidos que jugó ──
+  // (el fourball cuenta entero para los dos de la pareja, como en la Ryder Cup).
+  function puntosJugadores(dias) {
+    var P = {};
+    var de = function (n) { return P[n] || (P[n] = { pts: 0, jug: 0, g: 0, e: 0, p: 0 }); };
+    dias.forEach(function (d) {
+      d.cuartos.forEach(function (c) {
+        if (!c.res) return;
+        c.res.partidos.forEach(function (pt) {
+          if (!pt.a || !pt.b || pt.pts.estado === "sin") return;
+          var lado = function (ns, mio, est) {
+            ns.forEach(function (n) {
+              var r = de(n); r.pts += mio; r.jug++;
+              if (est === "empate") r.e++; else if (mio > 0) r.g++; else r.p++;
+            });
+          };
+          lado(pt.a, pt.pts.a, pt.pts.estado);
+          lado(pt.b, pt.pts.b, pt.pts.estado);
+        });
+      });
+    });
+    return P;
+  }
+
   function build(data, hoyISO) {
     var ix = indexar(data);
     var dias = (data.programa || []).map(function (p) { return armarDia(data, ix, p.dia); });
@@ -320,6 +344,7 @@
       ix: ix, dias: dias, totA: totA, totB: totB, maxPts: max,
       paraGanar: max / 2 + 0.5,
       ranking: ranking(data, ix, dias),
+      ptsJug: puntosJugadores(dias),
       diaActual: diaActual(data, hoyISO),
       hdcDia: function (dia, n) { return hdcDia(data, ix, dia, n); }
     };

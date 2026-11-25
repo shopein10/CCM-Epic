@@ -156,9 +156,19 @@
     var roster = function (id) {
       var e = eq(id);
       var js = S.data.jugadores.filter(function (j) { return j.equipo === id; });
+      var P = M.ptsJug || {};
+      var hayPts = js.some(function (j) { return P[j.nombre]; });
+      if (hayPts) js = js.slice().sort(function (x, y) {
+        return ((P[y.nombre] || {}).pts || 0) - ((P[x.nombre] || {}).pts || 0);
+      });
       return '<div class="roster"><h4 style="color:' + esc(e.color) + '">' + esc(e.nombre) + "</h4>" +
         (e.capitan ? '<div class="cap">Capitán: ' + esc(e.capitan) + "</div>" : "") +
-        js.map(function (j) { return "<div>" + esc(j.nombre) + ' <small>' + fmtIdx(j.index) + "</small></div>"; }).join("") + "</div>";
+        js.map(function (j) {
+          var r = P[j.nombre];
+          return '<div class="ro-jug"><span>' + esc(j.nombre) + ' <small>' + fmtIdx(j.index) + "</small></span>" +
+            (r ? '<span class="ro-pts" title="Ganados-empatados-perdidos">' + fmtPts(r.pts) +
+                 ' <small>' + r.g + "-" + r.e + "-" + r.p + "</small></span>" : "") + "</div>";
+        }).join("") + "</div>";
     };
     h += '<section class="card rosters">' + roster("A") + roster("B") + "</section>";
     return h;
