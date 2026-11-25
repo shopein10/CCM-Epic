@@ -143,3 +143,8 @@ option.usado { color: #999; }
 .toast { position: fixed; left: 50%; bottom: calc(var(--nav-h) + 20px); transform: translateX(-50%) translateY(20px); background: var(--accent); color: #fff; padding: 10px 16px; border-radius: 10px; opacity: 0; transition: .25s; z-index: 60; pointer-events: none; font-weight: 600; max-width: 90vw; }
 .toast.show { opacity: 1; transform: translateX(-50%); }
 .toast.err { background: var(--sobre); }
+
+/* puntos por jugador en el roster */
+.ro-jug { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.ro-pts { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ro-pts small { font-weight: 400; color: var(--muted); }
