@@ -20,6 +20,7 @@
     });
   }
   function fmtPts(n) { return n % 1 === 0 ? String(n) : String(Math.floor(n)) + "½"; }
+  function hoyos(n) { return n + (n === 1 ? " hoyo" : " hoyos"); }
   function fmtVs(v) { return v === 0 ? "E" : (v > 0 ? "+" + v : String(v)); }
   function fmtIdx(v) { return v == null ? "–" : (v < 0 ? "+" + String(-v) : String(v)).replace(".", ","); }
   function fmtHdc(v) { return v == null ? "–" : (v < 0 ? "+" + (-v) : String(v)); } // plus con "+"
@@ -78,13 +79,16 @@
   }
 
   function cargar(fresh) {
-    if (S.cargando) return Promise.resolve();
+    if (S.cargando) { if (fresh) S.otraFresca = true; return Promise.resolve(); }
     S.cargando = true; pintarEstado();
     return apiGet(fresh).then(function (d) { S.bg = true; try { aplicar(d, true); } finally { S.bg = false; } })
       .catch(function (e) {
         if (!S.data) $("#main").innerHTML = '<div class="card error">No se pudo leer la planilla (' + esc(e.message) + '). Reintento solo en unos segundos.</div>';
       })
-      .then(function () { S.cargando = false; pintarEstado(); });
+      .then(function () {
+        S.cargando = false; pintarEstado();
+        if (S.otraFresca) { S.otraFresca = false; return cargar(true); }
+      });
   }
 
   function pintarEstado() {
@@ -233,15 +237,15 @@
     if (!mc.jugados) return "sin empezar";
     var lider = mc.dif > 0 ? nA : nB, d = Math.abs(mc.dif);
     if (mc.single) {
-      if (mc.dif === 0) return mc.jugados === 18 ? "empatado (AS)" : "AS · " + mc.jugados + " hoyos";
+      if (mc.dif === 0) return mc.jugados === 18 ? "empatado (AS)" : "AS · " + hoyos(mc.jugados);
       if (mc.cerrado && mc.quedan > 0) return "gana " + lider + " " + d + "&" + mc.quedan;
       if (mc.jugados === 18) return "gana " + lider + " " + d + " UP";
-      return lider + " " + d + " UP · " + mc.jugados + " hoyos";
+      return lider + " " + d + " UP · " + hoyos(mc.jugados);
     }
     var txt = mc.pa + "–" + mc.pb;
-    if (mc.dif === 0) return "empatado " + txt + (mc.jugados < 18 ? " · " + mc.jugados + " hoyos" : "");
+    if (mc.dif === 0) return "empatado " + txt + (mc.jugados < 18 ? " · " + hoyos(mc.jugados) : "");
     if (mc.terminado) return "gana " + lider + " " + txt;
-    return lider + " +" + d + " (" + txt + ") · " + mc.jugados + " hoyos";
+    return lider + " +" + d + " (" + txt + ") · " + hoyos(mc.jugados);
   }
 
   function vMatchs() {
