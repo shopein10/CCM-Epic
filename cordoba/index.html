@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f2efe4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Viaje Golf">
+  <title>Viaje Golf</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="../icon-192.png">
+  <link rel="stylesheet" href="css/style.css?v=1">
+</head>
+<body>
+  <div id="splash"><div class="splash-t">⛳<br>Viaje Golf</div></div>
+
+  <header class="top">
+    <div>
+      <h1 id="titulo">Viaje</h1>
+      <div id="estado" class="estado">cargando…</div>
+    </div>
+    <button id="btn-refresh" class="icon-btn" aria-label="Actualizar">↻</button>
+  </header>
+  <div id="aviso" class="aviso" hidden></div>
+
+  <main id="main"><div class="card vacio">Cargando…</div></main>
+
+  <nav class="nav">
+    <button class="nav-item active" data-view="equipos"><span>🏆</span>Equipos</button>
+    <button class="nav-item" data-view="ranking"><span>📋</span>Ranking</button>
+    <button class="nav-item" data-view="matchs"><span>⚔️</span>Matchs</button>
+    <button class="nav-item" data-view="cargar"><span>✏️</span>Cargar</button>
+    <button class="nav-item" data-view="mas"><span>☰</span>Más</button>
+  </nav>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-box"><button id="modal-cerrar" class="icon-btn cerrar" aria-label="Cerrar">✕</button><div id="modal-body"></div></div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script src="js/config.js?v=1"></script>
+  <script src="js/calc.js?v=1"></script>
+  <script src="js/app.js?v=1"></script>
+</body>
+</html>
