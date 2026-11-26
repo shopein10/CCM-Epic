@@ -9,7 +9,8 @@
     cargando: false, fresco: false,
     carga: { dia: null, cuarto: null, hoyo: null, paso: 1, valores: {} },
     cap: { pin: null, info: null, dia: null, equipo: null, borrador: null },
-    hdcDia: null, abiertos: {}
+    hdcDia: null, abiertos: {},
+    navManual: false, el: { sel: null, selT: 0, enviando: false, flash: null, confirma: {} }
   };
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
@@ -71,6 +72,8 @@
     if (S.diaSel == null) S.diaSel = S.M.diaActual;
     if (S.carga.dia == null) S.carga.dia = S.M.diaActual;
     if (S.hdcDia == null) S.hdcDia = S.M.diaActual;
+    // Inicio automático: mientras la elección está abierta, todos caen ahí (salvo que hayan navegado a mano)
+    if (data.eleccion && data.eleccion.estado === "abierta" && !S.navManual) S.view = "eleccion";
     if (desdeServidor) {
       S.ultimoOk = Date.now(); S.fresco = true;
       try { localStorage.setItem(CONFIG.CACHE_KEY, JSON.stringify({ t: S.ultimoOk, data: data })); } catch (e) {}
@@ -107,16 +110,18 @@
     av.hidden = !S.data.aviso; av.textContent = S.data.aviso || "";
     $$(".nav-item").forEach(function (b) {
       var v = b.dataset.view;
-      b.classList.toggle("active", v === S.view || (v === "mas" && ["capitanes", "hdc", "ayuda"].indexOf(S.view) >= 0));
+      b.classList.toggle("active", v === S.view || (v === "mas" && ["capitanes", "hdc", "ayuda", "eleccion"].indexOf(S.view) >= 0));
     });
     var f = { equipos: vEquipos, ranking: vRanking, matchs: vMatchs, cargar: vCargar,
-              mas: vMas, capitanes: vCapitanes, hdc: vHdc, ayuda: vAyuda }[S.view] || vEquipos;
+              mas: vMas, capitanes: vCapitanes, hdc: vHdc, ayuda: vAyuda, eleccion: vEleccion }[S.view] || vEquipos;
     // En Cargar no se re-pinta encima de lo que se está escribiendo
     if (S.bg && S.view === "cargar" && S.carga.paso >= 3) { pintarEstado(); return; }
     if (S.bg && S.view === "capitanes" && $("#cap-form")) { pintarEstado(); return; }
+    if (S.bg && S.view === "eleccion" && document.activeElement && (document.activeElement.id === "el-pin" || document.activeElement.hasAttribute("data-el-cap"))) { pintarEstado(); return; }
     $("#main").innerHTML = f();
     if (S.view === "cargar") engancharCarga();
     if (S.view === "capitanes") engancharCap();
+    if (S.view === "eleccion") engancharEleccion();
     pintarEstado();
   }
 
@@ -141,7 +146,9 @@
 
   function vEquipos() {
     var A = eq("A"), B = eq("B"), M = S.M;
-    var h = '<section class="card marcador">' +
+    var EL = S.data.eleccion;
+    var h = EL && EL.estado === "abierta" ? '<button class="card el-banner" data-goto="eleccion">🎯 <b>Elección de equipos en vivo</b><span>Ver ›</span></button>' : "";
+    h += '<section class="card marcador">' +
       '<div class="mc-eq" style="--c:' + esc(A.color) + '"><div class="mc-nom">' + esc(A.nombre) + '</div><div class="mc-pts">' + fmtPts(M.totA) + "</div></div>" +
       '<div class="mc-mid">de ' + M.maxPts + '<br><small>gana con ' + fmtPts(M.paraGanar) + "</small></div>" +
       '<div class="mc-eq" style="--c:' + esc(B.color) + '"><div class="mc-nom">' + esc(B.nombre) + '</div><div class="mc-pts">' + fmtPts(M.totB) + "</div></div></section>";
@@ -416,6 +423,7 @@
   // ── MÁS ────────────────────────────────────────────────────
   function vMas() {
     return '<section class="card mas">' +
+      '<button class="mas-item" data-goto="eleccion"><b>Elección de equipos</b><small>Los capitanes eligen en vivo, en serpiente</small></button>' +
       '<button class="mas-item" data-goto="capitanes"><b>Capitanes</b><small>Armar las parejas de cada día</small></button>' +
       '<button class="mas-item" data-goto="hdc"><b>Hándicaps y tees</b><small>Hdc de juego de cada uno, por día</small></button>' +
       '<button class="mas-item" data-goto="ayuda"><b>Cómo corregir cosas</b><small>Desde la planilla, sin tocar la app</small></button></section>';
@@ -542,6 +550,220 @@
       .then(function () { btn.disabled = false; render(); });
   }
 
+  // ── ELECCIÓN DE EQUIPOS (capitanes eligen en serpiente) ───
+  function elTurno(k, primero) {
+    var seg = primero === "A" ? "B" : "A", r = Math.floor(k / 2), p = k % 2;
+    return r % 2 === 0 ? (p === 0 ? primero : seg) : (p === 0 ? seg : primero);
+  }
+  function elYo() { var i = S.cap.info; return i ? (i.admin ? "admin" : i.equipo) : null; }
+  function elCap(E, id) { return (E.capitanes && E.capitanes[id]) || eq(id).capitan || ""; }
+  function idxDe(n) { var j = S.M.ix.jug[n]; return j ? j.index : null; }
+  function sumaIdx(ns) {
+    var s = 0; ns.forEach(function (n) { var v = idxDe(n); if (v != null) s += v; });
+    return fmtIdx(Math.round(s * 10) / 10);
+  }
+
+  function vEleccion() {
+    var E = S.data.eleccion || { estado: "", picks: [], total: 0, capitanes: {} };
+    var yo = elYo(), A = eq("A"), B = eq("B");
+    var capA = elCap(E, "A"), capB = elCap(E, "B");
+    var h = volverMas();
+
+    var login = !S.cap.info
+      ? '<section class="card el-login"><p class="nota">Capitanes y admin: entrá con tu PIN para elegir. El resto mira desde acá.</p>' +
+        '<div class="el-pin-row"><input id="el-pin" class="in-pin" inputmode="numeric" type="password" placeholder="PIN" autocomplete="off">' +
+        '<button class="btn" id="el-entrar">Entrar</button></div></section>'
+      : '<p class="nota el-yo">Entraste como <b>' + (yo === "admin" ? "admin" : esc(eq(yo).nombre)) +
+        '</b> · <button class="btn-link" id="cap-salir">Salir</button></p>';
+
+    // Sin arrancar
+    if (!E.estado) {
+      h += '<section class="card el-intro"><h3>Elección de equipos</h3>' +
+        '<div class="el-caps"><div style="--c:' + esc(A.color) + '"><small>' + esc(A.nombre) + "</small><b>" + esc(capA || "sin capitán") + "</b></div>" +
+        '<span>vs</span><div style="--c:' + esc(B.color) + '"><small>' + esc(B.nombre) + "</small><b>" + esc(capB || "sin capitán") + "</b></div></div>" +
+        '<p class="nota">Eligen en serpiente: el que arranca elige 1, el otro 2, el primero 2, y así (A-B-B-A-A-B…). Cada uno se lleva ' +
+        (E.total / 2) + " jugadores.</p>" +
+        (!capA || !capB ? '<div class="warn">Todavía no hay capitanes: los carga el admin acá abajo antes de arrancar.</div>' : "") +
+        (E.total % 2 ? '<div class="warn">Sin contar a los capitanes quedan ' + E.total + ' jugadores: un equipo va a tener uno más.</div>' : "");
+      if (yo === "admin") {
+        if (S.el.capA == null) S.el.capA = capA;
+        if (S.el.capB == null) S.el.capB = capB;
+        var todos = S.data.jugadores.map(function (j) { return j.nombre; }).sort();
+        var selCap = function (id, val, otro) {
+          return '<label class="el-selcap" style="--c:' + esc(eq(id).color) + '"><small>Capitán ' + esc(eq(id).nombre) + "</small>" +
+            '<select data-el-cap="' + id + '"><option value="">—</option>' + todos.map(function (n) {
+              return "<option" + (n === val ? " selected" : "") + (n === otro ? " disabled" : "") + ">" + esc(n) + "</option>";
+            }).join("") + "</select></label>";
+        };
+        var listos = S.el.capA && S.el.capB && S.el.capA !== S.el.capB;
+        h += '<div class="el-selcaps">' + selCap("A", S.el.capA, S.el.capB) + selCap("B", S.el.capB, S.el.capA) + "</div>" +
+          '<p class="nota">Si los votan en el momento, cargalos acá antes de arrancar (se guardan en la planilla).</p>' +
+          '<div class="botones col"><button class="btn" data-el-iniciar="sorteo"' + (listos ? "" : " disabled") + '>🎲 Sortear quién arranca</button>' +
+          '<div class="botones"><button class="btn sec" data-el-iniciar="A"' + (listos ? "" : " disabled") + '>Arranca ' + esc(S.el.capA || A.nombre) + '</button>' +
+          '<button class="btn sec" data-el-iniciar="B"' + (listos ? "" : " disabled") + '>Arranca ' + esc(S.el.capB || B.nombre) + "</button></div></div>" +
+          '<p class="nota">Al arrancar se borran los equipos provisorios y las alineaciones guardadas.</p>';
+      } else h += '<p class="nota"><b>La arranca el administrador desde esta pantalla.</b> Quedate acá: cuando empiece se ve sola.</p>';
+      return h + "</section>" + login;
+    }
+
+    var picks = E.picks || [], k = picks.length, abierta = E.estado === "abierta" && E.turno;
+    var puedo = abierta && !S.el.enviando && (yo === "admin" || yo === E.turno);
+
+    // Turno / final
+    if (abierta) {
+      var et = eq(E.turno), capT = elCap(E, E.turno);
+      h += '<section class="card el-turno" style="--c:' + esc(et.color) + '"><small>Elección ' + (k + 1) + " de " + E.total + '</small>' +
+        '<div class="el-quien">Elige <b>' + esc(capT || et.nombre) + "</b></div><small>" + esc(et.nombre) + "</small>" +
+        (yo === E.turno ? '<div class="el-tetoca">¡Te toca! Tocá un jugador y tocá otra vez para confirmar.</div>' : "") +
+        (yo === "admin" && yo !== E.turno ? '<div class="nota">Como admin podés elegir por ' + esc(et.nombre) + " (si se le quedó el teléfono).</div>" : "") +
+        "</section>";
+    } else {
+      h += '<section class="card el-fin"><h3>¡Equipos armados! 🍖</h3><button class="btn" data-goto="equipos">Ver equipos</button></section>';
+    }
+
+    // Orden de elección
+    var orden = "";
+    for (var i = 0; i < E.total; i++) {
+      var tq = E.primero ? elTurno(i, E.primero) : "A";
+      orden += '<span class="el-o' + (i < k ? " hecho" : i === k && abierta ? " ahora" : "") + '" style="--c:' + esc(eq(tq).color) + '" title="' +
+        esc(i < k ? picks[i].jugador : eq(tq).nombre) + '">' + (i + 1) + "</span>";
+    }
+    h += '<div class="el-orden">' + orden + "</div>";
+
+    // Disponibles
+    if (abierta) {
+      var tomados = {};
+      picks.forEach(function (p) { tomados[p.jugador] = 1; });
+      var libres = S.data.jugadores.filter(function (j) {
+        return !j.equipo && !tomados[j.nombre] && j.nombre !== capA && j.nombre !== capB;
+      }).sort(function (a, b) { return (a.index == null ? 99 : a.index) - (b.index == null ? 99 : b.index); });
+      if (S.el.sel && !libres.some(function (j) { return j.nombre === S.el.sel; })) S.el.sel = null;
+      h += '<section class="card"><h3>Disponibles <small>(' + libres.length + ")</small></h3><div class=\"el-libres\">" +
+        libres.map(function (j) {
+          var sel = puedo && S.el.sel === j.nombre && Date.now() - S.el.selT < 6000;
+          return (puedo ? '<button class="el-jug' + (sel ? " sel" : "") + '" data-el-jug="' + esc(j.nombre) + '">'
+                        : '<div class="el-jug off">') +
+            "<b>" + esc(j.nombre) + "</b><small>" + (sel ? "tocá de nuevo ✓" : "index " + fmtIdx(j.index)) + "</small>" +
+            (puedo ? "</button>" : "</div>");
+        }).join("") + "</div>" + (S.el.enviando ? '<p class="nota">Enviando…</p>' : "") + "</section>";
+    }
+
+    // Planteles
+    var plantel = function (id) {
+      var e = eq(id), cap = elCap(E, id);
+      var mios = picks.filter(function (p) { return p.equipo === id; });
+      var nombres = (cap ? [cap] : []).concat(mios.map(function (p) { return p.jugador; }));
+      return '<div class="el-plantel" style="--c:' + esc(e.color) + '"><h4>' + esc(e.nombre) + "</h4>" +
+        (cap ? '<div class="el-p cap"><span>' + esc(cap) + ' <small class="tag">C</small></span><small>' + fmtIdx(idxDe(cap)) + "</small></div>" : "") +
+        mios.map(function (p) {
+          return '<div class="el-p' + (S.el.flash === p.jugador ? " flash" : "") + '"><span><small class="el-n">#' + p.n + "</small> " +
+            esc(p.jugador) + "</span><small>" + fmtIdx(idxDe(p.jugador)) + "</small></div>";
+        }).join("") +
+        '<div class="el-suma">Suma de index <b>' + sumaIdx(nombres) + "</b></div></div>";
+    };
+    h += '<section class="card el-planteles">' + plantel("A") + plantel("B") + "</section>";
+
+    // Admin
+    if (yo === "admin") {
+      h += '<section class="card el-admin"><h3>Admin</h3><div class="botones">' +
+        (k ? '<button class="btn sec" id="el-deshacer">' + (S.el.confirma.deshacer && Date.now() - S.el.confirma.deshacer < 4000 ?
+          "Tocá otra vez: deshacer " + esc(picks[k - 1].jugador) : "↶ Deshacer última") + "</button>" : "") +
+        '<button class="btn sec" id="el-reiniciar">' + (S.el.confirma.reiniciar && Date.now() - S.el.confirma.reiniciar < 4000 ?
+          "Tocá otra vez para empezar de cero" : "Reiniciar elección") + "</button></div></section>";
+    }
+    return h + (abierta || S.cap.info ? login : "");
+  }
+
+  function engancharEleccion() {
+    var pin = $("#el-pin");
+    if (pin) pin.addEventListener("keydown", function (e) { if (e.key === "Enter") $("#el-entrar").click(); });
+    $$("[data-el-cap]").forEach(function (sel) {
+      sel.addEventListener("change", function () {
+        S.el[sel.dataset.elCap === "A" ? "capA" : "capB"] = sel.value; render();
+      });
+    });
+    if (S.el.flash) { var f = S.el.flash; setTimeout(function () { if (S.el.flash === f) S.el.flash = null; }, 2500); }
+  }
+
+  // Une la respuesta liviana (o la de un POST) con los datos que ya hay
+  function mergeEleccion(d) {
+    if (!d || !d.eleccion || !S.data) return;
+    var antes = S.data.eleccion, nuevo = d.eleccion;
+    if (d.jugadores) {
+      var eqs = {};
+      d.jugadores.forEach(function (j) { eqs[j.nombre] = j.equipo; });
+      S.data.jugadores.forEach(function (j) { if (j.nombre in eqs) j.equipo = eqs[j.nombre]; });
+    }
+    S.data.eleccion = nuevo;
+    if (nuevo.capitanes) (S.data.equipos || []).forEach(function (e) { if (nuevo.capitanes[e.id] != null) e.capitan = nuevo.capitanes[e.id]; });
+    var na = antes && antes.picks ? antes.picks.length : 0, nn = (nuevo.picks || []).length;
+    if (antes && antes.estado && nn > na) {
+      var u = nuevo.picks[nn - 1];
+      S.el.flash = u.jugador;
+      toast("#" + u.n + " · " + (elCap(nuevo, u.equipo) || eq(u.equipo).nombre) + " eligió a " + u.jugador);
+    } else if (antes && nn < na && nuevo.estado) toast("Se deshizo la última elección");
+    else if (antes && !antes.estado && nuevo.estado === "abierta") toast("¡Arrancó la elección!");
+    S.ultimoOk = Date.now(); S.fresco = true;
+    S.bg = true; try { aplicar(S.data, false); } finally { S.bg = false; }
+    if (antes && antes.estado === "abierta" && nuevo.estado === "cerrada") cargar(true);
+  }
+
+  function cargarEleccion() {
+    if (S.elCargando) return;
+    S.elCargando = true;
+    fetch(CONFIG.API_URL + "?action=eleccion&t=" + Date.now(), { signal: timeout(15000) })
+      .then(function (r) { return r.json(); })
+      .then(function (d) { if (!d.error) mergeEleccion(d); })
+      .catch(function () { S.fresco = false; pintarEstado(); })
+      .then(function () { S.elCargando = false; });
+  }
+
+  function elPost(body, okMsg) {
+    S.el.enviando = true; render();
+    body.pin = S.cap.pin;
+    return apiPost(body).then(function (r) {
+      S.el.enviando = false;
+      if (r.eleccion) mergeEleccion(r); else render();
+      if (!r.ok) throw new Error(r.error || "Error");
+      if (okMsg) toast(typeof okMsg === "function" ? okMsg(r) : okMsg);
+    }).catch(function (e) { S.el.enviando = false; render(); toast(e.message, true); });
+  }
+
+  function clickEleccion(t, ds) {
+    if (t.id === "el-entrar") {
+      var p = $("#el-pin").value.trim(); if (!p) return true;
+      t.disabled = true;
+      capLogin(p).catch(function (er) { toast(er.message, true); t.disabled = false; });
+      return true;
+    }
+    if (ds.elIniciar) {
+      elPost({ action: "eleccionIniciar", primero: ds.elIniciar, capA: S.el.capA, capB: S.el.capB }, function (r) {
+        return "¡Arrancó! Empieza " + (elCap(r.eleccion, r.primero) || eq(r.primero).nombre);
+      });
+      return true;
+    }
+    if (ds.elJug) {
+      if (S.el.enviando) return true;
+      if (S.el.sel === ds.elJug && Date.now() - S.el.selT < 6000) {
+        var E = S.data.eleccion, n = ds.elJug;
+        S.el.sel = null;
+        elPost({ action: "eleccionElegir", jugador: n, n: (E.picks || []).length + 1 });
+      } else { S.el.sel = ds.elJug; S.el.selT = Date.now(); render(); }
+      return true;
+    }
+    if (t.id === "el-deshacer" || t.id === "el-reiniciar") {
+      var key = t.id === "el-deshacer" ? "deshacer" : "reiniciar";
+      if (!S.el.confirma[key] || Date.now() - S.el.confirma[key] > 4000) {
+        S.el.confirma = {}; S.el.confirma[key] = Date.now(); render(); return true;
+      }
+      S.el.confirma = {};
+      if (key === "deshacer") elPost({ action: "eleccionDeshacer" }, function (r) { return "Deshecho: " + r.deshecho; });
+      else elPost({ action: "eleccionIniciar", primero: "mismo" }, "Elección reiniciada");
+      return true;
+    }
+    return false;
+  }
+
   // ── Modal / toast ──────────────────────────────────────────
   function abrirModal(html) { $("#modal-body").innerHTML = html; $("#modal").hidden = false; }
   function toast(t, err) {
@@ -555,8 +777,9 @@
     var t = e.target.closest("button, [data-jug]");
     if (!t) { if (e.target.id === "modal") $("#modal").hidden = true; return; }
     var ds = t.dataset;
-    if (t.classList.contains("nav-item")) { S.view = ds.view; window.scrollTo(0, 0); render(); return; }
-    if (ds.goto) { S.view = ds.goto; window.scrollTo(0, 0); render(); return; }
+    if (t.classList.contains("nav-item")) { S.navManual = true; S.view = ds.view; window.scrollTo(0, 0); render(); return; }
+    if (ds.goto) { S.navManual = true; S.view = ds.goto; window.scrollTo(0, 0); render(); return; }
+    if (clickEleccion(t, ds)) return;
     if (ds.jug) { tarjetaJugador(ds.jug); return; }
     if (t.id === "modal-cerrar") { $("#modal").hidden = true; return; }
     if (t.id === "btn-refresh") { cargar(true); return; }
@@ -604,9 +827,15 @@
       if (pin) capLogin(pin).catch(function () {});
     });
     setInterval(function () {
-      if (document.hidden || S.view === "cargar" || S.view === "capitanes") return;
+      if (document.hidden || S.view === "cargar" || S.view === "capitanes" || S.view === "eleccion") return;
       S.fresco = false; cargar(false);
     }, CONFIG.REFRESH_MS);
+    setInterval(function () {
+      if (document.hidden || S.view !== "eleccion" || !S.data) return;
+      var E = S.data.eleccion;
+      if (E && E.estado === "cerrada") return;
+      cargarEleccion();
+    }, CONFIG.ELECCION_MS || 3000);
     var volver = function () { if (!document.hidden && Date.now() - S.ultimoOk > 15000 && S.view !== "cargar") cargar(false); };
     document.addEventListener("visibilitychange", volver);
     window.addEventListener("pageshow", volver);
